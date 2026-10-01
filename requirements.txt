@@ -1,8 +1,3 @@
 FAISS
 BM25
-Sentence Transformers
-CrewAI
-Gemini
-Tavily
-python-pptx
-reportlab
+streamlit==1.64.0
