@@ -1,3 +1,4 @@
+from ai_engine import show_ai_test
 from config import show_api_status
 import streamlit as st
 
@@ -30,6 +31,7 @@ def main():
     show_header()
     show_status()
     show_api_status()
+    show_ai_test()
 
 
 if __name__ == "__main__":
