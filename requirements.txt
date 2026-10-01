@@ -1,3 +1,2 @@
-FAISS
-BM25
+
 streamlit==1.64.0
