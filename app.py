@@ -29,6 +29,7 @@ def main():
 
     show_header()
     show_status()
+    show_api_status()
 
 
 if __name__ == "__main__":
