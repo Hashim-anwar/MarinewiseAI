@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+
+.env
+.streamlit/secrets.toml
+
+data/manuals/
+data/index/
+
+*.pdf
+*.docx
+*.pptx
