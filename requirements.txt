@@ -1,3 +1,5 @@
 streamlit==1.64.0
 groq
 gdown
+pypdf
+python-docx
