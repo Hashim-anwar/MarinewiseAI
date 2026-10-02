@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v5
 
@@ -19,14 +20,39 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Verify required files
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install gdown pypdf rank_bm25 sentence-transformers faiss-cpu requests
+
+      - name: Verify Tavily secret
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: |
+          if [ -z "$TAVILY_API_KEY" ]; then
+            echo "ERROR - TAVILY_API_KEY is not configured."
+            exit 1
+          fi
+
+          echo "TAVILY_API_KEY is configured."
+
+      - name: Verify STEP 29 files
         run: |
           python - <<'PY'
           from pathlib import Path
 
           required = [
+              "manual_catalog.json",
+              "manual_selector.py",
+              "manual_downloader.py",
+              "document_extractor.py",
+              "document_chunker.py",
+              "vector_indexer.py",
+              "hybrid_retriever.py",
+              "evidence_reranker.py",
+              "tavily_research.py",
+              "evidence_fusion.py",
               "troubleshooting_workflow.py",
-              "final_evidence.json",
           ]
 
           missing = [
@@ -43,17 +69,299 @@ jobs:
 
               raise SystemExit(1)
 
-          print("All STEP 29A required files are present.")
+          print("All STEP 29 required files are present.")
           PY
 
-      - name: Run troubleshooting workflow
+      - name: Select relevant manuals
+        run: |
+          python manual_selector.py \
+            --query "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm" \
+            --top-k 10 \
+            --output selected_manuals.json
+
+      - name: Verify manual selection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("selected_manuals.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - selected_manuals.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if isinstance(data, list):
+              count = len(data)
+
+          elif isinstance(data, dict):
+              count = 0
+
+              for key in [
+                  "selected_manuals",
+                  "results",
+                  "manuals",
+              ]:
+                  value = data.get(key)
+
+                  if isinstance(value, list):
+                      count = len(value)
+                      break
+
+          else:
+              raise SystemExit(
+                  "ERROR - Invalid selected_manuals.json structure."
+              )
+
+          if count == 0:
+              raise SystemExit(
+                  "ERROR - No manuals were selected."
+              )
+
+          print(f"Selected manuals: {count}")
+
+      - name: Download selected manuals
+        run: |
+          python manual_downloader.py
+
+      - name: Verify downloaded manuals
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          folder = Path("selected_manuals")
+
+          if not folder.exists():
+              raise SystemExit(
+                  "ERROR - selected_manuals folder was not created."
+              )
+
+          files = [
+              item
+              for item in folder.iterdir()
+              if item.is_file()
+          ]
+
+          if not files:
+              raise SystemExit(
+                  "ERROR - No selected manuals were downloaded."
+              )
+
+          print(f"Downloaded manuals: {len(files)}")
+
+      - name: Extract selected manuals
+        run: |
+          python document_extractor.py
+
+      - name: Create document chunks
+        run: |
+          python document_chunker.py
+
+      - name: Build FAISS vector index
+        run: |
+          python vector_indexer.py
+
+      - name: Run hybrid retrieval
+        run: |
+          python hybrid_retriever.py
+
+      - name: Re-rank OEM evidence
+        run: |
+          python evidence_reranker.py
+
+      - name: Verify OEM evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("reranked_evidence.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - reranked_evidence.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if not isinstance(data, dict):
+              raise SystemExit(
+                  "ERROR - Invalid reranked evidence structure."
+              )
+
+          print("OEM evidence verified.")
+
+      - name: Run controlled Tavily research
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: |
+          python tavily_research.py
+
+      - name: Verify Tavily evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("tavily_results.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - tavily_results.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if data.get("step") != 27:
+              raise SystemExit(
+                  "ERROR - Invalid Tavily step number."
+              )
+
+          if data.get("provider") != "Tavily":
+              raise SystemExit(
+                  "ERROR - Invalid Tavily provider."
+              )
+
+          evidence = data.get("web_evidence")
+
+          if not isinstance(evidence, list):
+              raise SystemExit(
+                  "ERROR - web_evidence is not a list."
+              )
+
+          if len(evidence) == 0:
+              raise SystemExit(
+                  "ERROR - Tavily returned no usable evidence."
+              )
+
+          print(f"WEB evidence: {len(evidence)}")
+
+      - name: Run evidence and citation fusion
+        run: |
+          python evidence_fusion.py
+
+      - name: Verify final evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("final_evidence.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - final_evidence.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          required = [
+              "step",
+              "stage",
+              "evidence_summary",
+              "source_policy",
+              "oem_evidence",
+              "web_evidence",
+              "combined_evidence",
+          ]
+
+          for key in required:
+              if key not in data:
+                  raise SystemExit(
+                      f"ERROR - Missing final evidence key: {key}"
+                  )
+
+          if data["step"] != 28:
+              raise SystemExit(
+                  "ERROR - final_evidence.json is not STEP 28."
+              )
+
+          oem = data["oem_evidence"]
+          web = data["web_evidence"]
+          combined = data["combined_evidence"]
+
+          if not isinstance(oem, list):
+              raise SystemExit(
+                  "ERROR - OEM evidence is not a list."
+              )
+
+          if not isinstance(web, list):
+              raise SystemExit(
+                  "ERROR - WEB evidence is not a list."
+              )
+
+          if not isinstance(combined, list):
+              raise SystemExit(
+                  "ERROR - Combined evidence is not a list."
+              )
+
+          if len(oem) == 0:
+              raise SystemExit(
+                  "ERROR - No OEM evidence available."
+              )
+
+          if len(combined) != len(oem) + len(web):
+              raise SystemExit(
+                  "ERROR - Combined evidence count mismatch."
+              )
+
+          policy = data["source_policy"]
+
+          if policy.get("oem_priority") is not True:
+              raise SystemExit(
+                  "ERROR - OEM priority policy failed."
+              )
+
+          if policy.get("web_is_not_oem") is not True:
+              raise SystemExit(
+                  "ERROR - WEB/OEM separation policy failed."
+              )
+
+          if policy.get(
+              "oem_requires_manual_reference"
+          ) is not True:
+              raise SystemExit(
+                  "ERROR - OEM reference policy failed."
+              )
+
+          if policy.get(
+              "web_requires_url"
+          ) is not True:
+              raise SystemExit(
+                  "ERROR - WEB URL policy failed."
+              )
+
+          if policy.get(
+              "source_types_are_separated"
+          ) is not True:
+              raise SystemExit(
+                  "ERROR - Source separation policy failed."
+              )
+
+          print("STEP 28 final evidence verified.")
+          print(f"OEM evidence      : {len(oem)}")
+          print(f"WEB evidence      : {len(web)}")
+          print(f"Combined evidence : {len(combined)}")
+
+      - name: Run STEP 29A troubleshooting workflow
         run: |
           python troubleshooting_workflow.py \
             --query "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm" \
             --evidence final_evidence.json \
             --output troubleshooting_workflow.json
 
-      - name: Verify troubleshooting workflow
+      - name: Verify STEP 29A workflow
         run: |
           python - <<'PY'
           import json
@@ -97,7 +405,9 @@ jobs:
                   "ERROR - Incorrect STEP number."
               )
 
-          if data["stage"] != "marine_troubleshooting_workflow":
+          if data["stage"] != (
+              "marine_troubleshooting_workflow"
+          ):
               raise SystemExit(
                   "ERROR - Incorrect workflow stage."
               )
@@ -222,4 +532,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: step29a-troubleshooting-workflow
-          path: troubleshooting_workflow.json
+          path: |
+            troubleshooting_workflow.json
+            final_evidence.json
