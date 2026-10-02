@@ -38,7 +38,6 @@ def download_manuals() -> str:
         output=str(MANUALS_FOLDER),
         quiet=False,
         use_cookies=False,
-        remaining_ok=True,
     )
 
     return str(MANUALS_FOLDER)
