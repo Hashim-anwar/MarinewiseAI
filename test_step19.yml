@@ -1,0 +1,35 @@
+name: MarineWise STEP 19 Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-step19:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify catalog exists
+        run: |
+          echo "Checking manual_catalog.json..."
+          test -f manual_catalog.json
+          echo "GREEN - manual_catalog.json found"
+
+      - name: Run STEP 19 Smart Manual Selector
+        run: |
+          python manual_selector.py \
+            --query "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm" \
+            --top-k 10
+
+      - name: STEP 19 verification complete
+        run: |
+          echo "=========================================="
+          echo "STEP 19 VERIFICATION WORKFLOW COMPLETE"
+          echo "=========================================="
