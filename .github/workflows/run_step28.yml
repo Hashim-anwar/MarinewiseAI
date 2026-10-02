@@ -1,0 +1,230 @@
+name: STEP 28 - Evidence and Citation Fusion
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-fusion:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Verify required input files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          required = [
+              "reranked_evidence.json",
+              "tavily_results.json",
+              "evidence_fusion.py",
+          ]
+
+          missing = [
+              item
+              for item in required
+              if not Path(item).exists()
+          ]
+
+          if missing:
+              print("ERROR - Missing required files:")
+              for item in missing:
+                  print(f" - {item}")
+              raise SystemExit(1)
+
+          print("All STEP 28 input files are present.")
+          PY
+
+      - name: Run evidence fusion
+        run: |
+          python evidence_fusion.py
+
+      - name: Verify final evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          output_file = Path("final_evidence.json")
+
+          if not output_file.exists():
+              raise SystemExit(
+                  "ERROR - final_evidence.json was not created."
+              )
+
+          data = json.loads(
+              output_file.read_text(
+                  encoding="utf-8"
+              )
+          )
+
+          required = [
+              "step",
+              "stage",
+              "evidence_summary",
+              "source_policy",
+              "oem_evidence",
+              "web_evidence",
+              "combined_evidence",
+          ]
+
+          for key in required:
+              if key not in data:
+                  raise SystemExit(
+                      f"ERROR - Missing key: {key}"
+                  )
+
+          if data["step"] != 28:
+              raise SystemExit(
+                  "ERROR - Incorrect STEP number."
+              )
+
+          policy = data["source_policy"]
+
+          checks = {
+              "OEM priority":
+                  policy.get("oem_priority") is True,
+
+              "WEB is not OEM":
+                  policy.get("web_is_not_oem") is True,
+
+              "OEM manual reference":
+                  policy.get(
+                      "oem_requires_manual_reference"
+                  ) is True,
+
+              "WEB URL required":
+                  policy.get(
+                      "web_requires_url"
+                  ) is True,
+
+              "Source separation":
+                  policy.get(
+                      "source_types_are_separated"
+                  ) is True,
+          }
+
+          failed = [
+              name
+              for name, passed in checks.items()
+              if not passed
+          ]
+
+          if failed:
+              print("FAILED POLICY CHECKS:")
+              for item in failed:
+                  print(f" - {item}")
+              raise SystemExit(1)
+
+          oem = data["oem_evidence"]
+          web = data["web_evidence"]
+          combined = data["combined_evidence"]
+
+          if not isinstance(oem, list):
+              raise SystemExit(
+                  "ERROR - OEM evidence is not a list."
+              )
+
+          if not isinstance(web, list):
+              raise SystemExit(
+                  "ERROR - WEB evidence is not a list."
+              )
+
+          if not isinstance(combined, list):
+              raise SystemExit(
+                  "ERROR - Combined evidence is not a list."
+              )
+
+          if len(combined) != len(oem) + len(web):
+              raise SystemExit(
+                  "ERROR - Combined evidence count mismatch."
+              )
+
+          for item in oem:
+              if item.get("source_type") != "OEM":
+                  raise SystemExit(
+                      "ERROR - Invalid OEM source type."
+                  )
+
+              if not item.get("source_file"):
+                  raise SystemExit(
+                      "ERROR - OEM source file missing."
+                  )
+
+              if not item.get("text"):
+                  raise SystemExit(
+                      "ERROR - OEM evidence text missing."
+                  )
+
+              if not item.get("citation", "").startswith(
+                  "[OEM"
+              ):
+                  raise SystemExit(
+                      "ERROR - Invalid OEM citation."
+                  )
+
+          for item in web:
+              if item.get("source_type") != "WEB":
+                  raise SystemExit(
+                      "ERROR - Invalid WEB source type."
+                  )
+
+              if not item.get("url"):
+                  raise SystemExit(
+                      "ERROR - WEB URL missing."
+                  )
+
+              if not item.get("text"):
+                  raise SystemExit(
+                      "ERROR - WEB evidence text missing."
+                  )
+
+              if not item.get("citation", "").startswith(
+                  "[WEB"
+              ):
+                  raise SystemExit(
+                      "ERROR - Invalid WEB citation."
+                  )
+
+          print("=" * 70)
+          print("STEP 28 VERIFICATION COMPLETE")
+          print("=" * 70)
+          print(
+              f"OEM evidence       : {len(oem)}"
+          )
+          print(
+              f"WEB evidence       : {len(web)}"
+          )
+          print(
+              f"Combined evidence  : {len(combined)}"
+          )
+          print()
+          print("OEM priority       : TRUE")
+          print("WEB is not OEM     : TRUE")
+          print("Source separation  : TRUE")
+          print("OEM references     : TRUE")
+          print("WEB URLs           : TRUE")
+          print()
+          print("STEP 28: SUCCESS")
+          print("GREEN")
+          PY
+
+      - name: Upload STEP 28 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: step28-final-evidence
+          path: final_evidence.json
