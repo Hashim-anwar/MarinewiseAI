@@ -42,11 +42,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install groq gdown
 
-      - name: Verify training workflow script
+      - name: Verify training workflow CLI
         run: |
           python training_workflow.py --help
 
-      - name: Verify assessment workflow script
+      - name: Verify assessment workflow CLI
         run: |
           python assessment_workflow.py --help
 
@@ -74,33 +74,45 @@ jobs:
           path = Path("training_workflow.json")
 
           if not path.exists():
-              raise SystemExit("ERROR: training_workflow.json was not created.")
+              raise SystemExit(
+                  "ERROR: training_workflow.json was not created."
+              )
 
           if path.stat().st_size == 0:
-              raise SystemExit("ERROR: training_workflow.json is empty.")
+              raise SystemExit(
+                  "ERROR: training_workflow.json is empty."
+              )
 
           with path.open("r", encoding="utf-8") as f:
               data = json.load(f)
 
           if not isinstance(data, dict):
-              raise SystemExit("ERROR: training_workflow.json must contain a JSON object.")
+              raise SystemExit(
+                  "ERROR: training_workflow.json must contain a JSON object."
+              )
 
           if data.get("step") != 30:
-              raise SystemExit(f"ERROR: Expected STEP 30, got {data.get('step')}")
+              raise SystemExit(
+                  f"ERROR: Expected STEP 30, got {data.get('step')}"
+              )
 
           if data.get("status") != "READY_FOR_GROQ":
               raise SystemExit(
                   f"ERROR: Expected READY_FOR_GROQ, got {data.get('status')}"
               )
 
-          if data.get("stage") != "training_workflow":
+          expected_stage = "training_intelligence_curriculum_planner"
+
+          if data.get("stage") != expected_stage:
               raise SystemExit(
-                  f"ERROR: Expected stage training_workflow, got {data.get('stage')}"
+                  f"ERROR: Expected stage {expected_stage}, "
+                  f"got {data.get('stage')}"
               )
 
           print("STEP 30 training workflow validation: GREEN")
-          print("Training workflow status:", data.get("status"))
-          print("Training workflow stage:", data.get("stage"))
+          print("Step:", data.get("step"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
           PY
 
       - name: Run STEP 33A assessment workflow
@@ -123,16 +135,22 @@ jobs:
           path = Path("assessment_workflow.json")
 
           if not path.exists():
-              raise SystemExit("ERROR: assessment_workflow.json was not created.")
+              raise SystemExit(
+                  "ERROR: assessment_workflow.json was not created."
+              )
 
           if path.stat().st_size == 0:
-              raise SystemExit("ERROR: assessment_workflow.json is empty.")
+              raise SystemExit(
+                  "ERROR: assessment_workflow.json is empty."
+              )
 
           with path.open("r", encoding="utf-8") as f:
               data = json.load(f)
 
           if not isinstance(data, dict):
-              raise SystemExit("ERROR: assessment_workflow.json must contain a JSON object.")
+              raise SystemExit(
+                  "ERROR: assessment_workflow.json must contain a JSON object."
+              )
 
           if data.get("step") != 33:
               raise SystemExit(
@@ -146,12 +164,14 @@ jobs:
 
           if data.get("stage") != "assessment_workflow":
               raise SystemExit(
-                  f"ERROR: Expected stage assessment_workflow, got {data.get('stage')}"
+                  f"ERROR: Expected stage assessment_workflow, "
+                  f"got {data.get('stage')}"
               )
 
           if data.get("status") != "READY_FOR_GROQ":
               raise SystemExit(
-                  f"ERROR: Expected status READY_FOR_GROQ, got {data.get('status')}"
+                  f"ERROR: Expected status READY_FOR_GROQ, "
+                  f"got {data.get('status')}"
               )
 
           configuration = data.get("assessment_configuration")
@@ -163,24 +183,27 @@ jobs:
 
           if configuration.get("question_count") != 20:
               raise SystemExit(
-                  f"ERROR: Expected 20 questions, got "
-                  f"{configuration.get('question_count')}"
+                  f"ERROR: Expected 20 questions, "
+                  f"got {configuration.get('question_count')}"
               )
 
           if configuration.get("passing_score_percent") != 70:
               raise SystemExit(
-                  f"ERROR: Expected passing score 70, got "
-                  f"{configuration.get('passing_score_percent')}"
+                  f"ERROR: Expected passing score 70, "
+                  f"got {configuration.get('passing_score_percent')}"
               )
 
           areas = configuration.get("areas")
 
           if not isinstance(areas, list):
-              raise SystemExit("ERROR: Assessment areas must be a list.")
+              raise SystemExit(
+                  "ERROR: Assessment areas must be a list."
+              )
 
           if len(areas) != 10:
               raise SystemExit(
-                  f"ERROR: Expected 10 assessment areas, got {len(areas)}"
+                  f"ERROR: Expected 10 assessment areas, "
+                  f"got {len(areas)}"
               )
 
           objectives = data.get("learning_objectives")
@@ -203,13 +226,16 @@ jobs:
           print("Stage:", data.get("stage"))
           print("Status:", data.get("status"))
           print("Questions:", configuration.get("question_count"))
-          print("Passing score:", configuration.get("passing_score_percent"))
+          print(
+              "Passing score:",
+              str(configuration.get("passing_score_percent")) + "%"
+          )
           print("Assessment areas:", len(areas))
           print("Learning objectives:", len(objectives))
           print("Assessment policy: verified")
           PY
 
-      - name: Display assessment output summary
+      - name: Display final STEP 33A summary
         run: |
           python - <<'PY'
           import json
@@ -225,7 +251,10 @@ jobs:
           print("========================================")
           print("STATUS:", data["status"])
           print("QUESTIONS:", config["question_count"])
-          print("PASSING SCORE:", str(config["passing_score_percent"]) + "%")
+          print(
+              "PASSING SCORE:",
+              str(config["passing_score_percent"]) + "%"
+          )
           print("ASSESSMENT AREAS:", len(config["areas"]))
           print("========================================")
           print("STEP 33A FINAL STATUS: GREEN")
