@@ -1,3 +1,84 @@
+name: STEP 31 - Groq Training Content Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  training-content:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install groq
+
+      - name: Verify GROQ API secret
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "ERROR - GROQ_API_KEY is not configured."
+            exit 1
+          fi
+
+          echo "GROQ_API_KEY is configured."
+
+      - name: Verify required source files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          required_files = [
+              "training_workflow.py",
+              "training_answer.py",
+              "manual_catalog.json",
+          ]
+
+          missing = [
+              file
+              for file in required_files
+              if not Path(file).exists()
+          ]
+
+          if missing:
+              print("ERROR - Missing required source files:")
+
+              for file in missing:
+                  print(f" - {file}")
+
+              raise SystemExit(1)
+
+          print("All required STEP 31 source files are present.")
+          print("GREEN")
+          PY
+
+      - name: Rebuild STEP 30 training workflow
+        run: |
+          echo "Rebuilding training workflow on the current runner..."
+
+          python training_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --topic "Fuel System and Injector Maintenance" \
+            --technician-level "Basic" \
+            --duration "4 Days" \
+            --vessel "QL-40" \
+            --manuals "manual_catalog.json" \
+            --output training_workflow.json
+
       - name: Verify rebuilt training workflow
         run: |
           python - <<'PY'
@@ -11,22 +92,33 @@
                   "ERROR - training_workflow.json was not generated."
               )
 
-          data = json.loads(
-              path.read_text(encoding="utf-8")
-          )
+          try:
+              data = json.loads(
+                  path.read_text(
+                      encoding="utf-8"
+                  )
+              )
+          except Exception as exc:
+              raise SystemExit(
+                  f"ERROR - Invalid training_workflow.json: {exc}"
+              )
 
           if data.get("step") != 30:
               raise SystemExit(
-                  f"ERROR - Incorrect training workflow step: "
+                  "ERROR - Incorrect training workflow step: "
                   f"{data.get('step')}"
               )
 
           if data.get("status") != "READY_FOR_GROQ":
               raise SystemExit(
-                  "ERROR - Training workflow is not READY_FOR_GROQ."
+                  "ERROR - Training workflow is not READY_FOR_GROQ: "
+                  f"{data.get('status')}"
               )
 
-          curriculum = data.get("curriculum", [])
+          curriculum = data.get(
+              "curriculum",
+              []
+          )
 
           if not isinstance(curriculum, list):
               raise SystemExit(
@@ -35,22 +127,326 @@
 
           if len(curriculum) < 15:
               raise SystemExit(
-                  "ERROR - Training curriculum is incomplete."
+                  "ERROR - Training curriculum is incomplete. "
+                  f"Found {len(curriculum)} sections."
               )
 
-          stage = data.get(
-              "stage",
-              "not specified"
+          input_data = data.get(
+              "input",
+              {}
           )
+
+          if not isinstance(input_data, dict):
+              raise SystemExit(
+                  "ERROR - Training input is invalid."
+              )
+
+          required_input_fields = [
+              "manufacturer",
+              "engine_model",
+              "topic",
+              "technician_level",
+              "duration",
+              "vessel",
+          ]
+
+          missing_input = [
+              field
+              for field in required_input_fields
+              if field not in input_data
+          ]
+
+          if missing_input:
+              raise SystemExit(
+                  "ERROR - Missing training input fields: "
+                  + ", ".join(missing_input)
+              )
 
           print("=" * 70)
           print("STEP 30 WORKFLOW REBUILT SUCCESSFULLY")
           print("=" * 70)
-          print(f"Step               : {data.get('step')}")
-          print(f"Stage              : {stage}")
-          print(f"Status             : {data.get('status')}")
-          print(f"Curriculum sections: {len(curriculum)}")
+
+          print(
+              f"Step                : {data.get('step')}"
+          )
+
+          print(
+              f"Stage               : {data.get('stage', 'not specified')}"
+          )
+
+          print(
+              f"Status              : {data.get('status')}"
+          )
+
+          print(
+              f"Manufacturer        : "
+              f"{input_data.get('manufacturer')}"
+          )
+
+          print(
+              f"Engine              : "
+              f"{input_data.get('engine_model')}"
+          )
+
+          print(
+              f"Topic               : "
+              f"{input_data.get('topic')}"
+          )
+
+          print(
+              f"Technician level    : "
+              f"{input_data.get('technician_level')}"
+          )
+
+          print(
+              f"Duration            : "
+              f"{input_data.get('duration')}"
+          )
+
+          print(
+              f"Vessel              : "
+              f"{input_data.get('vessel')}"
+          )
+
+          print(
+              f"Curriculum sections : {len(curriculum)}"
+          )
+
           print()
           print("STEP 30 validation  : TRUE")
           print("GREEN")
           PY
+
+      - name: Generate Groq training content
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          echo "Starting Groq training content generation..."
+
+          python training_answer.py \
+            --workflow training_workflow.json \
+            --output training_answer.json \
+            --model "openai/gpt-oss-120b"
+
+      - name: Verify STEP 31 output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("training_answer.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - training_answer.json was not created."
+              )
+
+          try:
+              data = json.loads(
+                  path.read_text(
+                      encoding="utf-8"
+                  )
+              )
+          except Exception as exc:
+              raise SystemExit(
+                  f"ERROR - Invalid training_answer.json: {exc}"
+              )
+
+          required_keys = [
+              "step",
+              "stage",
+              "status",
+              "model",
+              "input",
+              "constructed_query",
+              "manual_selection",
+              "report_sections",
+              "training_content",
+              "evidence_policy",
+          ]
+
+          missing_keys = [
+              key
+              for key in required_keys
+              if key not in data
+          ]
+
+          if missing_keys:
+              raise SystemExit(
+                  "ERROR - Missing output keys: "
+                  + ", ".join(missing_keys)
+              )
+
+          if data.get("step") != 31:
+              raise SystemExit(
+                  "ERROR - Incorrect STEP 31 number: "
+                  f"{data.get('step')}"
+              )
+
+          if data.get("stage") != (
+              "groq_training_content_generator"
+          ):
+              raise SystemExit(
+                  "ERROR - Incorrect STEP 31 stage: "
+                  f"{data.get('stage')}"
+              )
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit(
+                  "ERROR - Training generation status is not SUCCESS."
+              )
+
+          content = data.get(
+              "training_content",
+              ""
+          )
+
+          if not isinstance(content, str):
+              raise SystemExit(
+                  "ERROR - Training content is not text."
+              )
+
+          if len(content.strip()) < 300:
+              raise SystemExit(
+                  "ERROR - Training content is too short."
+              )
+
+          required_sections = [
+              "TRAINING OBJECTIVE",
+              "ENGINE INTRODUCTION",
+              "SYSTEM OVERVIEW",
+              "COMPONENT IDENTIFICATION",
+              "TOOLS REQUIRED",
+              "SAFETY PRECAUTIONS",
+              "REMOVAL PROCEDURE",
+              "INSPECTION",
+              "INSTALLATION",
+              "TORQUE AND SPECIFICATIONS",
+              "COMMON FAULTS",
+              "TROUBLESHOOTING",
+              "PRACTICAL EXERCISE",
+              "KNOWLEDGE CHECK",
+              "FINAL ASSESSMENT",
+              "OEM REFERENCES",
+              "EVIDENCE STATUS",
+          ]
+
+          upper_content = content.upper()
+
+          missing_sections = [
+              section
+              for section in required_sections
+              if section not in upper_content
+          ]
+
+          if missing_sections:
+              print(
+                  "ERROR - Missing training sections:"
+              )
+
+              for section in missing_sections:
+                  print(
+                      f" - {section}"
+                  )
+
+              raise SystemExit(1)
+
+          policy = data.get(
+              "evidence_policy",
+              {}
+          )
+
+          policy_checks = {
+              "OEM priority":
+                  policy.get("oem_priority") is True,
+
+              "WEB is not OEM":
+                  policy.get("web_is_not_oem") is True,
+
+              "Unsupported specifications blocked":
+                  policy.get(
+                      "unsupported_specifications_blocked"
+                  ) is True,
+
+              "Unsupported procedures blocked":
+                  policy.get(
+                      "unsupported_procedures_blocked"
+                  ) is True,
+
+              "Fake references blocked":
+                  policy.get(
+                      "fake_references_blocked"
+                  ) is True,
+
+              "Evidence controlled":
+                  policy.get(
+                      "evidence_controlled"
+                  ) is True,
+          }
+
+          failed_policy_checks = [
+              name
+              for name, passed
+              in policy_checks.items()
+              if not passed
+          ]
+
+          if failed_policy_checks:
+              print(
+                  "ERROR - Evidence policy validation failed:"
+              )
+
+              for item in failed_policy_checks:
+                  print(
+                      f" - {item}"
+                  )
+
+              raise SystemExit(1)
+
+          selected_manuals = data.get(
+              "manual_selection",
+              {}
+          ).get(
+              "selected_manuals",
+              []
+          )
+
+          print("=" * 70)
+          print("STEP 31 VERIFICATION COMPLETE")
+          print("=" * 70)
+
+          print(
+              f"Model             : {data.get('model')}"
+          )
+
+          print(
+              f"Content length    : "
+              f"{len(content)} characters"
+          )
+
+          print(
+              f"Selected manuals  : "
+              f"{len(selected_manuals)}"
+          )
+
+          print()
+          print("All 17 sections   : TRUE")
+          print("OEM priority      : TRUE")
+          print("WEB separation    : TRUE")
+          print("Evidence control  : TRUE")
+          print("Groq generation   : TRUE")
+          print("Policy validation : TRUE")
+
+          print()
+          print("STEP 31: SUCCESS")
+          print("GREEN")
+          PY
+
+      - name: Upload STEP 31 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: step31-groq-training-content
+          path: |
+            training_workflow.json
+            training_answer.json
+          if-no-files-found: error
