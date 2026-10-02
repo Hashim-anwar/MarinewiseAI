@@ -9,14 +9,8 @@ ASSESSMENT_FILE = Path("assessment_answer.json")
 EVIDENCE_FILE = Path("assessment_evidence.json")
 
 
-st.set_page_config(
-    page_title="MarineWise AI Assessment",
-    page_icon="⚓",
-    layout="wide",
-)
-
-
 def load_json(path):
+    """Load a JSON file safely."""
     if not path.exists():
         return None
 
@@ -28,6 +22,7 @@ def load_json(path):
 
 
 def find_recursive(data, target_keys):
+    """Find the first matching key anywhere in nested JSON."""
     if isinstance(data, dict):
         for key, value in data.items():
             if str(key).upper() in target_keys:
@@ -35,12 +30,14 @@ def find_recursive(data, target_keys):
 
         for value in data.values():
             result = find_recursive(value, target_keys)
+
             if result is not None:
                 return result
 
     elif isinstance(data, list):
         for item in data:
             result = find_recursive(item, target_keys)
+
             if result is not None:
                 return result
 
@@ -48,6 +45,7 @@ def find_recursive(data, target_keys):
 
 
 def get_questions(assessment):
+    """Extract assessment questions from common JSON structures."""
     value = find_recursive(
         assessment,
         {
@@ -59,7 +57,8 @@ def get_questions(assessment):
 
     if isinstance(value, list):
         return [
-            item for item in value
+            item
+            for item in value
             if isinstance(item, dict)
         ]
 
@@ -73,7 +72,8 @@ def get_questions(assessment):
 
             if isinstance(items, list):
                 return [
-                    item for item in items
+                    item
+                    for item in items
                     if isinstance(item, dict)
                 ]
 
@@ -81,7 +81,8 @@ def get_questions(assessment):
 
 
 def get_answer_key(assessment):
-    value = find_recursive(
+    """Extract the answer key recursively."""
+    return find_recursive(
         assessment,
         {
             "ANSWER KEY",
@@ -90,10 +91,9 @@ def get_answer_key(assessment):
         },
     )
 
-    return value
-
 
 def normalize_answer_key(answer_key):
+    """Convert different answer-key structures into one dictionary."""
     result = {}
 
     if isinstance(answer_key, dict):
@@ -104,6 +104,7 @@ def normalize_answer_key(answer_key):
 
     if isinstance(answer_key, list):
         for item in answer_key:
+
             if not isinstance(item, dict):
                 continue
 
@@ -125,7 +126,8 @@ def normalize_answer_key(answer_key):
     return result
 
 
-def question_text(question, number):
+def get_question_text(question, number):
+    """Get the question text."""
     for key in (
         "question",
         "QUESTION",
@@ -141,7 +143,8 @@ def question_text(question, number):
     return f"Question {number}"
 
 
-def question_type(question):
+def get_question_type(question):
+    """Get and normalize the question type."""
     for key in (
         "type",
         "question_type",
@@ -160,7 +163,8 @@ def question_type(question):
     return "MULTIPLE_CHOICE"
 
 
-def question_area(question):
+def get_question_area(question):
+    """Get the assessment area."""
     for key in (
         "area",
         "assessment_area",
@@ -176,6 +180,7 @@ def question_area(question):
 
 
 def get_options(question):
+    """Extract MCQ options."""
     options = question.get("options")
 
     if isinstance(options, dict):
@@ -188,7 +193,9 @@ def get_options(question):
         output = []
 
         for option in options:
+
             if isinstance(option, dict):
+
                 letter = (
                     option.get("letter")
                     or option.get("key")
@@ -204,7 +211,9 @@ def get_options(question):
                 )
 
                 if letter:
-                    output.append(f"{letter}. {text}")
+                    output.append(
+                        f"{letter}. {text}"
+                    )
                 else:
                     output.append(str(text))
 
@@ -216,7 +225,25 @@ def get_options(question):
     return []
 
 
+def get_question_citation(question):
+    """Get OEM citation attached to a question."""
+    for key in (
+        "citation",
+        "source_citation",
+        "oem_citation",
+        "reference",
+        "source",
+    ):
+        value = question.get(key)
+
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    return ""
+
+
 def normalize_text(value):
+    """Normalize answers for comparison."""
     if value is None:
         return ""
 
@@ -228,12 +255,17 @@ def normalize_text(value):
         text,
     )
 
-    text = re.sub(r"\s+", " ", text)
+    text = re.sub(
+        r"\s+",
+        " ",
+        text,
+    )
 
     return text
 
 
 def answers_match(user_answer, correct_answer):
+    """Compare trainee answer with answer key."""
     if user_answer is None or correct_answer is None:
         return False
 
@@ -245,13 +277,6 @@ def answers_match(user_answer, correct_answer):
 
     if user == correct:
         return True
-
-    user_first = user[:1]
-    correct_first = correct[:1]
-
-    if user_first in {"a", "b", "c", "d"}:
-        if user_first == correct_first:
-            return True
 
     true_values = {
         "true",
@@ -275,7 +300,11 @@ def answers_match(user_answer, correct_answer):
 
 
 def extract_metadata(assessment):
-    input_data = assessment.get("input", {})
+    """Extract assessment metadata."""
+    input_data = assessment.get(
+        "input",
+        {},
+    )
 
     if not isinstance(input_data, dict):
         input_data = {}
@@ -311,7 +340,9 @@ def extract_metadata(assessment):
     )
 
     try:
-        passing_score = float(passing_score)
+        passing_score = float(
+            passing_score
+        )
     except Exception:
         passing_score = 70.0
 
@@ -324,8 +355,16 @@ def extract_metadata(assessment):
     }
 
 
-def local_assessment_result(questions, answers, answer_key, passing_score):
-    key_map = normalize_answer_key(answer_key)
+def calculate_result(
+    questions,
+    answers,
+    answer_key,
+    passing_score,
+):
+    """Calculate assessment result."""
+    key_map = normalize_answer_key(
+        answer_key
+    )
 
     total = len(questions)
     correct = 0
@@ -336,20 +375,41 @@ def local_assessment_result(questions, answers, answer_key, passing_score):
 
     question_results = []
 
-    for index, question in enumerate(questions, start=1):
-        area = question_area(question)
-        user_answer = answers.get(index)
+    for number, question in enumerate(
+        questions,
+        start=1,
+    ):
+        area = get_question_area(
+            question
+        )
 
-        if user_answer in (None, ""):
+        user_answer = answers.get(
+            number
+        )
+
+        if user_answer in (
+            None,
+            "",
+        ):
             unanswered += 1
 
-        area_totals[area] = area_totals.get(area, 0) + 1
+        area_totals[area] = (
+            area_totals.get(area, 0) + 1
+        )
 
-        expected = key_map.get(str(index))
+        expected = key_map.get(
+            str(number)
+        )
 
         is_correct = False
 
-        if user_answer not in (None, "") and expected is not None:
+        if (
+            user_answer not in (
+                None,
+                "",
+            )
+            and expected is not None
+        ):
             is_correct = answers_match(
                 user_answer,
                 expected,
@@ -357,25 +417,31 @@ def local_assessment_result(questions, answers, answer_key, passing_score):
 
         if is_correct:
             correct += 1
+
             area_correct[area] = (
                 area_correct.get(area, 0) + 1
             )
 
         question_results.append(
             {
-                "question_number": index,
+                "question_number": number,
                 "area": area,
-                "question": question_text(
+                "question": get_question_text(
                     question,
-                    index,
+                    number,
                 ),
-                "user_answer": user_answer or "",
+                "user_answer": (
+                    user_answer or ""
+                ),
                 "correct": is_correct,
             }
         )
 
     percentage = (
-        round((correct / total) * 100, 1)
+        round(
+            (correct / total) * 100,
+            1,
+        )
         if total
         else 0.0
     )
@@ -383,45 +449,61 @@ def local_assessment_result(questions, answers, answer_key, passing_score):
     area_scores = {}
 
     for area, count in area_totals.items():
+
         area_scores[area] = round(
             (
-                area_correct.get(area, 0)
+                area_correct.get(
+                    area,
+                    0,
+                )
                 / count
-            ) * 100,
+            )
+            * 100,
             1,
         )
 
-    weak_areas = [
-        {
-            "area": area,
-            "score_percent": score,
-            "priority": (
+    weak_areas = []
+
+    for area, score in area_scores.items():
+
+        if score < 70:
+
+            priority = (
                 "HIGH"
                 if score < 50
                 else "MEDIUM"
-            ),
-        }
-        for area, score in area_scores.items()
-        if score < 70
-    ]
+            )
 
-    retraining = []
+            weak_areas.append(
+                {
+                    "area": area,
+                    "score_percent": score,
+                    "priority": priority,
+                }
+            )
+
+    retraining_recommendations = []
 
     for item in weak_areas:
+
         if item["score_percent"] < 50:
+
             recommendation = (
                 f"Repeat focused OEM training for "
-                f"{item['area']}, followed by a supervised "
-                f"practical exercise and reassessment."
+                f"{item['area']}, followed by a "
+                f"supervised practical exercise and "
+                f"reassessment."
             )
+
         else:
+
             recommendation = (
                 f"Review OEM training material for "
                 f"{item['area']}, complete a focused "
                 f"practical exercise, and reassess."
             )
 
-        retraining.append(
+        retraining_recommendations.append(
             {
                 "area": item["area"],
                 "priority": item["priority"],
@@ -439,27 +521,36 @@ def local_assessment_result(questions, answers, answer_key, passing_score):
         "question_results": question_results,
         "area_scores": area_scores,
         "weak_areas": weak_areas,
-        "retraining_recommendations": retraining,
+        "retraining_recommendations": (
+            retraining_recommendations
+        ),
     }
 
 
 def get_evidence_records(evidence):
+    """Extract OEM evidence records."""
     if not isinstance(evidence, dict):
         return []
 
-    records = evidence.get("evidence")
+    records = evidence.get(
+        "evidence"
+    )
 
     if isinstance(records, list):
         return [
-            item for item in records
+            item
+            for item in records
             if isinstance(item, dict)
         ]
 
     return []
 
 
-def render_evidence(evidence):
-    records = get_evidence_records(evidence)
+def render_oem_evidence(evidence):
+    """Display OEM evidence."""
+    records = get_evidence_records(
+        evidence
+    )
 
     if not records:
         st.info(
@@ -471,9 +562,21 @@ def render_evidence(evidence):
         records[:20],
         start=1,
     ):
-        citation = record.get("citation", "")
-        source_file = record.get("source_file", "")
-        page = record.get("page", "")
+        citation = record.get(
+            "citation",
+            "",
+        )
+
+        source_file = record.get(
+            "source_file",
+            "",
+        )
+
+        page = record.get(
+            "page",
+            "",
+        )
+
         evidence_text = record.get(
             "evidence_text",
             "",
@@ -485,6 +588,7 @@ def render_evidence(evidence):
         )
 
         with st.expander(title):
+
             if source_file:
                 st.write(
                     f"**Source:** {source_file}"
@@ -501,13 +605,27 @@ def render_evidence(evidence):
                 )
 
             if evidence_text:
-                st.write(evidence_text)
+                st.write(
+                    evidence_text
+                )
 
 
-def main():
-    st.title("⚓ MarineWise AI Assessment")
-    st.subheader(
-        "Marine Technician Knowledge & Practical Assessment"
+def show_assessment():
+    """
+    Display the MarineWise assessment module.
+
+    This function is imported by app.py.
+    It intentionally does not call
+    st.set_page_config().
+    """
+
+    st.header(
+        "📝 Technician Assessment"
+    )
+
+    st.write(
+        "OEM-grounded marine technician "
+        "knowledge and practical assessment."
     )
 
     assessment = load_json(
@@ -519,9 +637,16 @@ def main():
     )
 
     if assessment is None:
+
         st.error(
             "assessment_answer.json was not found."
         )
+
+        st.info(
+            "Make sure assessment_answer.json "
+            "exists in the repository."
+        )
+
         return
 
     questions = get_questions(
@@ -529,10 +654,12 @@ def main():
     )
 
     if not questions:
+
         st.error(
             "No QUESTIONS were found in "
             "assessment_answer.json."
         )
+
         return
 
     answer_key = get_answer_key(
@@ -543,7 +670,9 @@ def main():
         assessment
     )
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(
+        4
+    )
 
     with col1:
         st.metric(
@@ -570,24 +699,30 @@ def main():
         )
 
     st.info(
-        f"**Training Topic:** {metadata['topic']}  |  "
+        f"**Training Topic:** "
+        f"{metadata['topic']}  |  "
         f"**Passing Score:** "
         f"{metadata['passing_score']:.0f}%"
     )
 
-    if "started" not in st.session_state:
-        st.session_state.started = False
+    if "assessment_started" not in st.session_state:
+        st.session_state.assessment_started = False
 
-    if "submitted" not in st.session_state:
-        st.session_state.submitted = False
+    if "assessment_submitted" not in st.session_state:
+        st.session_state.assessment_submitted = False
 
-    if not st.session_state.started:
+    if not st.session_state.assessment_started:
 
-        st.markdown("## Ready to Start")
+        st.markdown(
+            "### Ready to Start"
+        )
 
         st.write(
-            "Answer all questions using the OEM-grounded "
-            "training material."
+            "This assessment evaluates technician "
+            "knowledge of engine fundamentals, "
+            "systems, components, safety, "
+            "maintenance, inspection, installation "
+            "and troubleshooting."
         )
 
         if st.button(
@@ -595,13 +730,16 @@ def main():
             type="primary",
             use_container_width=True,
         ):
-            st.session_state.started = True
-            st.session_state.submitted = False
+            st.session_state.assessment_started = True
+            st.session_state.assessment_submitted = False
+
             st.rerun()
 
         return
 
-    st.markdown("## Assessment Questions")
+    st.markdown(
+        "### Assessment Questions"
+    )
 
     answers = {}
 
@@ -609,34 +747,48 @@ def main():
         questions,
         start=1,
     ):
+
         st.markdown(
-            f"### {number}. "
-            f"{question_text(question, number)}"
+            f"#### {number}. "
+            f"{get_question_text(question, number)}"
         )
 
         st.caption(
-            f"Area: {question_area(question)}"
+            f"Assessment Area: "
+            f"{get_question_area(question)}"
         )
 
-        qtype = question_type(question)
+        qtype = get_question_type(
+            question
+        )
+
+        widget_key = (
+            f"marinewise_question_{number}"
+        )
 
         if qtype in {
             "MULTIPLE_CHOICE",
             "MCQ",
             "MULTI_CHOICE",
         }:
-            options = get_options(question)
+
+            options = get_options(
+                question
+            )
 
             if options:
+
                 answers[number] = st.radio(
-                    "Select one:",
+                    "Select one answer:",
                     options,
-                    key=f"question_{number}",
+                    key=widget_key,
                 )
+
             else:
+
                 answers[number] = st.text_input(
                     "Your answer:",
-                    key=f"question_{number}",
+                    key=widget_key,
                 )
 
         elif qtype in {
@@ -644,16 +796,21 @@ def main():
             "TRUEFALSE",
             "TRUE_OR_FALSE",
         }:
+
             answers[number] = st.radio(
-                "Select one:",
-                ["True", "False"],
-                key=f"question_{number}",
+                "Select one answer:",
+                [
+                    "True",
+                    "False",
+                ],
+                key=widget_key,
             )
 
         else:
+
             answers[number] = st.text_area(
                 "Your answer:",
-                key=f"question_{number}",
+                key=widget_key,
                 height=140,
             )
 
@@ -662,6 +819,7 @@ def main():
         )
 
         if citation:
+
             st.caption(
                 f"OEM Reference: {citation}"
             )
@@ -673,58 +831,81 @@ def main():
         type="primary",
         use_container_width=True,
     ):
-        st.session_state.answers = answers
-        st.session_state.submitted = True
+
+        st.session_state.assessment_answers = (
+            answers
+        )
+
+        st.session_state.assessment_submitted = True
+
         st.rerun()
 
-    if not st.session_state.submitted:
+    if not st.session_state.assessment_submitted:
         return
 
-    submitted_answers = st.session_state.answers
+    submitted_answers = (
+        st.session_state.get(
+            "assessment_answers",
+            {},
+        )
+    )
 
-    result = local_assessment_result(
+    result = calculate_result(
         questions,
         submitted_answers,
         answer_key,
         metadata["passing_score"],
     )
 
-    st.markdown("## Assessment Result")
+    st.markdown(
+        "## 📊 Assessment Result"
+    )
 
-    col1, col2, col3 = st.columns(3)
+    result_col1, result_col2, result_col3 = (
+        st.columns(3)
+    )
 
-    with col1:
+    with result_col1:
         st.metric(
             "Score",
             f"{result['score_percent']:.1f}%",
         )
 
-    with col2:
+    with result_col2:
         st.metric(
             "Correct",
-            f"{result['correct_answers']} / "
-            f"{result['total_questions']}",
+            (
+                f"{result['correct_answers']} / "
+                f"{result['total_questions']}"
+            ),
         )
 
-    with col3:
+    with result_col3:
         st.metric(
             "Unanswered",
             result["unanswered"],
         )
 
     if result["passed"]:
+
         st.success(
             "PASS — Passing score achieved."
         )
+
     else:
+
         st.warning(
             "RETRAINING REQUIRED — "
             "Passing score not achieved."
         )
 
-    st.markdown("## Area Performance")
+    st.markdown(
+        "### Area Performance"
+    )
 
-    for area, score in result["area_scores"].items():
+    for area, score in result[
+        "area_scores"
+    ].items():
 
         st.write(
             f"**{area}: {score:.1f}%**"
@@ -732,34 +913,48 @@ def main():
 
         st.progress(
             min(
-                max(score / 100, 0.0),
+                max(
+                    score / 100,
+                    0.0,
+                ),
                 1.0,
             )
         )
 
-    st.markdown("## Weak Areas")
+    st.markdown(
+        "### Weak Areas"
+    )
 
     if result["weak_areas"]:
-        for item in result["weak_areas"]:
+
+        for item in result[
+            "weak_areas"
+        ]:
+
             st.warning(
                 f"**{item['area']}** — "
                 f"{item['score_percent']:.1f}% — "
                 f"{item['priority']} priority"
             )
+
     else:
+
         st.success(
             "No weak assessment areas identified."
         )
 
     st.markdown(
-        "## Personalized Retraining Recommendations"
+        "### Personalized Retraining Recommendations"
     )
 
-    if result["retraining_recommendations"]:
+    recommendations = result[
+        "retraining_recommendations"
+    ]
 
-        for item in result[
-            "retraining_recommendations"
-        ]:
+    if recommendations:
+
+        for item in recommendations:
+
             st.info(
                 f"**{item['area']}** "
                 f"({item['priority']}): "
@@ -767,51 +962,47 @@ def main():
             )
 
     else:
+
         st.success(
             "No additional retraining recommendation "
             "was generated."
         )
 
-    st.markdown("## OEM Evidence")
+    st.markdown(
+        "### OEM Evidence"
+    )
 
-    render_evidence(evidence)
+    render_oem_evidence(
+        evidence
+    )
 
     st.markdown("---")
 
     if st.button(
-        "Retake Assessment",
+        "🔄 Retake Assessment",
         use_container_width=True,
     ):
-        for key in list(
-            st.session_state.keys()
-        ):
-            if key.startswith("question_"):
-                del st.session_state[key]
 
-        st.session_state.submitted = False
+        keys_to_delete = [
+            key
+            for key in st.session_state.keys()
+            if key.startswith(
+                "marinewise_question_"
+            )
+        ]
+
+        for key in keys_to_delete:
+            del st.session_state[key]
+
+        st.session_state.assessment_started = False
+        st.session_state.assessment_submitted = False
+
+        if "assessment_answers" in st.session_state:
+            del st.session_state.assessment_answers
+
         st.rerun()
 
     st.caption(
         "MarineWise AI | OEM-grounded assessment "
         "and technician retraining"
     )
-
-
-def get_question_citation(question):
-    for key in (
-        "citation",
-        "source_citation",
-        "oem_citation",
-        "reference",
-        "source",
-    ):
-        value = question.get(key)
-
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-
-    return ""
-
-
-if __name__ == "__main__":
-    main()
