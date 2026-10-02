@@ -1,0 +1,331 @@
+name: STEP 32B - AI Visual Fallback Planner
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  plan-ai-visuals:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "pymupdf"
+
+      - name: Verify dependencies
+        run: |
+          python - <<'PY'
+          import fitz
+
+          print("PyMuPDF: OK")
+          print("Dependencies GREEN")
+          PY
+
+      - name: Verify required project files
+        run: |
+          test -f manual_catalog.json
+          test -f manual_selector.py
+          test -f manual_downloader.py
+          test -f training_workflow.py
+          test -f training_answer.py
+          test -f training_visual_planner.py
+
+          echo "All required project files found."
+          echo "Project files GREEN"
+
+      - name: Build Step 30 training workflow
+        run: |
+          python training_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --topic "Fuel System and Injector Maintenance" \
+            --technician-level "Basic" \
+            --duration "4 Days" \
+            --vessel "QL-40" \
+            --manuals "manual_catalog.json" \
+            --output training_workflow.json
+
+      - name: Verify Step 30
+        run: |
+          python - <<'PY'
+          import json
+
+          with open(
+              "training_workflow.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  f"Step 30 failed: {data.get('status')}"
+              )
+
+          print("STEP 30 GREEN")
+          PY
+
+      - name: Verify GROQ_API_KEY
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "ERROR: GROQ_API_KEY secret is missing."
+            exit 1
+          fi
+
+          echo "GROQ_API_KEY available."
+          echo "Groq secret GREEN"
+
+      - name: Build Step 31 training content
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python training_answer.py \
+            --workflow training_workflow.json \
+            --output training_answer.json
+
+      - name: Verify Step 31
+        run: |
+          python - <<'PY'
+          import json
+
+          with open(
+              "training_answer.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if data.get("step") != 31:
+              raise SystemExit(
+                  f"Unexpected step: {data.get('step')}"
+              )
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit(
+                  f"Step 31 failed: {data.get('status')}"
+              )
+
+          if not data.get("training_content"):
+              raise SystemExit(
+                  "training_content is empty."
+              )
+
+          print("STEP 31 GREEN")
+          PY
+
+      - name: Select OEM manuals
+        run: |
+          python manual_selector.py \
+            --query "QL-40 MAN 16V175D-MM Main Engine Fuel System Injector Maintenance" \
+            --top-k 10 \
+            --output selected_manuals.json
+
+      - name: Verify OEM manual selection
+        run: |
+          python - <<'PY'
+          import json
+
+          with open(
+              "selected_manuals.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if isinstance(data, list):
+              records = data
+
+          elif isinstance(data, dict):
+
+              records = (
+                  data.get("selected_manuals")
+                  or data.get("results")
+                  or data.get("manuals")
+                  or []
+              )
+
+          else:
+              records = []
+
+          if not records:
+              raise SystemExit(
+                  "No OEM manuals selected."
+              )
+
+          print(
+              f"Selected OEM manuals: {len(records)}"
+          )
+
+          print("OEM selection GREEN")
+          PY
+
+      - name: Download selected OEM manuals
+        run: |
+          rm -rf selected_manuals
+
+          python manual_downloader.py \
+            --catalog manual_catalog.json \
+            --selected selected_manuals.json \
+            --output selected_manuals
+
+      - name: Verify downloaded OEM manuals
+        run: |
+          pdf_count=$(find selected_manuals -type f -iname "*.pdf" | wc -l)
+
+          echo "Downloaded PDF count: $pdf_count"
+
+          if [ "$pdf_count" -eq 0 ]; then
+            echo "ERROR: No OEM PDFs were downloaded."
+            exit 1
+          fi
+
+          echo "OEM PDF download GREEN"
+
+      - name: Run STEP 32B visual planner
+        run: |
+          python training_visual_planner.py \
+            --answer training_answer.json \
+            --workflow training_workflow.json \
+            --manual-dir selected_manuals \
+            --output ai_visual_requests.json
+
+      - name: Verify STEP 32B output
+        run: |
+          python - <<'PY'
+          import json
+
+          with open(
+              "ai_visual_requests.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          print("Step:", data.get("step"))
+          print("Substep:", data.get("substep"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+
+          if data.get("step") != 32:
+              raise SystemExit(
+                  f"Unexpected step: {data.get('step')}"
+              )
+
+          if data.get("substep") != "32B":
+              raise SystemExit(
+                  f"Unexpected substep: {data.get('substep')}"
+              )
+
+          if data.get("stage") != "ai_visual_fallback_planner":
+              raise SystemExit(
+                  f"Unexpected stage: {data.get('stage')}"
+              )
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit(
+                  f"STEP 32B failed: {data.get('status')}"
+              )
+
+          if data.get("manual_count", 0) == 0:
+              raise SystemExit(
+                  "No OEM manuals detected."
+              )
+
+          if data.get("visual_sections", 0) == 0:
+              raise SystemExit(
+                  "No visual training sections detected."
+              )
+
+          if "ai_visual_requests" not in data:
+              raise SystemExit(
+                  "ai_visual_requests field missing."
+              )
+
+          if data.get("ai_visual_label") != (
+              "AI Training Illustration — Not an OEM Figure"
+          ):
+              raise SystemExit(
+                  "AI visual label policy is incorrect."
+              )
+
+          policy = data.get(
+              "visual_policy",
+              {}
+          )
+
+          if not policy.get(
+              "oem_visual_first"
+          ):
+              raise SystemExit(
+                  "OEM-first policy is not enabled."
+              )
+
+          if not policy.get(
+              "technical_specs_must_come_from_oem"
+          ):
+              raise SystemExit(
+                  "OEM technical-specification policy missing."
+              )
+
+          print()
+          print(
+              "OEM visual sections:",
+              data.get("oem_visual_sections")
+          )
+
+          print(
+              "AI fallback sections:",
+              data.get("ai_fallback_sections")
+          )
+
+          print(
+              "AI requests:",
+              len(
+                  data.get(
+                      "ai_visual_requests",
+                      []
+                  )
+              )
+          )
+
+          print()
+          print("STEP 32B GREEN")
+          PY
+
+      - name: Upload STEP 32B artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarineWise-AI-Visual-Requests-STEP32B
+          path: ai_visual_requests.json
+          if-no-files-found: error
+
+      - name: Commit STEP 32B planner output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ai_visual_requests.json
+
+          if git diff --cached --quiet; then
+            echo "No STEP 32B output changes to commit."
+          else
+            git commit -m "Add MarineWise AI visual fallback requests"
+            git push
+          fi
+
+          echo "STEP 32B output commit GREEN"
