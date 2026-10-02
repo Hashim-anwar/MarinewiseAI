@@ -74,10 +74,12 @@ jobs:
           print("All required STEP 28 pipeline files are present.")
           PY
 
-      - name: Select manuals
+           - name: Select manuals
         run: |
           python manual_selector.py \
-            "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm"
+            --query "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm" \
+            --top-k 10 \
+            --output selected_manuals.json
 
       - name: Download selected manuals
         run: |
