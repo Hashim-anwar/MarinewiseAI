@@ -1,0 +1,239 @@
+name: MarineWise STEP 26 Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  step26:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install gdown pypdf sentence-transformers faiss-cpu rank_bm25 groq
+
+      - name: Verify Groq secret
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - VERIFY GROQ CONFIGURATION"
+          echo "=========================================="
+
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "ERROR - GROQ_API_KEY is not configured."
+            exit 1
+          fi
+
+          echo "GREEN - GROQ_API_KEY detected."
+
+      - name: Verify manual selection
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - VERIFY MANUAL SELECTION"
+          echo "=========================================="
+
+          test -f selected_manuals.json
+
+          echo "GREEN - selected_manuals.json found"
+
+      - name: Rebuild selected manual PDFs
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - DOWNLOAD SELECTED MANUALS"
+          echo "=========================================="
+
+          python manual_downloader.py
+
+      - name: Verify selected PDFs
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - VERIFY SELECTED PDFS"
+          echo "=========================================="
+
+          COUNT=$(find selected_manuals \
+            -maxdepth 1 \
+            -type f \
+            \( -iname "*.pdf" \) \
+            | wc -l)
+
+          echo "Selected PDF files: $COUNT"
+
+          test "$COUNT" -eq 10
+
+          echo "GREEN - 10 selected manuals available"
+
+      - name: Extract documents
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - DOCUMENT EXTRACTION"
+          echo "=========================================="
+
+          python document_extractor.py
+
+      - name: Verify extracted documents
+        run: |
+          COUNT=$(find extracted_documents \
+            -maxdepth 1 \
+            -type f \
+            -name "*.json" \
+            | wc -l)
+
+          echo "Extraction JSON files: $COUNT"
+
+          test "$COUNT" -eq 10
+
+          echo "GREEN - 10 extraction files available"
+
+      - name: Build document chunks
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - BUILD CHUNKS"
+          echo "=========================================="
+
+          python document_chunker.py
+
+      - name: Verify chunks
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - VERIFY CHUNKS"
+          echo "=========================================="
+
+          test -f chunks/all_chunks.json
+          test -f chunks/all_chunks.jsonl
+
+          echo "GREEN - all_chunks.json found"
+          echo "GREEN - all_chunks.jsonl found"
+
+      - name: Build FAISS vector index
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - BUILD FAISS INDEX"
+          echo "=========================================="
+
+          python vector_indexer.py
+
+      - name: Verify FAISS
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - VERIFY FAISS"
+          echo "=========================================="
+
+          test -f vector_store/marinewise.faiss
+          test -f vector_store/metadata.json
+          test -f vector_store/index_info.json
+
+          echo "GREEN - FAISS index found"
+          echo "GREEN - FAISS metadata found"
+          echo "GREEN - FAISS information found"
+
+      - name: Run Hybrid RAG
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - HYBRID RAG"
+          echo "=========================================="
+
+          python hybrid_retriever.py
+
+      - name: Verify Hybrid RAG
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - VERIFY HYBRID RAG"
+          echo "=========================================="
+
+          test -f hybrid_results.json
+
+          echo "GREEN - hybrid_results.json found"
+
+      - name: Run Evidence Re-Ranker
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - EVIDENCE RE-RANKING"
+          echo "=========================================="
+
+          python evidence_reranker.py
+
+      - name: Verify Reranked Evidence
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - VERIFY RERANKED EVIDENCE"
+          echo "=========================================="
+
+          test -f reranked_evidence.json
+
+          echo "GREEN - reranked_evidence.json found"
+
+      - name: Run Groq Answer Engine
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - GROQ ANSWER GENERATION"
+          echo "=========================================="
+
+          python groq_answer_engine.py
+
+      - name: Verify Groq answer
+        run: |
+          echo "=========================================="
+          echo "STEP 26 - VERIFY GROQ ANSWER"
+          echo "=========================================="
+
+          test -f groq_answer.json
+
+          echo "GREEN - groq_answer.json found"
+
+          python - <<'PY'
+          import json
+
+          with open(
+              "groq_answer.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          answer = data.get("answer", "")
+          evidence = data.get("evidence_sources", [])
+
+          assert answer.strip()
+          assert len(evidence) > 0
+
+          print(
+              f"Answer characters: {len(answer)}"
+          )
+
+          print(
+              f"Evidence sources: {len(evidence)}"
+          )
+
+          print(
+              "GREEN - Groq answer structure verified"
+          )
+          PY
+
+      - name: Upload STEP 26 results
+        uses: actions/upload-artifact@v4
+        with:
+          name: marinewise-step26-groq-answer
+          path: |
+            hybrid_results.json
+            reranked_evidence.json
+            groq_answer.json
+
+      - name: STEP 26 complete
+        run: |
+          echo "=========================================="
+          echo "STEP 26 VERIFICATION COMPLETE"
+          echo "=========================================="
+          echo "STEP 26: SUCCESS"
+          echo "GREEN"
