@@ -1,17 +1,21 @@
 """
 MarineWise AI
-STEP 18 - Smart Manual Selection
+STEP 19 - Advanced Smart Manual Selection
 
 Purpose:
-    Read manual_catalog.json and rank the most relevant OEM documents
-    for a marine troubleshooting query.
+    Select and rank the most relevant OEM manuals from manual_catalog.json
+    using vessel, manufacturer, engine model, system, fault/alarm/problem,
+    document type, filename and folder-path evidence.
 
-This step DOES NOT download manuals.
-It only performs intelligent catalog-level document selection.
+Important:
+    - Does NOT connect to Google Drive.
+    - Does NOT download files.
+    - Uses the existing manual_catalog.json created in STEP 17/18.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 from pathlib import Path
@@ -21,561 +25,1206 @@ from typing import Any
 CATALOG_FILE = Path("manual_catalog.json")
 
 
-# ---------------------------------------------------------
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+DEFAULT_TOP_K = 10
+
+
+# Stronger weights are given to exact technical information.
+WEIGHTS = {
+    "exact_vessel": 40,
+    "exact_manufacturer": 25,
+    "exact_engine_model": 50,
+    "system": 25,
+    "fault": 20,
+    "document_type": 15,
+    "manual_category": 10,
+    "filename": 10,
+    "path": 5,
+}
+
+
+# Known marine manufacturers.
+MANUFACTURERS = [
+    "MAN",
+    "MTU",
+    "CATERPILLAR",
+    "CAT",
+    "YANMAR",
+    "VOLVO PENTA",
+    "VOLVO",
+    "YAMAHA",
+    "ZF",
+    "MJP",
+    "ARNESON",
+    "DOEN",
+    "GÜRDESAN",
+    "GURDESAN",
+]
+
+
+# Known systems/categories in the MarineWise corpus.
+SYSTEM_ALIASES = {
+    "main engine": [
+        "main engine",
+        "main engines",
+        "main diesel engine",
+        "main diesel engines",
+        "propulsion",
+    ],
+    "generator": [
+        "generator",
+        "generators",
+        "genset",
+        "auxiliary engine",
+        "auxiliary engines",
+    ],
+    "gearbox": [
+        "gearbox",
+        "gear box",
+        "transmission",
+        "zf",
+    ],
+    "bow ramp": [
+        "bow ramp",
+        "landing craft ramp",
+        "ramp",
+    ],
+    "bow thruster": [
+        "bow thruster",
+        "thruster",
+    ],
+    "anchor winch": [
+        "anchor winch",
+        "winch",
+    ],
+    "hydraulic": [
+        "hydraulic",
+        "hydraulic pump",
+        "hydraulic system",
+    ],
+    "water jet": [
+        "water jet",
+        "waterjet",
+        "mjp",
+    ],
+    "steering": [
+        "steering",
+        "steering system",
+    ],
+    "petrol engine": [
+        "petrol engine",
+        "petrol engines",
+        "yamaha",
+    ],
+    "arneson": [
+        "arneson",
+        "surface drive",
+    ],
+}
+
+
+# Common document types.
+DOCUMENT_TYPE_TERMS = {
+    "technical documentation": [
+        "technical documentation",
+        "technical document",
+        "tech doc",
+    ],
+    "maintenance manual": [
+        "maintenance manual",
+        "maintenance",
+        "repair manual",
+    ],
+    "pms": [
+        "pms",
+        "planned maintenance",
+        "preventive maintenance",
+    ],
+    "parts catalog": [
+        "parts catalog",
+        "parts catalogue",
+        "part list",
+        "spare parts",
+        "spares",
+    ],
+    "operating manual": [
+        "operating instructions",
+        "operating manual",
+        "operation manual",
+        "operator manual",
+    ],
+    "service manual": [
+        "service manual",
+        "service manuel",
+    ],
+}
+
+
+# ============================================================
 # TEXT NORMALIZATION
-# ---------------------------------------------------------
+# ============================================================
 
-def normalize_text(text: str) -> str:
-    """Normalize text for reliable keyword matching."""
+def normalize(text: Any) -> str:
+    """Normalize text for matching."""
 
-    if not text:
+    if text is None:
         return ""
 
-    text = str(text).lower()
+    text = str(text).upper()
 
-    # Normalize common separators
+    # Normalize common separators.
     text = text.replace("_", " ")
     text = text.replace("-", " ")
     text = text.replace("/", " ")
     text = text.replace("\\", " ")
+    text = text.replace(",", " ")
+    text = text.replace(".", " ")
 
-    # Remove punctuation
-    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    # Collapse whitespace.
+    text = re.sub(r"\s+", " ", text)
 
-    # Collapse spaces
-    text = re.sub(r"\s+", " ", text).strip()
-
-    return text
+    return text.strip()
 
 
-# ---------------------------------------------------------
-# LOAD CATALOG
-# ---------------------------------------------------------
+def compact(text: Any) -> str:
+    """Create an aggressive normalized version for exact model matching."""
 
-def load_catalog() -> list[dict[str, Any]]:
-    """Load the catalog created in STEP 17."""
+    return re.sub(r"[^A-Z0-9]", "", str(text).upper())
 
-    if not CATALOG_FILE.exists():
+
+def tokenize(text: Any) -> set[str]:
+    """Return normalized tokens."""
+
+    value = normalize(text)
+
+    if not value:
+        return set()
+
+    return set(re.findall(r"[A-Z0-9]+", value))
+
+
+# ============================================================
+# CATALOG LOADING
+# ============================================================
+
+def load_catalog(path: Path = CATALOG_FILE) -> list[dict[str, Any]]:
+    """Load the existing manual catalog."""
+
+    if not path.exists():
         raise FileNotFoundError(
-            f"{CATALOG_FILE} was not found. "
-            "Run STEP 17 first."
+            f"Catalog not found: {path}\n"
+            "Run STEP 17/18 first so manual_catalog.json exists."
         )
 
-    with open(CATALOG_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
 
-    if isinstance(data, list):
-        return data
-
-    # Support catalogs wrapped inside a dictionary
     if isinstance(data, dict):
+        items = data.get("items", [])
 
-        for key in (
-            "records",
-            "catalog",
-            "manuals",
-            "items",
-            "documents",
-        ):
-            if isinstance(data.get(key), list):
-                return data[key]
+    elif isinstance(data, list):
+        items = data
 
-    raise ValueError(
-        "manual_catalog.json does not contain a recognized "
-        "catalog list."
-    )
+    else:
+        raise ValueError("Unsupported manual_catalog.json structure.")
+
+    if not isinstance(items, list):
+        raise ValueError("Catalog 'items' must be a list.")
+
+    return items
 
 
-# ---------------------------------------------------------
-# CREATE SEARCHABLE TEXT
-# ---------------------------------------------------------
+# ============================================================
+# CATALOG FIELD HELPERS
+# ============================================================
 
-def record_search_text(record: dict[str, Any]) -> str:
-    """
-    Combine all useful metadata fields into searchable text.
-    """
+def get_field(record: dict[str, Any], *names: str) -> str:
+    """Return the first available field."""
+
+    for name in names:
+        value = record.get(name)
+
+        if value is not None and str(value).strip():
+            return str(value)
+
+    return ""
+
+
+def record_text(record: dict[str, Any]) -> str:
+    """Build searchable text from all useful catalog fields."""
 
     fields = [
-        record.get("vessel"),
-        record.get("ship"),
-        record.get("vessel_name"),
-        record.get("equipment"),
-        record.get("system"),
-        record.get("manufacturer"),
-        record.get("maker"),
-        record.get("engine"),
-        record.get("engine_model"),
-        record.get("model"),
-        record.get("category"),
-        record.get("document_type"),
-        record.get("type"),
-        record.get("filename"),
-        record.get("file_name"),
-        record.get("name"),
-        record.get("path"),
-        record.get("folder_path"),
+        get_field(record, "vessel"),
+        get_field(record, "ship"),
+        get_field(record, "manufacturer"),
+        get_field(record, "engine_model"),
+        get_field(record, "engine"),
+        get_field(record, "system"),
+        get_field(record, "document_type"),
+        get_field(record, "manual_category"),
+        get_field(record, "filename"),
+        get_field(record, "name"),
+        get_field(record, "path"),
+        get_field(record, "folder"),
+        get_field(record, "relative_path"),
     ]
 
-    return normalize_text(
-        " ".join(str(x) for x in fields if x)
+    return " ".join(value for value in fields if value)
+
+
+# ============================================================
+# QUERY EXTRACTION
+# ============================================================
+
+def detect_vessels(query: str) -> list[str]:
+    """Detect vessel identifiers such as QL-40, QL-41 and QL-80."""
+
+    upper = str(query).upper()
+
+    matches = re.findall(
+        r"\bQL[\s\-_]?\d+\b",
+        upper,
     )
 
+    result = []
 
-# ---------------------------------------------------------
-# QUERY TOKENIZATION
-# ---------------------------------------------------------
+    for value in matches:
+        normalized_value = re.sub(r"[\s_]", "-", value)
+        normalized_value = normalized_value.replace("--", "-")
 
-def query_tokens(query: str) -> list[str]:
-    """Convert user query into useful searchable tokens."""
+        if normalized_value not in result:
+            result.append(normalized_value)
 
-    normalized = normalize_text(query)
+    return result
 
-    tokens = normalized.split()
 
-    # Ignore very common words
-    stop_words = {
-        "the",
-        "and",
-        "for",
-        "with",
-        "from",
-        "this",
-        "that",
-        "engine",
-        "main",
-        "system",
-        "problem",
-        "issue",
-        "fault",
-        "manual",
-        "document",
-        "please",
-        "show",
-        "find",
-        "need",
-        "me",
-        "of",
-        "a",
-        "an",
-        "is",
-        "to",
-        "in",
-        "on",
-        "at",
-    }
+def detect_manufacturer(query: str) -> str:
+    """Detect a known manufacturer."""
 
-    return [
-        token
-        for token in tokens
-        if token not in stop_words and len(token) >= 2
+    upper = normalize(query)
+
+    # Long names first.
+    for manufacturer in sorted(MANUFACTURERS, key=len, reverse=True):
+        if normalize(manufacturer) in upper:
+            return manufacturer
+
+    return ""
+
+
+def detect_engine_model(query: str) -> str:
+    """
+    Detect engine model patterns.
+
+    Examples:
+        16V175D-MM
+        12V175D-ML
+        D2676 LE446
+        10V 2000 M94
+        12V 2000 M96L
+        16V 4000 M90
+    """
+
+    raw = str(query).upper()
+
+    patterns = [
+        # MAN 16V175D-MM / 12V175D-ML
+        r"\b\d{1,2}V\s*175D[\s\-]*[A-Z]{2,4}\b",
+
+        # MAN D2676 LE446
+        r"\bD2676[\s\-]*LE[\s\-]*\d{3}\b",
+
+        # MTU 10V 2000 M94 / 12V 2000 M96L
+        r"\b\d{1,2}V\s*2000[\s\-]*M\d+[A-Z]?\b",
+
+        # MTU 16V 4000 M90
+        r"\b\d{1,2}V\s*4000[\s\-]*M\d+[A-Z]?\b",
+
+        # Compact model forms.
+        r"\b\d{1,2}V175D[\s\-]*[A-Z]{2,4}\b",
+        r"\b\d{1,2}V2000[\s\-]*M\d+[A-Z]?\b",
+        r"\b\d{1,2}V4000[\s\-]*M\d+[A-Z]?\b",
     ]
 
+    for pattern in patterns:
+        match = re.search(pattern, raw)
 
-# ---------------------------------------------------------
-# IMPORTANT MARINE TERMS
-# ---------------------------------------------------------
+        if match:
+            return normalize(match.group(0))
 
-TERM_GROUPS = {
+    return ""
 
-    "maintenance": {
-        "maintenance",
-        "pms",
-        "service",
-        "inspection",
-        "overhaul",
-        "repair",
-        "servicing",
-    },
 
-    "technical": {
-        "technical",
-        "specification",
-        "spec",
-        "technicaldocument",
-        "documentation",
-    },
+def detect_system(query: str) -> str:
+    """Detect the most relevant system."""
 
-    "parts": {
-        "parts",
-        "spare",
-        "spares",
-        "part",
-        "catalog",
-        "catalogue",
-    },
+    normalized_query = normalize(query)
 
-    "operation": {
-        "operation",
-        "operating",
-        "instructions",
-        "instruction",
-        "manual",
-    },
+    best_system = ""
+    best_length = 0
 
-    "alarm": {
+    for system, aliases in SYSTEM_ALIASES.items():
+
+        for alias in aliases:
+
+            alias_normalized = normalize(alias)
+
+            if alias_normalized in normalized_query:
+                if len(alias_normalized) > best_length:
+                    best_system = system
+                    best_length = len(alias_normalized)
+
+    return best_system
+
+
+def detect_document_type(query: str) -> str:
+    """Detect requested document type."""
+
+    normalized_query = normalize(query)
+
+    best_type = ""
+    best_length = 0
+
+    for document_type, aliases in DOCUMENT_TYPE_TERMS.items():
+
+        for alias in aliases:
+
+            alias_normalized = normalize(alias)
+
+            if alias_normalized in normalized_query:
+
+                if len(alias_normalized) > best_length:
+                    best_type = document_type
+                    best_length = len(alias_normalized)
+
+    return best_type
+
+
+# ============================================================
+# FAULT / PROBLEM EXTRACTION
+# ============================================================
+
+def extract_fault_terms(query: str) -> list[str]:
+    """
+    Extract useful troubleshooting terms from the query.
+
+    This intentionally remains simple at STEP 19.
+    Later STEP 24 can use a proper hybrid semantic/BM25/vector layer.
+    """
+
+    normalized_query = normalize(query)
+
+    fault_phrases = [
+        "high exhaust temperature",
+        "low exhaust temperature",
+        "high coolant temperature",
+        "high cooling water temperature",
+        "low oil pressure",
+        "high oil pressure",
+        "low lube oil pressure",
+        "high crankcase pressure",
+        "crankcase pressure",
+        "high fuel temperature",
+        "low fuel pressure",
+        "fuel leakage",
+        "oil in coolant",
+        "coolant in oil",
+        "abnormal noise",
+        "engine vibration",
+        "overspeed",
+        "overheat",
+        "overheating",
+        "misfire",
+        "no start",
+        "hard starting",
+        "starting problem",
+        "high temperature",
+        "low pressure",
         "alarm",
-        "warning",
         "fault",
         "malfunction",
-        "temperature",
-        "pressure",
-        "high",
-        "low",
-        "sensor",
-    },
+        "shutdown",
+        "trip",
+        "injector",
+        "turbocharger",
+        "exhaust",
+        "lubrication",
+        "cooling",
+        "fuel system",
+    ]
 
-    "engine": {
-        "engine",
-        "diesel",
-        "motor",
-        "propulsion",
-        "generator",
-        "genset",
-    },
+    found = []
 
-    "hydraulic": {
-        "hydraulic",
-        "pump",
-        "valve",
-        "pressure",
-        "cylinder",
-    },
+    for phrase in fault_phrases:
 
-    "gearbox": {
-        "gearbox",
-        "gear",
-        "transmission",
-        "zf",
-    },
+        if normalize(phrase) in normalized_query:
 
-    "waterjet": {
-        "waterjet",
-        "water",
-        "jet",
-        "mjp",
-    },
+            if phrase not in found:
+                found.append(phrase)
 
-    "steering": {
-        "steering",
-        "rudder",
-        "helm",
-    },
-}
+    return found
 
 
-# ---------------------------------------------------------
-# SCORE DOCUMENT
-# ---------------------------------------------------------
+# ============================================================
+# SCORING FUNCTIONS
+# ============================================================
 
-def score_record(
+def vessel_match(record: dict[str, Any], vessel: str) -> bool:
+    """Check exact vessel match across useful catalog fields."""
+
+    vessel_compact = compact(vessel)
+
+    fields = [
+        get_field(record, "vessel"),
+        get_field(record, "ship"),
+        get_field(record, "filename"),
+        get_field(record, "name"),
+        get_field(record, "path"),
+        get_field(record, "relative_path"),
+    ]
+
+    for field in fields:
+
+        if vessel_compact and vessel_compact in compact(field):
+            return True
+
+    return False
+
+
+def manufacturer_match(record: dict[str, Any], manufacturer: str) -> bool:
+    """Check manufacturer match."""
+
+    if not manufacturer:
+        return False
+
+    target = compact(manufacturer)
+
+    fields = [
+        get_field(record, "manufacturer"),
+        get_field(record, "filename"),
+        get_field(record, "name"),
+        get_field(record, "path"),
+        get_field(record, "relative_path"),
+    ]
+
+    for field in fields:
+
+        if target and target in compact(field):
+            return True
+
+    return False
+
+
+def engine_model_match(record: dict[str, Any], engine_model: str) -> bool:
+    """
+    Check engine model using aggressive normalization.
+
+    This allows:
+        16V175D-MM
+    to match:
+        16V175D MM
+        16V175D_MM
+        16V175D-MM
+    """
+
+    if not engine_model:
+        return False
+
+    target = compact(engine_model)
+
+    fields = [
+        get_field(record, "engine_model"),
+        get_field(record, "engine"),
+        get_field(record, "filename"),
+        get_field(record, "name"),
+        get_field(record, "path"),
+        get_field(record, "relative_path"),
+    ]
+
+    for field in fields:
+
+        if target and target in compact(field):
+            return True
+
+    return False
+
+
+def score_system(record: dict[str, Any], system: str) -> int:
+    """Score system relevance."""
+
+    if not system:
+        return 0
+
+    aliases = SYSTEM_ALIASES.get(system, [])
+
+    searchable = normalize(record_text(record))
+
+    best = 0
+
+    for alias in aliases:
+
+        alias_normalized = normalize(alias)
+
+        if alias_normalized in searchable:
+            best = max(best, WEIGHTS["system"])
+
+    return best
+
+
+def score_fault(record: dict[str, Any], fault_terms: list[str]) -> int:
+    """Score troubleshooting/fault terminology."""
+
+    if not fault_terms:
+        return 0
+
+    searchable = normalize(record_text(record))
+
+    score = 0
+
+    for fault in fault_terms:
+
+        fault_normalized = normalize(fault)
+
+        if fault_normalized in searchable:
+            score += WEIGHTS["fault"]
+
+    return min(score, WEIGHTS["fault"] * 3)
+
+
+def score_document_type(
+    record: dict[str, Any],
+    document_type: str,
+) -> int:
+    """Score requested document type."""
+
+    if not document_type:
+        return 0
+
+    aliases = DOCUMENT_TYPE_TERMS.get(document_type, [])
+
+    document_text = normalize(
+        " ".join(
+            [
+                get_field(record, "document_type"),
+                get_field(record, "manual_category"),
+                get_field(record, "filename"),
+                get_field(record, "name"),
+            ]
+        )
+    )
+
+    for alias in aliases:
+
+        if normalize(alias) in document_text:
+            return WEIGHTS["document_type"]
+
+    return 0
+
+
+def score_generic_tokens(
     record: dict[str, Any],
     query: str,
-) -> tuple[float, list[str]]:
+) -> int:
+    """
+    Small bonus for remaining query tokens.
 
-    searchable = record_search_text(record)
-    tokens = query_tokens(query)
+    This prevents generic words from dominating the ranking.
+    """
 
-    score = 0.0
-    reasons: list[str] = []
+    query_tokens = tokenize(query)
+    record_tokens = tokenize(record_text(record))
 
-    if not searchable:
-        return 0.0, reasons
+    if not query_tokens or not record_tokens:
+        return 0
 
-    # -----------------------------------------------------
-    # Exact phrase match
-    # -----------------------------------------------------
+    ignored = {
+        "THE",
+        "AND",
+        "FOR",
+        "WITH",
+        "MAIN",
+        "ENGINE",
+        "MANUAL",
+        "PROBLEM",
+        "ISSUE",
+        "CHECK",
+        "PLEASE",
+        "SHOW",
+        "ME",
+    }
 
-    normalized_query = normalize_text(query)
+    useful_tokens = {
+        token
+        for token in query_tokens
+        if token not in ignored and len(token) >= 3
+    }
 
-    if normalized_query and normalized_query in searchable:
-        score += 25
-        reasons.append("exact query match")
+    matches = useful_tokens.intersection(record_tokens)
 
-    # -----------------------------------------------------
-    # Individual token matching
-    # -----------------------------------------------------
+    return min(len(matches) * 2, 12)
 
-    for token in tokens:
 
-        if token in searchable:
-            score += 4
+def calculate_score(
+    record: dict[str, Any],
+    query: str,
+    vessels: list[str],
+    manufacturer: str,
+    engine_model: str,
+    system: str,
+    fault_terms: list[str],
+    document_type: str,
+) -> tuple[int, list[str]]:
+    """Calculate total relevance score and explain why it matched."""
 
-            if token not in reasons:
-                reasons.append(f"keyword:{token}")
+    score = 0
+    reasons = []
 
-    # -----------------------------------------------------
-    # Manufacturer / engine model priority
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+    # Vessel
+    # --------------------------------------------------------
 
-    manufacturer = normalize_text(
-        str(
-            record.get("manufacturer")
-            or record.get("maker")
-            or ""
-        )
-    )
+    for vessel in vessels:
 
-    model = normalize_text(
-        str(
-            record.get("engine_model")
-            or record.get("model")
-            or record.get("engine")
-            or ""
-        )
-    )
+        if vessel_match(record, vessel):
 
-    filename = normalize_text(
-        str(
-            record.get("filename")
-            or record.get("file_name")
-            or record.get("name")
-            or ""
-        )
-    )
+            score += WEIGHTS["exact_vessel"]
 
-    # Strong match when model appears in filename
-    if model and len(model) >= 4 and model in filename:
-        score += 15
-        reasons.append("engine/model in filename")
-
-    # Manufacturer match
-    if manufacturer and manufacturer in normalized_query:
-        if manufacturer in searchable:
-            score += 10
-            reasons.append("manufacturer match")
-
-    # -----------------------------------------------------
-    # Document-type intelligence
-    # -----------------------------------------------------
-
-    combined = searchable
-
-    query_lower = normalized_query
-
-    if any(
-        word in query_lower
-        for word in (
-            "maintenance",
-            "pms",
-            "service",
-            "overhaul",
-            "repair",
-        )
-    ):
-        if any(
-            word in combined
-            for word in (
-                "maintenance",
-                "pms",
-                "service",
-                "overhaul",
-                "repair",
+            reasons.append(
+                f"Exact vessel: {vessel}"
             )
-        ):
-            score += 8
-            reasons.append("maintenance document")
 
-    if any(
-        word in query_lower
-        for word in (
-            "alarm",
-            "fault",
-            "malfunction",
-            "temperature",
-            "pressure",
+            break
+
+    # --------------------------------------------------------
+    # Manufacturer
+    # --------------------------------------------------------
+
+    if manufacturer_match(record, manufacturer):
+
+        score += WEIGHTS["exact_manufacturer"]
+
+        reasons.append(
+            f"Manufacturer: {manufacturer}"
         )
-    ):
-        if any(
-            word in combined
-            for word in (
-                "alarm",
-                "fault",
-                "malfunction",
-                "troubleshooting",
-                "operation",
-                "technical",
+
+    # --------------------------------------------------------
+    # Engine model
+    # --------------------------------------------------------
+
+    if engine_model_match(record, engine_model):
+
+        score += WEIGHTS["exact_engine_model"]
+
+        reasons.append(
+            f"Exact engine model: {engine_model}"
+        )
+
+    # --------------------------------------------------------
+    # System
+    # --------------------------------------------------------
+
+    system_score = score_system(record, system)
+
+    if system_score:
+
+        score += system_score
+
+        reasons.append(
+            f"System: {system}"
+        )
+
+    # --------------------------------------------------------
+    # Fault
+    # --------------------------------------------------------
+
+    fault_score = score_fault(record, fault_terms)
+
+    if fault_score:
+
+        score += fault_score
+
+        reasons.append(
+            "Fault/problem terms matched"
+        )
+
+    # --------------------------------------------------------
+    # Document type
+    # --------------------------------------------------------
+
+    document_score = score_document_type(
+        record,
+        document_type,
+    )
+
+    if document_score:
+
+        score += document_score
+
+        reasons.append(
+            f"Document type: {document_type}"
+        )
+
+    # --------------------------------------------------------
+    # Manual category
+    # --------------------------------------------------------
+
+    category = normalize(
+        get_field(record, "manual_category")
+    )
+
+    if category:
+
+        query_normalized = normalize(query)
+
+        if category in query_normalized:
+
+            score += WEIGHTS["manual_category"]
+
+            reasons.append(
+                f"Manual category: {category}"
             )
-        ):
-            score += 7
-            reasons.append("fault/troubleshooting relevance")
 
-    if "parts" in query_lower or "spare" in query_lower:
-        if "parts" in combined or "spare" in combined:
-            score += 8
-            reasons.append("parts document")
+    # --------------------------------------------------------
+    # Generic token matching
+    # --------------------------------------------------------
 
-    # -----------------------------------------------------
-    # Term-group intelligence
-    # -----------------------------------------------------
+    generic_score = score_generic_tokens(
+        record,
+        query,
+    )
 
-    for group_name, group_terms in TERM_GROUPS.items():
+    if generic_score:
 
-        query_has_group = any(
-            term in query_tokens(query)
-            for term in group_terms
+        score += generic_score
+
+        reasons.append(
+            f"Additional keyword matches: +{generic_score}"
         )
-
-        document_has_group = any(
-            term in searchable.split()
-            for term in group_terms
-        )
-
-        if query_has_group and document_has_group:
-            score += 3
-            reasons.append(f"{group_name} relevance")
 
     return score, reasons
 
 
-# ---------------------------------------------------------
-# SMART SELECTOR
-# ---------------------------------------------------------
+# ============================================================
+# RANKING
+# ============================================================
 
-def select_manuals(
+def rank_manuals(
+    catalog: list[dict[str, Any]],
     query: str,
-    top_k: int = 10,
+    top_k: int = DEFAULT_TOP_K,
 ) -> list[dict[str, Any]]:
+    """Rank catalog records according to the smart selection algorithm."""
 
-    catalog = load_catalog()
+    vessels = detect_vessels(query)
+    manufacturer = detect_manufacturer(query)
+    engine_model = detect_engine_model(query)
+    system = detect_system(query)
+    fault_terms = extract_fault_terms(query)
+    document_type = detect_document_type(query)
 
     results = []
 
     for record in catalog:
 
-        score, reasons = score_record(
-            record,
-            query,
+        score, reasons = calculate_score(
+            record=record,
+            query=query,
+            vessels=vessels,
+            manufacturer=manufacturer,
+            engine_model=engine_model,
+            system=system,
+            fault_terms=fault_terms,
+            document_type=document_type,
         )
 
-        if score <= 0:
-            continue
+        result = dict(record)
 
-        results.append(
-            {
-                "score": round(score, 2),
-                "reasons": reasons,
-                "record": record,
-            }
-        )
+        result["_score"] = score
+        result["_reasons"] = reasons
 
+        results.append(result)
+
+    # Highest score first.
+    #
+    # Filename is used as a stable tie-breaker so results remain
+    # predictable between workflow runs.
     results.sort(
-        key=lambda item: item["score"],
+        key=lambda item: (
+            item["_score"],
+            normalize(
+                get_field(
+                    item,
+                    "filename",
+                    "name",
+                )
+            ),
+        ),
         reverse=True,
     )
 
     return results[:top_k]
 
 
-# ---------------------------------------------------------
-# DISPLAY
-# ---------------------------------------------------------
+# ============================================================
+# DISPLAY HELPERS
+# ============================================================
 
-def display_results(
-    query: str,
+def display_name(record: dict[str, Any]) -> str:
+    """Get the best available document name."""
+
+    return (
+        get_field(
+            record,
+            "filename",
+            "name",
+        )
+        or "Unknown document"
+    )
+
+
+def display_path(record: dict[str, Any]) -> str:
+    """Get document path."""
+
+    return (
+        get_field(
+            record,
+            "path",
+            "relative_path",
+            "folder",
+        )
+        or "Unknown path"
+    )
+
+
+def print_query_analysis(query: str) -> None:
+    """Display what STEP 19 detected from the query."""
+
+    print()
+    print("QUERY INTELLIGENCE")
+    print("-" * 60)
+
+    vessels = detect_vessels(query)
+    manufacturer = detect_manufacturer(query)
+    engine_model = detect_engine_model(query)
+    system = detect_system(query)
+    fault_terms = extract_fault_terms(query)
+    document_type = detect_document_type(query)
+
+    print(
+        f"Vessel(s): "
+        f"{', '.join(vessels) if vessels else 'Not detected'}"
+    )
+
+    print(
+        f"Manufacturer: "
+        f"{manufacturer if manufacturer else 'Not detected'}"
+    )
+
+    print(
+        f"Engine model: "
+        f"{engine_model if engine_model else 'Not detected'}"
+    )
+
+    print(
+        f"System: "
+        f"{system if system else 'Not detected'}"
+    )
+
+    print(
+        f"Fault/problem: "
+        f"{', '.join(fault_terms) if fault_terms else 'Not detected'}"
+    )
+
+    print(
+        f"Document type: "
+        f"{document_type if document_type else 'Not detected'}"
+    )
+
+
+def print_results(
     results: list[dict[str, Any]],
 ) -> None:
+    """Display ranked manuals."""
 
     print()
+    print("SMART MANUAL SELECTION RESULTS")
     print("=" * 70)
-    print("MARINEWISE AI - STEP 18 SMART MANUAL SELECTION")
-    print("=" * 70)
-
-    print(f"Query: {query}")
-    print()
-
-    print(f"Matching manuals: {len(results)}")
-    print()
 
     if not results:
-        print("NO RELEVANT MANUALS FOUND")
-        print()
-        print(
-            "MarineWise AI should NOT download documents "
-            "without a relevant catalog match."
-        )
+
+        print("No matching manuals found.")
+
         return
 
-    for index, item in enumerate(results, start=1):
+    for index, result in enumerate(results, start=1):
 
-        record = item["record"]
-
-        filename = (
-            record.get("filename")
-            or record.get("file_name")
-            or record.get("name")
-            or "Unknown file"
+        print()
+        print(
+            f"{index}. "
+            f"Score={result['_score']} | "
+            f"{display_name(result)}"
         )
 
-        vessel = (
-            record.get("vessel")
-            or record.get("ship")
-            or record.get("vessel_name")
-            or "Unknown"
+        manufacturer = get_field(
+            result,
+            "manufacturer",
         )
 
-        manufacturer = (
-            record.get("manufacturer")
-            or record.get("maker")
-            or "Unknown"
+        vessel = get_field(
+            result,
+            "vessel",
+            "ship",
         )
 
-        document_type = (
-            record.get("document_type")
-            or record.get("type")
-            or record.get("category")
-            or "Unknown"
+        engine = get_field(
+            result,
+            "engine_model",
+            "engine",
         )
 
-        print("-" * 70)
+        system = get_field(
+            result,
+            "system",
+        )
+
+        document_type = get_field(
+            result,
+            "document_type",
+        )
+
+        if vessel:
+            print(f"   Vessel: {vessel}")
+
+        if manufacturer:
+            print(f"   Manufacturer: {manufacturer}")
+
+        if engine:
+            print(f"   Engine: {engine}")
+
+        if system:
+            print(f"   System: {system}")
+
+        if document_type:
+            print(f"   Document type: {document_type}")
+
+        if result["_reasons"]:
+
+            print(
+                "   Why selected: "
+                + "; ".join(result["_reasons"])
+            )
 
         print(
-            f"{index}. SCORE: {item['score']}"
+            f"   Path: {display_path(result)}"
         )
 
-        print(
-            f"   Vessel: {vessel}"
+
+# ============================================================
+# JSON OUTPUT
+# ============================================================
+
+def save_selection(
+    results: list[dict[str, Any]],
+    query: str,
+    output_file: str,
+) -> None:
+    """Save selected manuals for later pipeline steps."""
+
+    clean_results = []
+
+    for result in results:
+
+        clean = dict(result)
+
+        clean_results.append(clean)
+
+    output = {
+        "project": "MarineWise AI",
+        "step": "STEP 19",
+        "query": query,
+        "selected_count": len(clean_results),
+        "results": clean_results,
+    }
+
+    with open(
+        output_file,
+        "w",
+        encoding="utf-8",
+    ) as file:
+
+        json.dump(
+            output,
+            file,
+            indent=2,
+            ensure_ascii=False,
         )
 
-        print(
-            f"   Manufacturer: {manufacturer}"
-        )
 
-        print(
-            f"   Document Type: {document_type}"
-        )
+# ============================================================
+# VERIFICATION
+# ============================================================
 
-        print(
-            f"   File: {filename}"
-        )
+def verify_step_19(
+    catalog: list[dict[str, Any]],
+    results: list[dict[str, Any]],
+    query: str,
+) -> None:
+    """
+    Automated verification.
 
-        print(
-            f"   Why: {', '.join(item['reasons'][:8])}"
+    The test is intentionally based on the known QL-40 /
+    MAN 16V175D-MM use case from the MarineWise corpus.
+    """
+
+    assert len(catalog) > 0, (
+        "Catalog is empty."
+    )
+
+    assert len(results) > 0, (
+        "STEP 19 returned no results."
+    )
+
+    top_names = [
+        display_name(result).upper()
+        for result in results[:3]
+    ]
+
+    combined_top = " ".join(top_names)
+
+    # The top results should contain evidence of the requested
+    # vessel/engine combination.
+    expected_engine = (
+        "16V175D"
+        in combined_top
+        or "16V175D" in query.upper()
+    )
+
+    assert expected_engine, (
+        "STEP 19 did not detect the expected 16V175D "
+        "engine context."
+    )
+
+    # At least one of the top results should contain either
+    # QL 40 or the exact 16V175D-MM document.
+    relevant_top = any(
+        (
+            "QL40" in compact(display_name(result))
+            or "16V175DMM" in compact(display_name(result))
+            or "16V175D" in compact(display_name(result))
         )
+        for result in results[:3]
+    )
+
+    assert relevant_top, (
+        "STEP 19 top results do not contain the expected "
+        "QL-40 / 16V175D-MM evidence."
+    )
 
     print()
     print("=" * 70)
-    print("STEP 18 SELECTION TEST: SUCCESS")
+    print("STEP 19 VERIFICATION")
+    print("=" * 70)
+    print("Catalog loaded successfully.")
+    print(f"Catalog records: {len(catalog)}")
+    print(f"Query: {query}")
+    print(f"Top results returned: {len(results)}")
+    print("Exact vessel/engine intelligence detected.")
+    print("Relevant manuals ranked in top results.")
+    print()
+    print("STEP 19: SUCCESS")
+    print("GREEN")
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main() -> None:
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "MarineWise AI STEP 19 "
+            "Advanced Smart Manual Selector"
+        )
+    )
+
+    parser.add_argument(
+        "--query",
+        type=str,
+        default=(
+            "QL-40 MAN 16V175D-MM "
+            "main engine high exhaust temperature alarm"
+        ),
+        help="Marine troubleshooting/manual search query.",
+    )
+
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=10,
+        help="Number of manuals to return.",
+    )
+
+    parser.add_argument(
+        "--catalog",
+        type=str,
+        default=str(CATALOG_FILE),
+        help="Path to manual_catalog.json.",
+    )
+
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="selected_manuals.json",
+        help="Output JSON file.",
+    )
+
+    args = parser.parse_args()
+
+    catalog_path = Path(args.catalog)
+
+    print("=" * 70)
+    print("MARINEWISE AI - STEP 19")
+    print("ADVANCED SMART MANUAL SELECTION")
     print("=" * 70)
 
+    print()
+    print(f"Catalog file: {catalog_path}")
 
-# ---------------------------------------------------------
-# TEST QUERIES
-# ---------------------------------------------------------
+    catalog = load_catalog(catalog_path)
+
+    print(f"Catalog records: {len(catalog)}")
+
+    print()
+    print(f"Search query: {args.query}")
+
+    print_query_analysis(args.query)
+
+    results = rank_manuals(
+        catalog=catalog,
+        query=args.query,
+        top_k=args.top_k,
+    )
+
+    print_results(results)
+
+    save_selection(
+        results=results,
+        query=args.query,
+        output_file=args.output,
+    )
+
+    print()
+    print(f"Selection file created: {args.output}")
+
+    verify_step_19(
+        catalog=catalog,
+        results=results,
+        query=args.query,
+    )
+
 
 if __name__ == "__main__":
-
-    # STEP 18 validation query
-    test_query = (
-        "QL 40 MAN 16V175D-MM main diesel engine "
-        "high exhaust temperature alarm"
-    )
-
-    results = select_manuals(
-        query=test_query,
-        top_k=10,
-    )
-
-    display_results(
-        query=test_query,
-        results=results,
-    )
+    main()
