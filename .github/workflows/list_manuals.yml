@@ -397,3 +397,106 @@ jobs:
           name: marinewise-manual-catalog
           path: manual_catalog.json
           if-no-files-found: error
+      - name: Test Manual Intelligence Search
+        run: |
+          python - <<'PY'
+          import json
+          import re
+
+
+          def normalize(text):
+              text = str(text or "").upper()
+              text = text.replace("_", " ")
+              text = text.replace("-", " ")
+              text = re.sub(r"\s+", " ", text)
+              return text.strip()
+
+
+          with open(
+              "manual_catalog.json",
+              "r",
+              encoding="utf-8",
+          ) as file:
+              data = json.load(file)
+
+
+          catalog = data["items"]
+
+          query = normalize(
+              "QL 40 MAN 16V175D-MM Main Engine maintenance"
+          )
+
+          results = []
+
+          for item in catalog:
+
+              searchable = normalize(
+                  " ".join(
+                      [
+                          item.get("vessel", ""),
+                          item.get("manufacturer", ""),
+                          item.get("system", ""),
+                          item.get("engine_model", ""),
+                          item.get("document_type", ""),
+                          item.get("file_name", ""),
+                          item.get("drive_path", ""),
+                      ]
+                  )
+              )
+
+              score = 0
+
+              for term in query.split():
+
+                  if len(term) >= 2 and term in searchable:
+                      score += 1
+
+              if score > 0:
+
+                  result = dict(item)
+                  result["search_score"] = score
+
+                  results.append(result)
+
+
+          results.sort(
+              key=lambda x: x["search_score"],
+              reverse=True,
+          )
+
+          print("=" * 60)
+          print("MARINEWISE AI - MANUAL INTELLIGENCE SEARCH")
+          print("=" * 60)
+
+          print(
+              f"\nCatalog records: {len(catalog)}"
+          )
+
+          print(
+              f"Search query: "
+              f"QL 40 MAN 16V175D-MM Main Engine maintenance"
+          )
+
+          print(
+              f"Matching manuals: {len(results)}"
+          )
+
+          print("\nTop results:")
+          print("-" * 60)
+
+          for number, item in enumerate(results[:10], start=1):
+
+              print(
+                  f"{number}. "
+                  f"Score={item['search_score']} | "
+                  f"{item.get('file_name', 'Unknown')}"
+              )
+
+          if not results:
+              raise RuntimeError(
+                  "STEP 18 FAILED: "
+                  "No manuals matched the search."
+              )
+
+          print("\nSTEP 18 SEARCH TEST: SUCCESS")
+          PY
