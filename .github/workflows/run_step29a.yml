@@ -1,0 +1,225 @@
+name: STEP 29A - Troubleshooting Workflow Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  troubleshooting-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify required files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          required = [
+              "troubleshooting_workflow.py",
+              "final_evidence.json",
+          ]
+
+          missing = [
+              item
+              for item in required
+              if not Path(item).exists()
+          ]
+
+          if missing:
+              print("ERROR - Missing required files:")
+
+              for item in missing:
+                  print(f" - {item}")
+
+              raise SystemExit(1)
+
+          print("All STEP 29A required files are present.")
+          PY
+
+      - name: Run troubleshooting workflow
+        run: |
+          python troubleshooting_workflow.py \
+            --query "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm" \
+            --evidence final_evidence.json \
+            --output troubleshooting_workflow.json
+
+      - name: Verify troubleshooting workflow
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("troubleshooting_workflow.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - troubleshooting_workflow.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          required_keys = [
+              "step",
+              "stage",
+              "status",
+              "query",
+              "input",
+              "evidence",
+              "source_policy",
+              "workflow_sequence",
+              "troubleshooting_output_sections",
+              "oem_evidence",
+              "web_evidence",
+              "combined_evidence",
+              "next_stage",
+          ]
+
+          for key in required_keys:
+              if key not in data:
+                  raise SystemExit(
+                      f"ERROR - Missing required key: {key}"
+                  )
+
+          if data["step"] != 29:
+              raise SystemExit(
+                  "ERROR - Incorrect STEP number."
+              )
+
+          if data["stage"] != "marine_troubleshooting_workflow":
+              raise SystemExit(
+                  "ERROR - Incorrect workflow stage."
+              )
+
+          if data["status"] != "READY_FOR_GROQ":
+              raise SystemExit(
+                  "ERROR - Workflow is not ready for Groq."
+              )
+
+          oem = data["oem_evidence"]
+          web = data["web_evidence"]
+          combined = data["combined_evidence"]
+
+          if not isinstance(oem, list):
+              raise SystemExit(
+                  "ERROR - OEM evidence is not a list."
+              )
+
+          if not isinstance(web, list):
+              raise SystemExit(
+                  "ERROR - WEB evidence is not a list."
+              )
+
+          if not isinstance(combined, list):
+              raise SystemExit(
+                  "ERROR - Combined evidence is not a list."
+              )
+
+          if len(oem) == 0:
+              raise SystemExit(
+                  "ERROR - No OEM evidence available."
+              )
+
+          if len(combined) != len(oem) + len(web):
+              raise SystemExit(
+                  "ERROR - Evidence count mismatch."
+              )
+
+          policy = data["source_policy"]
+
+          checks = {
+              "OEM priority":
+                  policy.get("oem_priority") is True,
+
+              "WEB is not OEM":
+                  policy.get("web_is_not_oem") is True,
+
+              "OEM required":
+                  policy.get(
+                      "oem_required_for_technical_conclusion"
+                  ) is True,
+
+              "Citations required":
+                  policy.get(
+                      "citations_required"
+                  ) is True,
+          }
+
+          failed = [
+              name
+              for name, passed in checks.items()
+              if not passed
+          ]
+
+          if failed:
+              print("FAILED POLICY CHECKS:")
+
+              for item in failed:
+                  print(f" - {item}")
+
+              raise SystemExit(1)
+
+          sections = data[
+              "troubleshooting_output_sections"
+          ]
+
+          required_sections = [
+              "PROBLEM IDENTIFICATION",
+              "RELEVANT OEM EVIDENCE",
+              "PROBABLE CAUSES",
+              "TROUBLESHOOTING STEPS",
+              "CORRECTIVE ACTION",
+              "OEM REFERENCES",
+              "EVIDENCE STATUS",
+              "SAFETY NOTE",
+          ]
+
+          for section in required_sections:
+              if section not in sections:
+                  raise SystemExit(
+                      f"ERROR - Missing output section: {section}"
+                  )
+
+          next_stage = data["next_stage"]
+
+          if next_stage.get("component") != (
+              "Groq Evidence-Based Answer Engine"
+          ):
+              raise SystemExit(
+                  "ERROR - Incorrect next-stage component."
+              )
+
+          print("=" * 70)
+          print("STEP 29A VERIFICATION COMPLETE")
+          print("=" * 70)
+          print(f"OEM evidence       : {len(oem)}")
+          print(f"WEB evidence       : {len(web)}")
+          print(f"Combined evidence  : {len(combined)}")
+          print()
+          print("OEM priority       : TRUE")
+          print("WEB is not OEM     : TRUE")
+          print("OEM required       : TRUE")
+          print("Citations required : TRUE")
+          print("Output structure   : TRUE")
+          print("Groq handoff       : TRUE")
+          print()
+          print("STEP 29A: SUCCESS")
+          print("GREEN")
+          PY
+
+      - name: Upload STEP 29A artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: step29a-troubleshooting-workflow
+          path: troubleshooting_workflow.json
