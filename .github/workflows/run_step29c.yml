@@ -23,7 +23,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install gdown pypdf rank_bm25 sentence-transformers faiss-cpu requests groq
+          pip install \
+            gdown \
+            pypdf \
+            rank_bm25 \
+            sentence-transformers \
+            faiss-cpu \
+            requests \
+            groq
 
       - name: Verify API secrets
         env:
@@ -70,10 +77,8 @@ jobs:
 
           if missing:
               print("ERROR - Missing required files:")
-
               for item in missing:
                   print(f" - {item}")
-
               raise SystemExit(1)
 
           print("All STEP 29C required files are present.")
@@ -339,12 +344,232 @@ jobs:
           print("Structured troubleshooting workflow verified.")
           PY
 
+      # ------------------------------------------------------------
+      # CRITICAL FIX
+      # Compact the evidence before sending it to Groq.
+      # The previous failure occurred because the complete evidence
+      # payload was too large for the Groq request.
+      # ------------------------------------------------------------
+
+      - name: Compact evidence for Groq
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          source = Path("troubleshooting_workflow.json")
+          output = Path("troubleshooting_workflow_groq.json")
+
+          data = json.loads(
+              source.read_text(encoding="utf-8")
+          )
+
+          MAX_OEM_ITEMS = 8
+          MAX_WEB_ITEMS = 3
+          MAX_CHARS_PER_ITEM = 1800
+          MAX_TOTAL_EVIDENCE_CHARS = 14000
+
+          def compact_item(item, source_type):
+              if not isinstance(item, dict):
+                  return None
+
+              if source_type == "OEM":
+                  text = (
+                      item.get("text")
+                      or item.get("content")
+                      or ""
+                  )
+
+                  compact = {
+                      "evidence_id": item.get("evidence_id"),
+                      "source_type": "OEM",
+                      "source_file": item.get("source_file"),
+                      "page": item.get("page"),
+                      "citation": item.get("citation"),
+                      "text": str(text)[:MAX_CHARS_PER_ITEM],
+                  }
+
+              else:
+                  text = (
+                      item.get("text")
+                      or item.get("content")
+                      or item.get("snippet")
+                      or ""
+                  )
+
+                  compact = {
+                      "evidence_id": item.get("evidence_id"),
+                      "source_type": "WEB",
+                      "title": item.get("title"),
+                      "url": item.get("url"),
+                      "citation": item.get("citation"),
+                      "text": str(text)[:MAX_CHARS_PER_ITEM],
+                  }
+
+              return compact
+
+          oem_source = data.get("oem_evidence", [])
+          web_source = data.get("web_evidence", [])
+
+          oem_items = []
+
+          for item in oem_source[:MAX_OEM_ITEMS]:
+              compact = compact_item(item, "OEM")
+              if compact:
+                  oem_items.append(compact)
+
+          web_items = []
+
+          for item in web_source[:MAX_WEB_ITEMS]:
+              compact = compact_item(item, "WEB")
+              if compact:
+                  web_items.append(compact)
+
+          # Build evidence while enforcing a hard total character limit.
+          final_oem = []
+          final_web = []
+          total_chars = 0
+
+          for item in oem_items:
+              item_chars = len(
+                  json.dumps(
+                      item,
+                      ensure_ascii=False
+                  )
+              )
+
+              if total_chars + item_chars > MAX_TOTAL_EVIDENCE_CHARS:
+                  break
+
+              final_oem.append(item)
+              total_chars += item_chars
+
+          for item in web_items:
+              item_chars = len(
+                  json.dumps(
+                      item,
+                      ensure_ascii=False
+                  )
+              )
+
+              if total_chars + item_chars > MAX_TOTAL_EVIDENCE_CHARS:
+                  break
+
+              final_web.append(item)
+              total_chars += item_chars
+
+          data["oem_evidence"] = final_oem
+          data["web_evidence"] = final_web
+
+          data["combined_evidence"] = (
+              final_oem + final_web
+          )
+
+          data["evidence_summary"] = {
+              "oem_count": len(final_oem),
+              "web_count": len(final_web),
+              "combined_count": len(
+                  final_oem + final_web
+              ),
+              "groq_compacted": True,
+              "max_oem_items": MAX_OEM_ITEMS,
+              "max_web_items": MAX_WEB_ITEMS,
+              "max_chars_per_item": MAX_CHARS_PER_ITEM,
+              "max_total_evidence_chars": MAX_TOTAL_EVIDENCE_CHARS,
+              "actual_evidence_chars": total_chars,
+          }
+
+          output.write_text(
+              json.dumps(
+                  data,
+                  indent=2,
+                  ensure_ascii=False
+              ),
+              encoding="utf-8"
+          )
+
+          print("=" * 70)
+          print("GROQ EVIDENCE COMPACTION COMPLETE")
+          print("=" * 70)
+          print(
+              f"OEM evidence kept : {len(final_oem)}"
+          )
+          print(
+              f"WEB evidence kept : {len(final_web)}"
+          )
+          print(
+              f"Total evidence    : "
+              f"{len(final_oem) + len(final_web)}"
+          )
+          print(
+              f"Evidence chars    : {total_chars}"
+          )
+          print(
+              "Groq payload control: TRUE"
+          )
+          print("=" * 70)
+          PY
+
+      - name: Verify compact Groq workflow
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path(
+              "troubleshooting_workflow_groq.json"
+          )
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - Compact Groq workflow was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          oem = data.get("oem_evidence", [])
+          web = data.get("web_evidence", [])
+
+          if not oem:
+              raise SystemExit(
+                  "ERROR - Compact workflow contains no OEM evidence."
+              )
+
+          summary = data.get(
+              "evidence_summary",
+              {}
+          )
+
+          if summary.get("groq_compacted") is not True:
+              raise SystemExit(
+                  "ERROR - Groq compaction flag missing."
+              )
+
+          if summary.get(
+              "actual_evidence_chars",
+              999999
+          ) > 14000:
+              raise SystemExit(
+                  "ERROR - Groq evidence payload is still too large."
+              )
+
+          print("Compact Groq workflow verified.")
+          print(f"OEM evidence : {len(oem)}")
+          print(f"WEB evidence : {len(web)}")
+          print(
+              "Evidence chars : "
+              f"{summary.get('actual_evidence_chars', 0)}"
+          )
+          PY
+
       - name: Generate Groq troubleshooting answer
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           python troubleshooting_answer.py \
-            --workflow troubleshooting_workflow.json \
+            --workflow troubleshooting_workflow_groq.json \
             --output troubleshooting_answer.json \
             --model "openai/gpt-oss-120b"
 
@@ -354,7 +579,9 @@ jobs:
           import json
           from pathlib import Path
 
-          path = Path("troubleshooting_answer.json")
+          path = Path(
+              "troubleshooting_answer.json"
+          )
 
           if not path.exists():
               raise SystemExit(
@@ -440,22 +667,30 @@ jobs:
 
           policy = data["source_policy"]
 
-          if policy.get("oem_priority") is not True:
+          if policy.get(
+              "oem_priority"
+          ) is not True:
               raise SystemExit(
                   "ERROR - OEM priority policy failed."
               )
 
-          if policy.get("web_is_not_oem") is not True:
+          if policy.get(
+              "web_is_not_oem"
+          ) is not True:
               raise SystemExit(
                   "ERROR - WEB/OEM separation failed."
               )
 
-          if policy.get("citations_required") is not True:
+          if policy.get(
+              "citations_required"
+          ) is not True:
               raise SystemExit(
                   "ERROR - Citation policy failed."
               )
 
-          if policy.get("unsupported_claims_blocked") is not True:
+          if policy.get(
+              "unsupported_claims_blocked"
+          ) is not True:
               raise SystemExit(
                   "ERROR - Evidence control policy failed."
               )
@@ -463,20 +698,26 @@ jobs:
           print("=" * 70)
           print("STEP 29C VERIFICATION COMPLETE")
           print("=" * 70)
+
           print(
               f"Model             : {data['model']}"
           )
+
           print(
               f"OEM evidence      : "
               f"{data['evidence_summary'].get('oem_count', 0)}"
           )
+
           print(
               f"WEB evidence      : "
               f"{data['evidence_summary'].get('web_count', 0)}"
           )
+
           print(
-              f"Answer length     : {len(answer)} characters"
+              f"Answer length     : "
+              f"{len(answer)} characters"
           )
+
           print()
           print("Required sections : TRUE")
           print("OEM citation      : TRUE")
@@ -495,5 +736,6 @@ jobs:
           name: step29c-groq-troubleshooting-answer
           path: |
             troubleshooting_workflow.json
+            troubleshooting_workflow_groq.json
             troubleshooting_answer.json
             final_evidence.json
