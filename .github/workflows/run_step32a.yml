@@ -88,7 +88,8 @@ jobs:
           print("Training workflow keys:")
           print(list(data.keys()))
 
-          assert data.get("status") == "READY_FOR_GROQ", data.get("status")
+          assert data.get("status") == "READY_FOR_GROQ", \
+              f"Unexpected Step 30 status: {data.get('status')}"
 
           inputs = data.get("input", {})
 
@@ -132,7 +133,8 @@ jobs:
           print("Training answer keys:")
           print(list(data.keys()))
 
-          assert data.get("step") == "31", \
+          # Step is stored as integer 31 in the existing GREEN Step 31 output.
+          assert data.get("step") == 31, \
               f"Unexpected step: {data.get('step')}"
 
           assert data.get("stage") == "groq_training_content_generator", \
@@ -141,13 +143,26 @@ jobs:
           assert data.get("status") == "SUCCESS", \
               f"Unexpected status: {data.get('status')}"
 
-          policy = data.get("policy")
+          assert isinstance(data.get("input"), dict), \
+              "Step 31 input missing."
 
-          assert policy, \
-              "Training policy missing."
+          assert isinstance(data.get("report_sections"), list), \
+              "Step 31 report_sections missing."
 
+          assert isinstance(data.get("training_content"), dict), \
+              "Step 31 training_content missing."
+
+          assert isinstance(data.get("evidence_policy"), dict), \
+              "Step 31 evidence_policy missing."
+
+          print("STEP 31 number validation: GREEN")
           print("STEP 31 status: SUCCESS")
-          print("STEP 31 policy validation: GREEN")
+          print(
+              f"Report sections: "
+              f"{len(data.get('report_sections', []))}"
+          )
+          print("Training content validation: GREEN")
+          print("Evidence policy validation: GREEN")
           print("STEP 31 validation GREEN")
           PY
 
