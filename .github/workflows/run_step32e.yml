@@ -20,22 +20,106 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Verify required files
+      - name: Install dependencies
         run: |
-          test -f training_answer.json
+          python -m pip install --upgrade pip
+          pip install \
+            gdown>=6.1.0 \
+            groq \
+            pymupdf \
+            python-docx \
+            reportlab \
+            python-pptx
+
+      - name: Verify STEP 32 project files
+        run: |
+          test -f training_workflow.py
+          test -f training_answer.py
+          test -f training_visual_validator.py
+          test -f training_final_visual_integrator.py
+          test -f manual_selector.py
+          test -f manual_downloader.py
+          test -f manual_catalog.json
           test -f validated_visual_requests.json
           test -f ai_training_visual_manifest.json
-          test -f training_final_visual_integrator.py
 
-          echo "All required STEP 32E files found."
+          echo "STEP 32E project files verified."
 
-      - name: Validate STEP 31 input
+      - name: Verify Groq secret
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "GROQ_API_KEY repository secret is missing."
+            exit 1
+          fi
+
+          echo "GROQ_API_KEY verified."
+
+      - name: Rebuild STEP 30 training workflow
+        run: |
+          python training_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --topic "Fuel System and Injector Maintenance" \
+            --technician-level "Basic" \
+            --duration "4 Days" \
+            --vessel "QL-40" \
+            --manuals "manual_catalog.json" \
+            --output training_workflow.json
+
+      - name: Validate STEP 30
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("training_workflow.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "training_workflow.json was not created."
+              )
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          print("STEP 30")
+          print("Step:", data.get("step"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+
+          if data.get("step") != 30:
+              raise SystemExit("Invalid STEP 30 output.")
+
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  "STEP 30 is not READY_FOR_GROQ."
+              )
+
+          print("STEP 30 validation: GREEN")
+          PY
+
+      - name: Rebuild STEP 31 training answer
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python training_answer.py \
+            --workflow training_workflow.json \
+            --output training_answer.json
+
+      - name: Validate STEP 31
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
 
           path = Path("training_answer.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "training_answer.json was not created."
+              )
 
           with path.open("r", encoding="utf-8") as f:
               data = json.load(f)
@@ -46,10 +130,14 @@ jobs:
           print("Status:", data.get("status"))
 
           if data.get("step") != 31:
-              raise SystemExit("training_answer.json is not STEP 31.")
+              raise SystemExit(
+                  "training_answer.json is not STEP 31."
+              )
 
           if data.get("status") != "SUCCESS":
-              raise SystemExit("STEP 31 status is not SUCCESS.")
+              raise SystemExit(
+                  "STEP 31 status is not SUCCESS."
+              )
 
           print("STEP 31 validation: GREEN")
           PY
@@ -58,11 +146,12 @@ jobs:
         run: |
           python - <<'PY'
           import json
-          from pathlib import Path
 
-          path = Path("validated_visual_requests.json")
-
-          with path.open("r", encoding="utf-8") as f:
+          with open(
+              "validated_visual_requests.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
               data = json.load(f)
 
           print("STEP 32C")
@@ -70,8 +159,14 @@ jobs:
           print("Substep:", data.get("substep"))
           print("Stage:", data.get("stage"))
           print("Status:", data.get("status"))
-          print("OEM visual sections:", data.get("oem_visual_sections"))
-          print("AI fallback sections:", data.get("ai_fallback_sections"))
+          print(
+              "OEM visual sections:",
+              data.get("oem_visual_sections")
+          )
+          print(
+              "AI fallback sections:",
+              data.get("ai_fallback_sections")
+          )
 
           if data.get("step") != 32:
               raise SystemExit("Invalid STEP 32C step.")
@@ -80,7 +175,9 @@ jobs:
               raise SystemExit("Invalid STEP 32C substep.")
 
           if data.get("status") != "SUCCESS":
-              raise SystemExit("STEP 32C status is not SUCCESS.")
+              raise SystemExit(
+                  "STEP 32C status is not SUCCESS."
+              )
 
           print("STEP 32C validation: GREEN")
           PY
@@ -89,11 +186,12 @@ jobs:
         run: |
           python - <<'PY'
           import json
-          from pathlib import Path
 
-          path = Path("ai_training_visual_manifest.json")
-
-          with path.open("r", encoding="utf-8") as f:
+          with open(
+              "ai_training_visual_manifest.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
               data = json.load(f)
 
           print("STEP 32D")
@@ -101,8 +199,14 @@ jobs:
           print("Substep:", data.get("substep"))
           print("Stage:", data.get("stage"))
           print("Status:", data.get("status"))
-          print("Generated:", len(data.get("generated", [])))
-          print("Failed:", len(data.get("failed", [])))
+          print(
+              "Generated:",
+              len(data.get("generated", []))
+          )
+          print(
+              "Failed:",
+              len(data.get("failed", []))
+          )
 
           if data.get("step") != 32:
               raise SystemExit("Invalid STEP 32D step.")
@@ -110,39 +214,83 @@ jobs:
           if data.get("substep") != "32D":
               raise SystemExit("Invalid STEP 32D substep.")
 
-          if data.get("stage") != "controlled_ai_visual_generator":
-              raise SystemExit("Invalid STEP 32D stage.")
+          if data.get("stage") != \
+              "controlled_ai_visual_generator":
+              raise SystemExit(
+                  "Invalid STEP 32D stage."
+              )
 
           if data.get("failed"):
-              raise SystemExit("STEP 32D contains failed visual requests.")
+              raise SystemExit(
+                  "STEP 32D contains failed visual requests."
+              )
 
-          if data.get("ai_visual_label") != "AI Training Illustration — Not an OEM Figure":
-              raise SystemExit("Invalid AI visual label.")
+          if data.get("ai_visual_label") != \
+              "AI Training Illustration — Not an OEM Figure":
+              raise SystemExit(
+                  "Invalid AI visual label."
+              )
 
           print("STEP 32D validation: GREEN")
           PY
 
-      - name: Verify OEM visual directory
+      - name: Select the same 10 OEM manuals
         run: |
-          if [ -d "validated_oem_visuals" ]; then
-            echo "validated_oem_visuals found."
-            find validated_oem_visuals -type f | head -20
-          else
-            echo "validated_oem_visuals directory not found."
-            echo "Continuing because the STEP 32E manifest may contain existing references."
+          python manual_selector.py \
+            --query "QL-40 MAN 16V175D-MM Main Engine Fuel System Injector Maintenance" \
+            --top-k 10 \
+            --output selected_manuals.json
+
+      - name: Validate manual selection
+        run: |
+          python - <<'PY'
+          import json
+
+          with open(
+              "selected_manuals.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if not isinstance(data, list):
+              raise SystemExit(
+                  "selected_manuals.json is not a list."
+              )
+
+          if len(data) != 10:
+              raise SystemExit(
+                  f"Expected 10 selected manuals, found {len(data)}."
+              )
+
+          print(
+              "Selected OEM manuals:",
+              len(data)
+          )
+          print("Manual selection: GREEN")
+          PY
+
+      - name: Download selected OEM manuals
+        run: |
+          python manual_downloader.py \
+            --selection selected_manuals.json \
+            --catalog manual_catalog.json \
+            --output-dir selected_manuals
+
+      - name: Verify downloaded OEM manuals
+        run: |
+          count=$(find selected_manuals -type f -iname "*.pdf" | wc -l)
+
+          echo "Downloaded PDF count: $count"
+
+          if [ "$count" -lt 1 ]; then
+            echo "No OEM PDFs were downloaded."
+            exit 1
           fi
 
-      - name: Verify AI visual directory
-        run: |
-          if [ -d "ai_training_visuals" ]; then
-            echo "ai_training_visuals found."
-            find ai_training_visuals -type f | head -20
-          else
-            echo "No ai_training_visuals directory."
-            echo "This is acceptable when STEP 32D generated zero AI visuals."
-          fi
+          echo "OEM manual download: GREEN"
 
-      - name: Run STEP 32E integrator
+      - name: Run STEP 32E visual integrator
         run: |
           python training_final_visual_integrator.py \
             --training training_answer.json \
@@ -157,11 +305,13 @@ jobs:
           import json
           from pathlib import Path
 
-          path = Path("final_visual_package_manifest.json")
+          path = Path(
+              "final_visual_package_manifest.json"
+          )
 
           if not path.exists():
               raise SystemExit(
-                  "final_visual_package_manifest.json was not created."
+                  "STEP 32E manifest was not created."
               )
 
           with path.open("r", encoding="utf-8") as f:
@@ -175,36 +325,60 @@ jobs:
           print("Substep:", data.get("substep"))
           print("Stage:", data.get("stage"))
           print("Status:", data.get("status"))
-          print("Visual sections:", data.get("visual_sections"))
-          print("OEM integrated:", data.get("oem_visuals_integrated"))
-          print("AI integrated:", data.get("ai_visuals_integrated"))
-          print("Unavailable:", data.get("visuals_unavailable"))
+          print(
+              "Visual sections:",
+              data.get("visual_sections")
+          )
+          print(
+              "OEM integrated:",
+              data.get("oem_visuals_integrated")
+          )
+          print(
+              "AI integrated:",
+              data.get("ai_visuals_integrated")
+          )
+          print(
+              "Unavailable:",
+              data.get("visuals_unavailable")
+          )
           print("==============================================")
 
           if data.get("step") != 32:
-              raise SystemExit("Invalid STEP 32E step.")
+              raise SystemExit(
+                  "Invalid STEP 32E step."
+              )
 
           if data.get("substep") != "32E":
-              raise SystemExit("Invalid STEP 32E substep.")
+              raise SystemExit(
+                  "Invalid STEP 32E substep."
+              )
 
-          if data.get("stage") != "final_visual_package_integrator":
-              raise SystemExit("Invalid STEP 32E stage.")
+          if data.get("stage") != \
+              "final_visual_package_integrator":
+              raise SystemExit(
+                  "Invalid STEP 32E stage."
+              )
 
           if data.get("status") != "SUCCESS":
-              raise SystemExit("STEP 32E status is not SUCCESS.")
+              raise SystemExit(
+                  "STEP 32E status is not SUCCESS."
+              )
 
           if data.get("visual_sections") != 10:
               raise SystemExit(
-                  "STEP 32E must contain 10 visual sections."
+                  "Expected 10 visual sections."
               )
 
-          if data.get("ai_visual_label") != "AI Training Illustration — Not an OEM Figure":
-              raise SystemExit("Invalid STEP 32E AI visual label.")
+          if data.get("ai_visual_label") != \
+              "AI Training Illustration — Not an OEM Figure":
+              raise SystemExit(
+                  "Invalid AI visual label."
+              )
 
           print("STEP 32E manifest validation: GREEN")
           PY
 
-      - name: Verify integrated files
+      - name: Verify final visual files
         run: |
           python - <<'PY'
           import json
@@ -218,12 +392,15 @@ jobs:
               data = json.load(f)
 
           visuals = data.get("visuals", [])
+          integrated = [
+              item
+              for item in visuals
+              if item.get("status") == "INTEGRATED"
+          ]
+
           missing = []
 
-          for item in visuals:
-              if item.get("status") != "INTEGRATED":
-                  continue
-
+          for item in integrated:
               file_path = item.get("file")
 
               if not file_path:
@@ -246,15 +423,22 @@ jobs:
                   )
 
           if missing:
-              print("Invalid integrated files:")
+              print("Invalid integrated visual files:")
+
               for item in missing:
                   print(item)
 
               raise SystemExit(
-                  "Integrated visual verification failed."
+                  "Final visual file verification failed."
               )
 
-          print("Integrated visual files validation: GREEN")
+          print(
+              "Final visual file verification: GREEN"
+          )
+          print(
+              "Integrated visuals:",
+              len(integrated)
+          )
           PY
 
       - name: Display STEP 32E summary
@@ -270,16 +454,28 @@ jobs:
               data = json.load(f)
 
           print("")
-          print("==============================================")
+          print("================================================")
           print("MARINEWISE STEP 32E")
           print("FINAL VISUAL PACKAGE INTEGRATION")
-          print("==============================================")
+          print("================================================")
           print("STATUS:", data.get("status"))
-          print("OEM VISUALS:", data.get("oem_visuals_integrated"))
-          print("AI VISUALS:", data.get("ai_visuals_integrated"))
-          print("UNAVAILABLE:", data.get("visuals_unavailable"))
-          print("AI LABEL:", data.get("ai_visual_label"))
-          print("==============================================")
+          print(
+              "OEM VISUALS:",
+              data.get("oem_visuals_integrated")
+          )
+          print(
+              "AI VISUALS:",
+              data.get("ai_visuals_integrated")
+          )
+          print(
+              "UNAVAILABLE:",
+              data.get("visuals_unavailable")
+          )
+          print(
+              "AI LABEL:",
+              data.get("ai_visual_label")
+          )
+          print("================================================")
           PY
 
       - name: Upload STEP 32E artifact
@@ -307,9 +503,9 @@ jobs:
 
       - name: Final STEP 32E GREEN verification
         run: |
-          echo "=============================================="
+          echo "================================================"
           echo "STEP 32E STATUS: GREEN"
-          echo "Final visual integration completed."
+          echo "Final visual package integration completed."
           echo "OEM visual priority preserved."
           echo "AI visuals remain fallback-only."
-          echo "=============================================="
+          echo "================================================"
