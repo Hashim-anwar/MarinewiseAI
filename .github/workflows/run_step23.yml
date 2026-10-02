@@ -38,11 +38,13 @@ jobs:
 
           python manual_downloader.py
 
-      - name: Verify selected PDFs
+            - name: Verify selected PDFs
         run: |
-          COUNT=$(find selected_manuals -maxdepth 1 -type f -name "*.pdf" | wc -l)
+          COUNT=$(find selected_manuals -maxdepth 1 -type f \( -iname "*.pdf" \) | wc -l)
 
           echo "Selected PDF files: $COUNT"
+
+          find selected_manuals -maxdepth 1 -type f \( -iname "*.pdf" \) -printf "%f\n" | sort
 
           test "$COUNT" -eq 10
 
