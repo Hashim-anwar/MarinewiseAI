@@ -54,7 +54,7 @@ CRITICAL RULES:
 13. Do not invent component specifications.
 14. Do not create fake OEM references.
 15. Every technical question must be supported by supplied evidence.
-16. Technical answers must include OEM citations.
+16. Technical answers must include OEM citations when evidence is available.
 17. Web evidence must never be represented as OEM evidence.
 18. If reliable OEM evidence is unavailable, use exactly:
 
@@ -68,7 +68,7 @@ Insufficient OEM evidence available for a reliable conclusion.
     A, B, C and D.
 24. True/False questions must use:
     A. True
-    B. False
+    B. False.
 25. Short-answer questions must include expected answer points.
 26. Practical scenarios must include scoring points.
 27. Include an answer key.
@@ -76,8 +76,10 @@ Insufficient OEM evidence available for a reliable conclusion.
 29. Include scoring guidance.
 30. Identify weak training areas.
 31. Provide evidence-based retraining recommendations.
-32. Return valid JSON only.
-33. Do not wrap the final JSON in Markdown.
+32. Return one valid JSON object only.
+33. Do not return Markdown.
+34. Do not return code fences.
+35. Do not return text outside the JSON object.
 """
 
 
@@ -148,6 +150,7 @@ def compact_for_prompt(
 def validate_workflow(
     workflow: dict[str, Any],
 ) -> None:
+
     if workflow.get("step") != 33:
         raise ValueError(
             "Expected assessment workflow step 33, "
@@ -351,7 +354,11 @@ Passing score:
 
 Use the supplied assessment workflow and OEM evidence only.
 
-Required assessment sections:
+Return ONE JSON OBJECT.
+
+The JSON object must contain an "assessment" object.
+
+The assessment object must contain these sections:
 
 ASSESSMENT OVERVIEW
 INSTRUCTIONS
@@ -365,7 +372,11 @@ OEM REFERENCES
 EVIDENCE STATUS
 SAFETY NOTE
 
-For every question include, where applicable:
+QUESTIONS must be an array containing exactly
+{question_count}
+question objects.
+
+Each question should contain:
 
 question_id
 type
@@ -380,32 +391,36 @@ explanation
 oem_citation
 scoring_points
 
-Multiple-choice questions:
+Use only fields appropriate to the question type.
+
+Multiple-choice:
 exactly four options:
 A, B, C and D.
 
-True/False questions:
+True/False:
 A = True
 B = False.
 
-Short-answer questions:
+Short-answer:
 include expected answer points.
 
-Practical scenarios:
+Practical scenario:
 include scoring points.
 
-Technical information must remain strictly within the
-supplied evidence.
+Technical information must remain strictly within
+the supplied evidence.
 
-Technical citations should use this format:
+OEM citations should use:
 
 [OEM: filename, Page X]
 
-Do not fabricate citations.
+Never fabricate an OEM citation.
 
-If evidence is insufficient, use exactly:
+If reliable OEM evidence is unavailable, use exactly:
 
 {MISSING_EVIDENCE_TEXT}
+
+The final response must be valid JSON and nothing else.
 
 SOURCE DATA:
 
@@ -417,59 +432,44 @@ def extract_json(
     text: str,
 ) -> dict[str, Any]:
     """
-    Safely extract a JSON object from the Groq response.
-
-    Handles:
-    1. Pure JSON.
-    2. JSON surrounded by Markdown code fences.
-    3. JSON embedded inside additional response text.
+    Parse JSON returned by Groq JSON Object Mode.
     """
 
+    if not text:
+        raise ValueError(
+            "Groq returned an empty response."
+        )
+
     cleaned = text.strip()
-
-    if cleaned.startswith("```json"):
-        cleaned = cleaned[7:].strip()
-
-    elif cleaned.startswith("```"):
-        cleaned = cleaned[3:].strip()
-
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3].strip()
 
     try:
         data = json.loads(
             cleaned
         )
 
-        if isinstance(data, dict):
-            return data
+    except json.JSONDecodeError as exc:
 
-    except json.JSONDecodeError:
-        pass
+        print("========================================")
+        print("GROQ JSON PARSING ERROR")
+        print("========================================")
+        print(
+            "Response length:",
+            len(cleaned),
+        )
+        print("Response preview:")
+        print(cleaned[:3000])
+        print("========================================")
 
-    start = cleaned.find("{")
-    end = cleaned.rfind("}")
+        raise ValueError(
+            "Groq response was not valid JSON."
+        ) from exc
 
-    if start >= 0 and end > start:
+    if not isinstance(data, dict):
+        raise ValueError(
+            "Groq response JSON must be an object."
+        )
 
-        candidate = cleaned[
-            start:end + 1
-        ]
-
-        try:
-            data = json.loads(
-                candidate
-            )
-
-            if isinstance(data, dict):
-                return data
-
-        except json.JSONDecodeError:
-            pass
-
-    raise ValueError(
-        "Groq response did not contain valid JSON."
-    )
+    return data
 
 
 def recursive_find(
@@ -477,13 +477,35 @@ def recursive_find(
     target_key: str,
 ) -> Any:
 
-    target = target_key.lower()
+    target = (
+        str(target_key)
+        .strip()
+        .lower()
+        .replace("_", " ")
+        .replace("-", " ")
+    )
+
+    target = " ".join(
+        target.split()
+    )
 
     if isinstance(value, dict):
 
         for key, item in value.items():
 
-            if str(key).lower() == target:
+            normalized_key = (
+                str(key)
+                .strip()
+                .lower()
+                .replace("_", " ")
+                .replace("-", " ")
+            )
+
+            normalized_key = " ".join(
+                normalized_key.split()
+            )
+
+            if normalized_key == target:
                 return item
 
             found = recursive_find(
@@ -509,52 +531,20 @@ def recursive_find(
     return None
 
 
-def find_section(
-    data: dict[str, Any],
-    section_name: str,
-) -> Any:
-
-    return recursive_find(
-        data,
-        section_name,
-    )
-
-
 def find_questions(
     data: dict[str, Any],
 ) -> list[Any] | None:
 
-    result = find_section(
-        data,
+    candidates = [
         "QUESTIONS",
-    )
-
-    if isinstance(result, list):
-        return result
-
-    result = find_section(
-        data,
         "questions",
-    )
+    ]
 
-    if isinstance(result, list):
-        return result
+    for name in candidates:
 
-    assessment = data.get(
-        "assessment"
-    )
-
-    if isinstance(assessment, dict):
-
-        result = assessment.get(
-            "QUESTIONS"
-        )
-
-        if isinstance(result, list):
-            return result
-
-        result = assessment.get(
-            "questions"
+        result = recursive_find(
+            data,
+            name,
         )
 
         if isinstance(result, list):
@@ -623,13 +613,13 @@ def validate_answer_key(
     data: dict[str, Any],
 ) -> None:
 
-    answer_key = find_section(
+    answer_key = recursive_find(
         data,
         "ANSWER KEY",
     )
 
     if answer_key is None:
-        answer_key = find_section(
+        answer_key = recursive_find(
             data,
             "answer_key",
         )
@@ -643,113 +633,37 @@ def validate_answer_key(
 def validate_required_sections(
     data: dict[str, Any],
 ) -> None:
-    """
-    Validate that the assessment contains the required content.
 
-    Groq may return the sections:
-    - at the top level
-    - inside an assessment object
-    - inside a nested content object
-    - using underscores instead of spaces
+    def normalize(
+        value: Any,
+    ) -> str:
 
-    Therefore validation is recursive and normalizes section names.
-    """
+        text = str(
+            value
+        ).strip().lower()
 
-    def normalize_key(value: Any) -> str:
-        if value is None:
-            return ""
+        text = (
+            text.replace("_", " ")
+            .replace("-", " ")
+            .replace(":", " ")
+        )
 
-        text = str(value).strip().lower()
-
-        replacements = {
-            "_": " ",
-            "-": " ",
-            ":": " ",
-        }
-
-        for old, new in replacements.items():
-            text = text.replace(old, new)
-
-        text = " ".join(text.split())
-
-        return text
-
-    required = {
-        normalize_key(section)
-        for section in REQUIRED_SECTIONS
-    }
-
-    found = set()
-
-    def walk(value: Any) -> None:
-
-        if isinstance(value, dict):
-
-            for key, item in value.items():
-
-                normalized = normalize_key(key)
-
-                if normalized in required:
-                    found.add(normalized)
-
-                walk(item)
-
-        elif isinstance(value, list):
-
-            for item in value:
-                walk(item)
-
-        elif isinstance(value, str):
-
-            normalized = normalize_key(value)
-
-            if normalized in required:
-                found.add(normalized)
-
-    walk(data)
-
-    # Some models return sections as strings such as:
-    # "1. ASSESSMENT OVERVIEW"
-    # "ASSESSMENT OVERVIEW:"
-    #
-    # Check the complete JSON text as a secondary safeguard.
+        return " ".join(
+            text.split()
+        )
 
     serialized = json.dumps(
         data,
         ensure_ascii=False,
     ).lower()
 
-    for section in REQUIRED_SECTIONS:
-
-        normalized = normalize_key(section)
-
-        variants = [
-            section.lower(),
-            normalized,
-            normalized.replace(" ", "_"),
-        ]
-
-        for variant in variants:
-
-            if variant in serialized:
-                found.add(normalized)
-                break
-
-    missing = [
-        section
-        for section in REQUIRED_SECTIONS
-        if normalize_key(section) not in found
-    ]
-
-    if missing:
-        raise ValueError(
-            "Missing required assessment sections: "
-            + ", ".join(missing)
-        )
-
     missing = []
 
     for section in REQUIRED_SECTIONS:
+
+        normalized = normalize(
+            section
+        )
 
         found = recursive_find(
             data,
@@ -759,8 +673,25 @@ def validate_required_sections(
         if found is None:
             found = recursive_find(
                 data,
-                section.lower(),
+                normalized,
             )
+
+        if found is None:
+
+            variants = [
+                section.lower(),
+                normalized,
+                normalized.replace(
+                    " ",
+                    "_",
+                ),
+            ]
+
+            for variant in variants:
+
+                if variant in serialized:
+                    found = True
+                    break
 
         if found is None:
             missing.append(section)
@@ -835,7 +766,10 @@ def main() -> None:
     print("========================================")
     print("STEP 33B")
     print("========================================")
-    print("Loading assessment workflow...")
+
+    print(
+        "Loading assessment workflow..."
+    )
 
     workflow = load_json(
         args.workflow
@@ -878,7 +812,10 @@ def main() -> None:
             "GROQ_API_KEY environment variable is missing."
         )
 
-    print("Calling Groq...")
+    print(
+        "Calling Groq..."
+    )
+
     print(
         f"Model: {MODEL}"
     )
@@ -895,7 +832,10 @@ def main() -> None:
     response = client.chat.completions.create(
         model=MODEL,
         temperature=0.1,
-        max_completion_tokens=6000,
+        max_completion_tokens=8000,
+        response_format={
+            "type": "json_object"
+        },
         messages=[
             {
                 "role": "system",
@@ -908,12 +848,19 @@ def main() -> None:
         ],
     )
 
-    content = response.choices[0].message.content
+    content = (
+        response.choices[0]
+        .message.content
+    )
 
     if not content:
         raise RuntimeError(
             "Groq returned an empty response."
         )
+
+    print(
+        "Groq JSON response received."
+    )
 
     generated = extract_json(
         content
@@ -953,7 +900,9 @@ def main() -> None:
     print(
         f"Output: {args.output}"
     )
-    print("Status: SUCCESS")
+    print(
+        "Status: SUCCESS"
+    )
     print(
         "STEP 33 FILE 2 STATUS: GREEN"
     )
