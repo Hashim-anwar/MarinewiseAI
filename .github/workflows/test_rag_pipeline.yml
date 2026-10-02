@@ -1,0 +1,46 @@
+name: Test MARINEWISE RAG Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-rag-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install gdown pypdf python-docx
+          pip install sentence-transformers faiss-cpu rank_bm25
+
+      - name: Download a small Drive sample
+        run: |
+          python - <<'PY'
+          import gdown
+          from pathlib import Path
+
+          url = "https://drive.google.com/drive/folders/1gI_rJpsDzJ3HsOBO0Hb50B71vaJDkXY5?usp=sharing"
+
+          output = Path("/tmp/marinewise_sample")
+          output.mkdir(parents=True, exist_ok=True)
+
+          print("Downloading a limited Drive sample...")
+
+          gdown.download_folder(
+              url=url,
+              output=str(output),
+              quiet=False,
+              use_cookies=False,
+              remaining_ok=True,
+              skip_download=True,
+          )
+          PY
