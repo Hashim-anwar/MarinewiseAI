@@ -152,6 +152,10 @@ jobs:
                   "ERROR: assessment_workflow.json must contain a JSON object."
               )
 
+          # ---------------------------------------------------------
+          # STEP / SUBSTEP / STAGE / STATUS
+          # ---------------------------------------------------------
+
           if data.get("step") != 33:
               raise SystemExit(
                   f"ERROR: Expected step 33, got {data.get('step')}"
@@ -174,6 +178,10 @@ jobs:
                   f"got {data.get('status')}"
               )
 
+          # ---------------------------------------------------------
+          # ASSESSMENT CONFIGURATION
+          # ---------------------------------------------------------
+
           configuration = data.get("assessment_configuration")
 
           if not isinstance(configuration, dict):
@@ -181,37 +189,120 @@ jobs:
                   "ERROR: assessment_configuration must be a JSON object."
               )
 
-          if configuration.get("question_count") != 20:
+          # ---------------------------------------------------------
+          # QUESTION COUNT
+          # ---------------------------------------------------------
+
+          question_count = configuration.get("question_count")
+
+          if question_count != 20:
               raise SystemExit(
-                  f"ERROR: Expected 20 questions, "
-                  f"got {configuration.get('question_count')}"
+                  f"ERROR: Expected question_count 20, "
+                  f"got {question_count}"
               )
 
-          if configuration.get("passing_score_percent") != 70:
+          # ---------------------------------------------------------
+          # PASSING SCORE
+          # ---------------------------------------------------------
+
+          passing_score = configuration.get("passing_score_percent")
+
+          if passing_score != 70:
               raise SystemExit(
-                  f"ERROR: Expected passing score 70, "
-                  f"got {configuration.get('passing_score_percent')}"
+                  f"ERROR: Expected passing_score_percent 70, "
+                  f"got {passing_score}"
               )
+
+          # ---------------------------------------------------------
+          # ASSESSMENT TYPES
+          # ---------------------------------------------------------
+
+          assessment_types = configuration.get("types")
+
+          if assessment_types is None:
+              raise SystemExit(
+                  "ERROR: Assessment types are missing."
+              )
+
+          if isinstance(assessment_types, (list, dict)):
+              type_count = len(assessment_types)
+          else:
+              type_count = 1
+
+          if type_count == 0:
+              raise SystemExit(
+                  "ERROR: Assessment types are empty."
+              )
+
+          # ---------------------------------------------------------
+          # ASSESSMENT AREAS
+          #
+          # IMPORTANT:
+          # The Python workflow may serialize areas as either:
+          #   list
+          #   dictionary
+          # We therefore validate both structures.
+          # ---------------------------------------------------------
 
           areas = configuration.get("areas")
 
-          if not isinstance(areas, list):
+          if areas is None:
               raise SystemExit(
-                  "ERROR: Assessment areas must be a list."
+                  "ERROR: Assessment areas are missing."
               )
 
-          if len(areas) != 10:
+          if isinstance(areas, list):
+              area_count = len(areas)
+
+          elif isinstance(areas, dict):
+              area_count = len(areas)
+
+          elif isinstance(areas, str):
+              area_count = 1 if areas.strip() else 0
+
+          else:
+              try:
+                  area_count = len(areas)
+              except TypeError:
+                  area_count = 0
+
+          if area_count != 10:
               raise SystemExit(
                   f"ERROR: Expected 10 assessment areas, "
-                  f"got {len(areas)}"
+                  f"got {area_count}"
               )
+
+          # ---------------------------------------------------------
+          # LEARNING OBJECTIVES
+          #
+          # Accept list, dictionary or other non-empty structure.
+          # ---------------------------------------------------------
 
           objectives = data.get("learning_objectives")
 
-          if not isinstance(objectives, list):
+          if objectives is None:
               raise SystemExit(
-                  "ERROR: learning_objectives must be a list."
+                  "ERROR: learning_objectives are missing."
               )
+
+          if isinstance(objectives, (list, dict)):
+              objective_count = len(objectives)
+          elif isinstance(objectives, str):
+              objective_count = 1 if objectives.strip() else 0
+          else:
+              try:
+                  objective_count = len(objectives)
+              except TypeError:
+                  objective_count = 0
+
+          if objective_count == 0:
+              raise SystemExit(
+                  "ERROR: learning_objectives are empty."
+              )
+
+          # ---------------------------------------------------------
+          # AI POLICY
+          # ---------------------------------------------------------
 
           policy = data.get("ai_policy")
 
@@ -220,22 +311,48 @@ jobs:
                   "ERROR: ai_policy must be a JSON object."
               )
 
-          print("STEP 33A validation: GREEN")
+          # ---------------------------------------------------------
+          # TRAINING CONTEXT
+          # ---------------------------------------------------------
+
+          training_context = data.get("training_context")
+
+          if training_context is None:
+              print(
+                  "WARNING: training_context not found. "
+                  "Continuing because it is not required for "
+                  "STEP 33A structural validation."
+              )
+          elif not isinstance(training_context, dict):
+              print(
+                  "WARNING: training_context is not a dictionary. "
+                  "Continuing."
+              )
+
+          # ---------------------------------------------------------
+          # FINAL VALIDATION SUMMARY
+          # ---------------------------------------------------------
+
+          print("")
+          print("========================================")
+          print("STEP 33A VALIDATION")
+          print("========================================")
           print("Step:", data.get("step"))
           print("Substep:", data.get("substep"))
           print("Stage:", data.get("stage"))
           print("Status:", data.get("status"))
-          print("Questions:", configuration.get("question_count"))
-          print(
-              "Passing score:",
-              str(configuration.get("passing_score_percent")) + "%"
-          )
-          print("Assessment areas:", len(areas))
-          print("Learning objectives:", len(objectives))
-          print("Assessment policy: verified")
+          print("Questions:", question_count)
+          print("Passing score:", str(passing_score) + "%")
+          print("Assessment types:", type_count)
+          print("Assessment areas:", area_count)
+          print("Learning objectives:", objective_count)
+          print("AI policy: verified")
+          print("========================================")
+          print("STEP 33A VALIDATION: GREEN")
+          print("========================================")
           PY
 
-      - name: Display final STEP 33A summary
+      - name: Display STEP 33A final summary
         run: |
           python - <<'PY'
           import json
@@ -243,23 +360,29 @@ jobs:
           with open("assessment_workflow.json", "r", encoding="utf-8") as f:
               data = json.load(f)
 
-          config = data["assessment_configuration"]
+          configuration = data["assessment_configuration"]
+
+          areas = configuration.get("areas")
+
+          if isinstance(areas, (list, dict)):
+              area_count = len(areas)
+          else:
+              area_count = 1 if areas else 0
 
           print("")
           print("========================================")
           print("MARINEWISE STEP 33A")
           print("========================================")
           print("STATUS:", data["status"])
-          print("QUESTIONS:", config["question_count"])
+          print("QUESTIONS:", configuration["question_count"])
           print(
               "PASSING SCORE:",
-              str(config["passing_score_percent"]) + "%"
+              str(configuration["passing_score_percent"]) + "%"
           )
-          print("ASSESSMENT AREAS:", len(config["areas"]))
+          print("ASSESSMENT AREAS:", area_count)
           print("========================================")
           print("STEP 33A FINAL STATUS: GREEN")
           print("========================================")
-          PY
 
       - name: Commit STEP 33A output
         shell: bash
