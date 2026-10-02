@@ -1,0 +1,266 @@
+name: MarineWise STEP 33B Assessment Generator
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assessment-generator:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify required files
+        shell: bash
+        run: |
+          set -e
+
+          test -f training_workflow.py
+          test -f assessment_workflow.py
+          test -f assessment_answer.py
+          test -f manual_catalog.json
+
+          echo "Required files verified."
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install groq gdown
+
+      - name: Verify assessment generator CLI
+        run: |
+          python assessment_answer.py --help
+
+      - name: Verify Groq API key
+        shell: bash
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          set -e
+
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "ERROR: GROQ_API_KEY GitHub secret is missing."
+            exit 1
+          fi
+
+          echo "GROQ_API_KEY is available."
+
+      - name: Build STEP 30 training workflow
+        run: |
+          python training_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --topic "Fuel System and Injector Maintenance" \
+            --technician-level "Basic" \
+            --duration "4 Days" \
+            --vessel "QL-40" \
+            --manuals "manual_catalog.json" \
+            --output training_workflow.json
+
+      - name: Validate STEP 30
+        shell: bash
+        run: |
+          set -e
+
+          python - <<'PY'
+          import json
+
+          with open(
+              "training_workflow.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if data.get("step") != 30:
+              raise SystemExit(
+                  f"ERROR: Expected STEP 30, got {data.get('step')}"
+              )
+
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  f"ERROR: Expected READY_FOR_GROQ, "
+                  f"got {data.get('status')}"
+              )
+
+          if data.get("stage") != (
+              "training_intelligence_curriculum_planner"
+          ):
+              raise SystemExit(
+                  "ERROR: Unexpected STEP 30 stage: "
+                  + str(data.get("stage"))
+              )
+
+          print("STEP 30 VALIDATION: GREEN")
+          PY
+
+      - name: Build STEP 33A assessment workflow
+        run: |
+          python assessment_workflow.py \
+            --training training_workflow.json \
+            --output assessment_workflow.json \
+            --question-count 20 \
+            --passing-score 70
+
+      - name: Validate STEP 33A
+        shell: bash
+        run: |
+          set -e
+
+          python - <<'PY'
+          import json
+
+          with open(
+              "assessment_workflow.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if data.get("step") != 33:
+              raise SystemExit(
+                  f"ERROR: Expected step 33, got {data.get('step')}"
+              )
+
+          if data.get("substep") != "33A":
+              raise SystemExit(
+                  f"ERROR: Expected substep 33A, "
+                  f"got {data.get('substep')}"
+              )
+
+          if data.get("stage") != "assessment_workflow":
+              raise SystemExit(
+                  "ERROR: Unexpected assessment workflow stage."
+              )
+
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  f"ERROR: Expected READY_FOR_GROQ, "
+                  f"got {data.get('status')}"
+              )
+
+          print("STEP 33A VALIDATION: GREEN")
+          PY
+
+      - name: Run STEP 33B Groq assessment generator
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python assessment_answer.py \
+            --workflow assessment_workflow.json \
+            --output assessment_answer.json
+
+      - name: Validate STEP 33B output
+        shell: bash
+        run: |
+          set -e
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path(
+              "assessment_answer.json"
+          )
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: assessment_answer.json was not created."
+              )
+
+          if path.stat().st_size == 0:
+              raise SystemExit(
+                  "ERROR: assessment_answer.json is empty."
+              )
+
+          with path.open(
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if not isinstance(data, dict):
+              raise SystemExit(
+                  "ERROR: assessment_answer.json "
+                  "must contain a JSON object."
+              )
+
+          if data.get("step") != 33:
+              raise SystemExit(
+                  f"ERROR: Expected step 33, "
+                  f"got {data.get('step')}"
+              )
+
+          if data.get("substep") != "33B":
+              raise SystemExit(
+                  f"ERROR: Expected substep 33B, "
+                  f"got {data.get('substep')}"
+              )
+
+          if data.get("stage") != (
+              "groq_assessment_content_generator"
+          ):
+              raise SystemExit(
+                  "ERROR: Unexpected STEP 33B stage: "
+                  + str(data.get("stage"))
+              )
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit(
+                  f"ERROR: Expected SUCCESS, "
+                  f"got {data.get('status')}"
+              )
+
+          if "assessment" not in data:
+              raise SystemExit(
+                  "ERROR: assessment section missing."
+              )
+
+          print("")
+          print("========================================")
+          print("STEP 33B VALIDATION")
+          print("========================================")
+          print("Step:", data.get("step"))
+          print("Substep:", data.get("substep"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+          print("Model:", data.get("model"))
+          print("Assessment payload: verified")
+          print("========================================")
+          print("STEP 33B VALIDATION: GREEN")
+          print("========================================")
+          PY
+
+      - name: Commit STEP 33B output
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add assessment_answer.json
+
+          if git diff --cached --quiet; then
+            echo "No assessment answer changes to commit."
+          else
+            git commit -m "Add MarineWise STEP 33B assessment generator output"
+            git push
+          fi
+
+      - name: Upload STEP 33B artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarineWise-Assessment-Generator-STEP33B
+          path: |
+            assessment_answer.json
+            assessment_workflow.json
+          if-no-files-found: error
