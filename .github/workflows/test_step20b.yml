@@ -1,0 +1,72 @@
+name: MarineWise STEP 20B - Check Selected Manuals
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-selection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Check selected_manuals.json
+        run: |
+          echo "=========================================="
+          echo "MARINEWISE AI - STEP 20B"
+          echo "CHECK SELECTED MANUALS"
+          echo "=========================================="
+
+          test -f selected_manuals.json
+          echo "GREEN - selected_manuals.json found"
+
+          python - <<'PY'
+          import json
+
+          with open("selected_manuals.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          print()
+          print("JSON TYPE:", type(data).__name__)
+
+          if isinstance(data, dict):
+              print("TOP-LEVEL KEYS:")
+              for key in data.keys():
+                  print(" -", key)
+
+              records = (
+                  data.get("selected_manuals")
+                  or data.get("results")
+                  or data.get("items")
+                  or []
+              )
+          else:
+              records = data
+
+          print()
+          print("SELECTED RECORDS:", len(records))
+          print()
+          print("SELECTED MANUAL DETAILS")
+          print("------------------------------------------")
+
+          for i, record in enumerate(records, 1):
+              print()
+              print(f"MANUAL {i}")
+
+              if isinstance(record, dict):
+                  for key, value in record.items():
+                      print(f"{key}: {value}")
+              else:
+                  print(record)
+
+          print()
+          print("==========================================")
+          print("STEP 20B INSPECTION COMPLETE")
+          print("==========================================")
+          PY
