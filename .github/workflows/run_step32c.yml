@@ -1,0 +1,379 @@
+name: STEP 32C - OEM Visual Quality Validator
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-oem-visuals:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            "pymupdf" \
+            "groq" \
+            "gdown>=6.1.0"
+
+      - name: Verify dependencies
+        run: |
+          python - <<'PY'
+          import sys
+          import fitz
+          import gdown
+          from groq import Groq
+
+          print("Python:", sys.version)
+          print("PyMuPDF: OK")
+          print("gdown: OK")
+          print("Groq: OK")
+          print("STEP 32C DEPENDENCIES GREEN")
+          PY
+
+      - name: Verify project files
+        run: |
+          test -f manual_catalog.json
+          test -f manual_selector.py
+          test -f manual_downloader.py
+          test -f training_workflow.py
+          test -f training_answer.py
+          test -f training_visual_planner.py
+          test -f training_visual_validator.py
+          test -f ai_visual_requests.json
+
+          echo "manual_catalog.json: FOUND"
+          echo "manual_selector.py: FOUND"
+          echo "manual_downloader.py: FOUND"
+          echo "training_workflow.py: FOUND"
+          echo "training_answer.py: FOUND"
+          echo "training_visual_planner.py: FOUND"
+          echo "training_visual_validator.py: FOUND"
+          echo "ai_visual_requests.json: FOUND"
+          echo "PROJECT FILES GREEN"
+
+      - name: Verify Step 32B planner output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("ai_visual_requests.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: ai_visual_requests.json is missing."
+              )
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          print("Step:", data.get("step"))
+          print("Substep:", data.get("substep"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+
+          if data.get("step") != 32:
+              raise SystemExit(
+                  f"Unexpected step: {data.get('step')}"
+              )
+
+          if data.get("substep") != "32B":
+              raise SystemExit(
+                  f"Unexpected substep: {data.get('substep')}"
+              )
+
+          if data.get("stage") != "ai_visual_fallback_planner":
+              raise SystemExit(
+                  f"Unexpected stage: {data.get('stage')}"
+              )
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit(
+                  f"STEP 32B is not successful: {data.get('status')}"
+              )
+
+          if data.get("manual_count", 0) <= 0:
+              raise SystemExit(
+                  "ERROR: Step 32B contains no manuals."
+              )
+
+          if data.get("visual_sections", 0) <= 0:
+              raise SystemExit(
+                  "ERROR: Step 32B contains no visual sections."
+              )
+
+          expected_label = (
+              "AI Training Illustration — Not an OEM Figure"
+          )
+
+          if data.get("ai_visual_label") != expected_label:
+              raise SystemExit(
+                  "ERROR: Step 32B AI visual label is incorrect."
+              )
+
+          policy = data.get("visual_policy", {})
+
+          if not policy.get("oem_visual_first"):
+              raise SystemExit(
+                  "ERROR: OEM-first policy is not enabled."
+              )
+
+          if not policy.get(
+              "technical_specs_must_come_from_oem"
+          ):
+              raise SystemExit(
+                  "ERROR: OEM technical specification policy missing."
+              )
+
+          print("STEP 32B INPUT GREEN")
+          PY
+
+      - name: Verify GROQ_API_KEY
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "ERROR: GROQ_API_KEY secret is missing."
+            exit 1
+          fi
+
+          echo "GROQ_API_KEY available."
+          echo "GROQ SECRET GREEN"
+
+      - name: Select OEM manuals
+        run: |
+          python manual_selector.py \
+            --query "QL-40 MAN 16V175D-MM Main Engine Fuel System Injector Maintenance" \
+            --top-k 10 \
+            --output selected_manuals.json
+
+      - name: Verify OEM manual selection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("selected_manuals.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: selected_manuals.json was not created."
+              )
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          if isinstance(data, list):
+              records = data
+          elif isinstance(data, dict):
+              records = (
+                  data.get("selected_manuals")
+                  or data.get("results")
+                  or data.get("manuals")
+                  or []
+              )
+          else:
+              records = []
+
+          if not records:
+              raise SystemExit(
+                  "ERROR: No OEM manuals selected."
+              )
+
+          print("Selected OEM manuals:", len(records))
+          print("OEM SELECTION GREEN")
+          PY
+
+      - name: Download selected OEM manuals
+        run: |
+          rm -rf selected_manuals
+
+          python manual_downloader.py \
+            --catalog manual_catalog.json \
+            --selected selected_manuals.json \
+            --output selected_manuals
+
+      - name: Verify downloaded OEM manuals
+        run: |
+          pdf_count=$(find selected_manuals -type f -iname "*.pdf" | wc -l)
+
+          echo "Downloaded PDF count: $pdf_count"
+
+          if [ "$pdf_count" -eq 0 ]; then
+            echo "ERROR: No OEM PDFs were downloaded."
+            exit 1
+          fi
+
+          echo "Downloaded OEM PDFs:"
+          find selected_manuals -type f -iname "*.pdf" | sort
+
+          echo "OEM PDF DOWNLOAD GREEN"
+
+      - name: Run STEP 32C validator
+        run: |
+          rm -rf validated_oem_visuals
+
+          python training_visual_validator.py \
+            --planner ai_visual_requests.json \
+            --manual-dir selected_manuals \
+            --output validated_visual_requests.json \
+            --visual-dir validated_oem_visuals
+
+      - name: Verify STEP 32C output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("validated_visual_requests.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: validated_visual_requests.json "
+                  "was not created."
+              )
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          print("Step:", data.get("step"))
+          print("Substep:", data.get("substep"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+
+          if data.get("step") != 32:
+              raise SystemExit(
+                  f"Unexpected step: {data.get('step')}"
+              )
+
+          if data.get("substep") != "32C":
+              raise SystemExit(
+                  f"Unexpected substep: {data.get('substep')}"
+              )
+
+          if data.get("stage") != "oem_visual_quality_validator":
+              raise SystemExit(
+                  f"Unexpected stage: {data.get('stage')}"
+              )
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit(
+                  f"STEP 32C failed: {data.get('status')}"
+              )
+
+          if data.get("visual_sections", 0) <= 0:
+              raise SystemExit(
+                  "ERROR: No visual training sections."
+              )
+
+          if data.get("manual_count", 0) <= 0:
+              raise SystemExit(
+                  "ERROR: No OEM manuals detected."
+              )
+
+          expected_label = (
+              "AI Training Illustration — Not an OEM Figure"
+          )
+
+          if data.get("ai_visual_label") != expected_label:
+              raise SystemExit(
+                  "ERROR: AI visual label is incorrect."
+              )
+
+          policy = data.get("visual_policy", {})
+
+          if not policy.get("oem_visual_first"):
+              raise SystemExit(
+                  "ERROR: OEM visual first policy is disabled."
+              )
+
+          if not policy.get(
+              "ai_visual_only_when_oem_visual_is_unavailable"
+          ):
+              raise SystemExit(
+                  "ERROR: AI fallback policy is incorrect."
+              )
+
+          if not policy.get(
+              "technical_specs_must_come_from_oem"
+          ):
+              raise SystemExit(
+                  "ERROR: OEM specification policy missing."
+              )
+
+          if not policy.get(
+              "list_of_figures_pages_rejected"
+          ):
+              raise SystemExit(
+                  "ERROR: List-of-Figures rejection policy missing."
+              )
+
+          if not policy.get(
+              "visual_page_must_be_validated"
+          ):
+              raise SystemExit(
+                  "ERROR: Visual validation policy missing."
+              )
+
+          print("Candidate count:", data.get("candidate_count"))
+          print("Usable OEM visuals:", data.get("usable_oem_visuals"))
+          print("OEM visual sections:", data.get("oem_visual_sections"))
+          print("AI fallback sections:", data.get("ai_fallback_sections"))
+          print(
+              "AI requests:",
+              len(data.get("ai_visual_requests", []))
+          )
+
+          print("STEP 32C GREEN")
+          PY
+
+      - name: Verify validated OEM images
+        run: |
+          image_count=$(find validated_oem_visuals \
+            -type f \
+            \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" \) \
+            | wc -l)
+
+          echo "Validated OEM image count: $image_count"
+
+          find validated_oem_visuals -type f | sort
+
+          echo "OEM VISUAL VALIDATION GREEN"
+
+      - name: Upload STEP 32C artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarineWise-OEM-Visual-Validation-STEP32C
+          path: |
+            validated_visual_requests.json
+            validated_oem_visuals
+          if-no-files-found: error
+
+      - name: Commit STEP 32C output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add validated_visual_requests.json
+
+          if git diff --cached --quiet; then
+            echo "No STEP 32C JSON changes to commit."
+          else
+            git commit -m "Add MarineWise OEM visual validation"
+            git push
+          fi
+
+          echo "STEP 32C OUTPUT COMMIT GREEN"
