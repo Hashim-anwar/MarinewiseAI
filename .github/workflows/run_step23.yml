@@ -18,17 +18,73 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install sentence-transformers faiss-cpu
+          pip install gdown pypdf sentence-transformers faiss-cpu
 
-      - name: Verify STEP 22 chunk file
+      - name: Verify STEP 19 selection
+        run: |
+          echo "=========================================="
+          echo "STEP 23 - VERIFY MANUAL SELECTION"
+          echo "=========================================="
+
+          test -f selected_manuals.json
+
+          echo "GREEN - selected_manuals.json found"
+
+      - name: Rebuild selected manual PDFs
+        run: |
+          echo "=========================================="
+          echo "STEP 23 - DOWNLOAD SELECTED MANUALS"
+          echo "=========================================="
+
+          python manual_downloader.py
+
+      - name: Verify selected PDFs
+        run: |
+          COUNT=$(find selected_manuals -maxdepth 1 -type f -name "*.pdf" | wc -l)
+
+          echo "Selected PDF files: $COUNT"
+
+          test "$COUNT" -eq 10
+
+          echo "GREEN - 10 selected manuals available"
+
+      - name: Extract documents
+        run: |
+          echo "=========================================="
+          echo "STEP 23 - DOCUMENT EXTRACTION"
+          echo "=========================================="
+
+          python document_extractor.py
+
+      - name: Verify extracted documents
+        run: |
+          COUNT=$(find extracted_documents -maxdepth 1 -type f -name "*.json" | wc -l)
+
+          echo "Extraction JSON files: $COUNT"
+
+          test "$COUNT" -eq 10
+
+          echo "GREEN - 10 extraction files available"
+
+      - name: Build document chunks
+        run: |
+          echo "=========================================="
+          echo "STEP 23 - REBUILD CHUNKS"
+          echo "=========================================="
+
+          python document_chunker.py
+
+      - name: Verify chunk index
         run: |
           echo "=========================================="
           echo "STEP 23 - VERIFY CHUNK INPUT"
           echo "=========================================="
 
           test -f chunks/all_chunks.json
+          test -f chunks/all_chunks.jsonl
 
           echo "GREEN - all_chunks.json found"
+          echo "GREEN - all_chunks.jsonl found"
 
       - name: Run STEP 23 Vector Indexer
         run: |
