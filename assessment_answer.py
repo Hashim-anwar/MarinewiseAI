@@ -31,100 +31,288 @@ REQUIRED_SECTIONS = [
 ]
 
 
-SYSTEM_PROMPT = f"""
-You are MarineWise AI, an evidence-controlled marine-engine
-training and assessment assistant.
+SYSTEM_PROMPT = """
+You are MarineWise AI, an evidence-controlled marine engine
+training assessment generator.
 
-Generate a technical assessment from the supplied assessment
-workflow and supplied evidence.
+Your task is to generate a technician assessment strictly from
+the supplied assessment workflow and OEM evidence.
 
-STRICT EVIDENCE POLICY:
+CRITICAL RULES:
 
-1. OEM evidence has highest priority.
-2. Use supplied OEM evidence whenever available.
-3. Web evidence is NOT OEM evidence.
-4. Never invent technical facts.
-5. Never invent part numbers, torque values, pressures,
-   temperatures, clearances, dimensions, tolerances,
-   alarm meanings, maintenance intervals, procedures,
-   tool specifications, or component specifications.
-6. Never create a fake OEM citation.
-7. Never claim that a statement comes from an OEM manual unless
-   supplied evidence supports it.
-8. Every technical question must be supported by supplied evidence.
-9. Every technical answer must be supported by supplied evidence.
-10. If sufficient evidence is unavailable, state exactly:
+1. OEM evidence has the highest priority.
+2. Do not invent technical information.
+3. Do not invent part numbers.
+4. Do not invent torque values.
+5. Do not invent pressures.
+6. Do not invent temperatures.
+7. Do not invent clearances.
+8. Do not invent dimensions.
+9. Do not invent maintenance intervals.
+10. Do not invent procedures.
+11. Do not invent tools or special tools.
+12. Do not invent alarm meanings.
+13. Do not invent component specifications.
+14. Do not create fake OEM references.
+15. Every technical question must be supported by supplied evidence.
+16. Every technical answer must have an OEM citation.
+17. WEB evidence must never be represented as OEM evidence.
+18. If reliable OEM evidence is unavailable, use exactly:
 
-{MISSING_EVIDENCE_TEXT}
+Insufficient OEM evidence available for a reliable conclusion.
 
-11. Do not use general engineering knowledge to fill missing OEM
-    information.
-12. Safety-critical instructions must remain evidence-controlled.
-13. Practical scenarios must not contain invented technical limits.
-14. Do not fabricate page numbers or filenames.
+19. Questions must be appropriate for marine technicians.
+20. Questions must test the supplied training curriculum.
+21. Include different difficulty levels.
+22. Include the requested assessment types.
+23. Multiple-choice questions must have exactly four options:
+    A, B, C and D.
+24. True/False questions must use:
+    A. True
+    B. False
+25. Short-answer questions must include expected answer points.
+26. Practical scenarios must include scoring points.
+27. Include an answer key.
+28. Include explanations.
+29. Include scoring guidance.
+30. Identify weak training areas.
+31. Provide evidence-based retraining recommendations.
+32. Return valid JSON only.
+33. Do not wrap JSON in Markdown fences.
+"""
 
-CITATIONS:
 
-OEM:
-[OEM: filename, Page X]
+def load_json(path: str) -> dict[str, Any]:
+    file_path = Path(path)
 
-Web:
-[WEB: title]
+    if not file_path.exists():
+        raise FileNotFoundError(f"File not found: {path}")
 
-Never convert a WEB citation into an OEM citation.
+    with file_path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
 
-ASSESSMENT QUALITY:
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} must contain a JSON object.")
 
-Generate useful marine technician assessment questions.
+    return data
 
-Cover, where evidence permits:
-- engine fundamentals
-- system knowledge
-- component identification
-- tools and safety
-- maintenance procedure
-- inspection
-- installation
-- troubleshooting
-- OEM specifications
-- practical application
 
-Avoid ambiguous questions.
+def save_json(path: str, data: dict[str, Any]) -> None:
+    file_path = Path(path)
 
-MULTIPLE CHOICE:
-Use exactly four options:
-A, B, C, D.
+    file_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
-TRUE/FALSE:
-Use:
-A. True
-B. False.
+    with file_path.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            data,
+            file,
+            indent=2,
+            ensure_ascii=False,
+        )
 
-SHORT ANSWER:
-Provide:
-- expected answer
-- acceptable answer points
-- explanation
-- evidence citation
 
-PRACTICAL SCENARIO:
-Provide:
-- scenario
-- technician task
-- expected response
-- scoring points
-- evidence citation
+def compact_for_prompt(value: Any, max_chars: int = 30000) -> str:
+    text = json.dumps(
+        value,
+        ensure_ascii=False,
+        indent=2,
+    )
 
-The answer key must correspond exactly to the generated questions.
+    if len(text) <= max_chars:
+        return text
 
-OUTPUT REQUIREMENTS:
+    return text[:max_chars] + "\n...[TRUNCATED]..."
+
+
+def validate_workflow(workflow: dict[str, Any]) -> None:
+    if workflow.get("step") != 33:
+        raise ValueError(
+            f"Expected assessment workflow step 33, "
+            f"got {workflow.get('step')}"
+        )
+
+    if workflow.get("substep") != "33A":
+        raise ValueError(
+            f"Expected assessment workflow substep 33A, "
+            f"got {workflow.get('substep')}"
+        )
+
+    if workflow.get("stage") != "assessment_workflow":
+        raise ValueError(
+            "Unexpected assessment workflow stage: "
+            + str(workflow.get("stage"))
+        )
+
+    if workflow.get("status") != "READY_FOR_GROQ":
+        raise ValueError(
+            "Assessment workflow is not READY_FOR_GROQ: "
+            + str(workflow.get("status"))
+        )
+
+
+def extract_context(
+    workflow: dict[str, Any],
+) -> dict[str, Any]:
+    input_data = workflow.get("input", {})
+
+    if not isinstance(input_data, dict):
+        input_data = {}
+
+    configuration = workflow.get(
+        "assessment_configuration",
+        {},
+    )
+
+    if not isinstance(configuration, dict):
+        configuration = {}
+
+    training_context = workflow.get(
+        "training_context",
+        {},
+    )
+
+    if not isinstance(training_context, dict):
+        training_context = {}
+
+    return {
+        "input": input_data,
+        "assessment_configuration": configuration,
+        "training_context": training_context,
+        "learning_objectives": workflow.get(
+            "learning_objectives",
+            [],
+        ),
+        "assessment_instructions": workflow.get(
+            "assessment_instructions",
+            [],
+        ),
+        "required_output": workflow.get(
+            "required_output",
+            {},
+        ),
+        "scoring_model": workflow.get(
+            "scoring_model",
+            {},
+        ),
+    }
+
+
+def extract_evidence(
+    workflow: dict[str, Any],
+) -> list[Any]:
+    possible_keys = [
+        "evidence",
+        "training_evidence",
+        "relevant_evidence",
+        "oem_evidence",
+        "sources",
+    ]
+
+    for key in possible_keys:
+        value = workflow.get(key)
+
+        if isinstance(value, list):
+            return value
+
+    training_context = workflow.get(
+        "training_context",
+        {},
+    )
+
+    if isinstance(training_context, dict):
+        for key in possible_keys:
+            value = training_context.get(key)
+
+            if isinstance(value, list):
+                return value
+
+    return []
+
+
+def get_question_count(
+    workflow: dict[str, Any],
+) -> int:
+    configuration = workflow.get(
+        "assessment_configuration",
+        {},
+    )
+
+    if isinstance(configuration, dict):
+        value = configuration.get(
+            "question_count",
+            20,
+        )
+
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            pass
+
+    return 20
+
+
+def get_passing_score(
+    workflow: dict[str, Any],
+) -> int:
+    configuration = workflow.get(
+        "assessment_configuration",
+        {},
+    )
+
+    if isinstance(configuration, dict):
+        value = configuration.get(
+            "passing_score_percent",
+            configuration.get(
+                "passing_score",
+                70,
+            ),
+        )
+
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            pass
+
+    return 70
+
+
+def build_user_prompt(
+    workflow: dict[str, Any],
+    evidence: list[Any],
+) -> str:
+    context = extract_context(workflow)
+
+    question_count = get_question_count(workflow)
+    passing_score = get_passing_score(workflow)
+
+    payload = {
+        "assessment_context": context,
+        "requested_question_count": question_count,
+        "passing_score_percent": passing_score,
+        "evidence": evidence,
+    }
+
+    return f"""
+Generate the MarineWise technician assessment.
+
+The assessment must contain exactly
+{question_count}
+questions.
+
+Passing score:
+{passing_score} percent.
+
+Use the supplied assessment workflow and OEM evidence only.
 
 Return one valid JSON object.
 
-The assessment content may be directly at the root level OR
-inside an "assessment" object.
-
-The following section names should be used:
+Required top-level assessment content:
 
 ASSESSMENT OVERVIEW
 INSTRUCTIONS
@@ -138,706 +326,63 @@ OEM REFERENCES
 EVIDENCE STATUS
 SAFETY NOTE
 
-QUESTIONS must be an array.
-
-Do not use markdown code fences.
-Do not add commentary outside JSON.
-"""
-
-
-def load_json(path: str) -> dict[str, Any]:
-    file_path = Path(path)
-
-    if not file_path.exists():
-        raise FileNotFoundError(
-            f"Input file not found: {path}"
-        )
-
-    if file_path.stat().st_size == 0:
-        raise ValueError(
-            f"Input file is empty: {path}"
-        )
-
-    with file_path.open(
-        "r",
-        encoding="utf-8",
-    ) as f:
-        data = json.load(f)
-
-    if not isinstance(data, dict):
-        raise ValueError(
-            f"Expected JSON object in {path}, "
-            f"got {type(data).__name__}"
-        )
-
-    return data
-
-
-def save_json(
-    path: str,
-    data: dict[str, Any],
-) -> None:
-
-    output_path = Path(path)
-    output_path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    with output_path.open(
-        "w",
-        encoding="utf-8",
-    ) as f:
-        json.dump(
-            data,
-            f,
-            indent=2,
-            ensure_ascii=False,
-        )
-
-
-def compact_for_prompt(
-    value: Any,
-    max_chars: int = 30000,
-) -> str:
-
-    try:
-        text = json.dumps(
-            value,
-            ensure_ascii=False,
-            indent=2,
-        )
-    except Exception:
-        text = str(value)
-
-    if len(text) <= max_chars:
-        return text
-
-    return text[:max_chars] + "\n[TRUNCATED]"
-
-
-def validate_workflow(
-    workflow: dict[str, Any],
-) -> None:
-
-    if workflow.get("step") != 33:
-        raise ValueError(
-            f"Expected STEP 33 workflow, "
-            f"got {workflow.get('step')}"
-        )
-
-    if workflow.get("substep") != "33A":
-        raise ValueError(
-            f"Expected substep 33A, "
-            f"got {workflow.get('substep')}"
-        )
-
-    if workflow.get("stage") != "assessment_workflow":
-        raise ValueError(
-            f"Expected stage assessment_workflow, "
-            f"got {workflow.get('stage')}"
-        )
-
-    if workflow.get("status") != "READY_FOR_GROQ":
-        raise ValueError(
-            f"Expected READY_FOR_GROQ, "
-            f"got {workflow.get('status')}"
-        )
-
-
-def extract_context(
-    workflow: dict[str, Any],
-) -> dict[str, Any]:
-
-    context: dict[str, Any] = {}
-
-    keys = [
-        "input",
-        "assessment_configuration",
-        "learning_objectives",
-        "training_context",
-        "assessment_instructions",
-        "required_output",
-        "scoring_model",
-        "ai_policy",
-    ]
-
-    for key in keys:
-        if key in workflow:
-            context[key] = workflow[key]
-
-    return context
-
-
-def extract_evidence(
-    workflow: dict[str, Any],
-) -> Any:
-
-    evidence_keys = [
-        "evidence",
-        "training_evidence",
-        "relevant_evidence",
-        "oem_evidence",
-        "sources",
-        "retrieved_evidence",
-        "evidence_context",
-    ]
-
-    for key in evidence_keys:
-        value = workflow.get(key)
-
-        if value:
-            return value
-
-    training_context = workflow.get(
-        "training_context"
-    )
-
-    if isinstance(training_context, dict):
-
-        for key in evidence_keys:
-            value = training_context.get(key)
-
-            if value:
-                return value
-
-    return []
-
-
-def get_question_count(
-    workflow: dict[str, Any],
-) -> int:
-
-    configuration = workflow.get(
-        "assessment_configuration"
-    )
-
-    if isinstance(configuration, dict):
-
-        value = configuration.get(
-            "question_count"
-        )
-
-        if isinstance(value, int):
-            return value
-
-    return 20
-
-
-def get_passing_score(
-    workflow: dict[str, Any],
-) -> int:
-
-    configuration = workflow.get(
-        "assessment_configuration"
-    )
-
-    if isinstance(configuration, dict):
-
-        value = configuration.get(
-            "passing_score_percent"
-        )
-
-        if isinstance(value, (int, float)):
-            return int(value)
-
-    return 70
-
-
-def build_user_prompt(
-    workflow: dict[str, Any],
-    evidence: Any,
-) -> str:
-
-    context = extract_context(workflow)
-    question_count = get_question_count(workflow)
-    passing_score = get_passing_score(workflow)
-
-    return f"""
-Generate the MarineWise technical assessment.
-
-ASSESSMENT WORKFLOW:
-
-{compact_for_prompt(context, 35000)}
-
-AVAILABLE TRAINING / OEM EVIDENCE:
-
-{compact_for_prompt(evidence, 50000)}
-
-QUESTION COUNT:
-
-{question_count}
-
-PASSING SCORE:
-
-{passing_score}%
-
-IMPORTANT:
-
-Generate exactly {question_count} questions.
-
-Every technical question must be supported by supplied evidence.
-
-Do not invent technical information.
-
-If reliable evidence is unavailable, use:
-
-{MISSING_EVIDENCE_TEXT}
-
-Use exact citations.
-
-OEM:
+For every question include, where applicable:
+
+- question_id
+- type
+- area
+- difficulty
+- question
+- options
+- correct_answer
+- expected_answer
+- expected_answer_points
+- explanation
+- oem_citation
+- scoring_points
+
+Multiple-choice questions:
+- exactly four options
+- A, B, C and D
+- exactly one correct answer
+
+True/False:
+- A = True
+- B = False
+
+Short-answer:
+- include expected answer points
+
+Practical scenario:
+- include realistic technician scenario
+- include scoring points
+- remain strictly within supplied evidence
+
+Technical evidence must include exact OEM citations such as:
 
 [OEM: filename, Page X]
 
-WEB:
+Do not fabricate citations.
 
-[WEB: title]
+If evidence is insufficient, use:
 
-Never fabricate citations.
+{MISSING_EVIDENCE_TEXT}
 
-Return one valid JSON object only.
+SOURCE DATA:
+
+{compact_for_prompt(payload)}
 """
 
 
-def extract_json(
-    text: str,
-) -> dict[str, Any]:
-
+def extract_json(text: str) -> dict[str, Any]:
     cleaned = text.strip()
 
-    if not cleaned:
-        raise ValueError(
-            "Groq returned an empty response."
-        )
-
-    if cleaned.startswith("```"):
-
-        cleaned = re.sub(
-            r"^```(?:json)?\s*",
-            "",
-            cleaned,
-            flags=re.IGNORECASE,
-        )
-
-        cleaned = re.sub(
-            r"\s*```$",
-            "",
-            cleaned,
-        )
-
-    try:
-        result = json.loads(cleaned)
-
-        if isinstance(result, dict):
-            return result
-
-    except json.JSONDecodeError:
-        pass
-
-    start = cleaned.find("{")
-    end = cleaned.rfind("}")
-
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError(
-            "Groq response did not contain a valid JSON object."
-        )
-
-    candidate = cleaned[start:end + 1]
-
-    try:
-        result = json.loads(candidate)
-
-    except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"Unable to parse Groq JSON: {exc}"
-        ) from exc
-
-    if not isinstance(result, dict):
-        raise ValueError(
-            "Groq response must be a JSON object."
-        )
-
-    return result
-
-
-def recursive_find(
-    value: Any,
-    target_key: str,
-) -> Any:
-
-    target = (
-        str(target_key)
-        .strip()
-        .lower()
+    cleaned = re.sub(
+        r"^```(?:json)?\s*",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
     )
 
-    if isinstance(value, dict):
-
-        for key, item in value.items():
-
-            normalized_key = (
-                str(key)
-                .strip()
-                .lower()
-            )
-
-            if normalized_key == target:
-                return item
-
-        for item in value.values():
-
-            result = recursive_find(
-                item,
-                target_key,
-            )
-
-            if result is not None:
-                return result
-
-    elif isinstance(value, list):
-
-        for item in value:
-
-            result = recursive_find(
-                item,
-                target_key,
-            )
-
-            if result is not None:
-                return result
-
-    return None
-
-
-def find_section(
-    data: dict[str, Any],
-    section_name: str,
-) -> Any:
-
-    return recursive_find(
-        data,
-        section_name,
-    )
-
-
-def find_questions(
-    data: dict[str, Any],
-) -> Any:
-
-    return recursive_find(
-        data,
-        "QUESTIONS",
-    )
-
-
-def validate_questions(
-    data: dict[str, Any],
-    expected_count: int,
-) -> None:
-
-    questions = find_questions(data)
-
-    if questions is None:
-        raise ValueError(
-            "Groq output does not contain QUESTIONS."
-        )
-
-    if not isinstance(questions, list):
-        raise ValueError(
-            "Groq QUESTIONS section must be a list."
-        )
-
-    actual_count = len(questions)
-
-    if actual_count != expected_count:
-        raise ValueError(
-            f"Expected {expected_count} questions, "
-            f"got {actual_count}."
-        )
-
-    for index, question in enumerate(
-        questions,
-        start=1,
-    ):
-
-        if not isinstance(question, dict):
-            raise ValueError(
-                f"Question {index} is not a JSON object."
-            )
-
-        question_text = (
-            question.get("question")
-            or question.get("Question")
-            or question.get("text")
-            or question.get("prompt")
-        )
-
-        if not question_text:
-            raise ValueError(
-                f"Question {index} has no question text."
-            )
-
-
-def validate_answer_key(
-    data: dict[str, Any],
-) -> None:
-
-    answer_key = find_section(
-        data,
-        "ANSWER KEY",
-    )
-
-    if answer_key is None:
-        print(
-            "WARNING: ANSWER KEY section not found."
-        )
-        return
-
-    if not isinstance(
-        answer_key,
-        (list, dict),
-    ):
-        print(
-            "WARNING: ANSWER KEY has unexpected structure."
-        )
-
-
-def validate_required_sections(
-    data: dict[str, Any],
-) -> None:
-
-    missing = []
-
-    for section in REQUIRED_SECTIONS:
-
-        if section == "QUESTIONS":
-            continue
-
-        if find_section(
-            data,
-            section,
-        ) is None:
-            missing.append(section)
-
-    if missing:
-
-        print(
-            "WARNING: Missing optional assessment sections:"
-        )
-
-        for section in missing:
-            print(
-                " -",
-                section,
-            )
-
-
-def add_metadata(
-    generated: dict[str, Any],
-    workflow: dict[str, Any],
-) -> dict[str, Any]:
-
-    input_data = workflow.get("input")
-
-    if not isinstance(input_data, dict):
-        input_data = {}
-
-    return {
-        "step": 33,
-        "substep": "33B",
-        "stage": "groq_assessment_content_generator",
-        "status": "SUCCESS",
-        "input": {
-            "manufacturer": input_data.get(
-                "manufacturer"
-            ),
-            "engine_model": input_data.get(
-                "engine_model"
-            ),
-            "topic": input_data.get(
-                "topic"
-            ),
-            "vessel": input_data.get(
-                "vessel"
-            ),
-            "technician_level": input_data.get(
-                "technician_level"
-            ),
-            "duration": input_data.get(
-                "duration"
-            ),
-        },
-        "model": MODEL,
-        "evidence_policy": {
-            "oem_priority": True,
-            "web_is_not_oem": True,
-            "unsupported_technical_claims_blocked": True,
-            "invented_part_numbers_blocked": True,
-            "invented_torque_blocked": True,
-            "invented_pressures_blocked": True,
-            "invented_temperatures_blocked": True,
-            "invented_clearances_blocked": True,
-            "invented_dimensions_blocked": True,
-            "invented_procedures_blocked": True,
-            "fake_oem_references_blocked": True,
-            "source_citation_required": True,
-        },
-        "required_sections": REQUIRED_SECTIONS,
-        "assessment": generated,
-    }
-
-
-def main() -> None:
-
-    parser = argparse.ArgumentParser(
-        description=(
-            "MarineWise STEP 33B "
-            "Groq Assessment Generator"
-        )
-    )
-
-    parser.add_argument(
-        "--workflow",
-        required=True,
-        help="STEP 33A assessment workflow JSON",
-    )
-
-    parser.add_argument(
-        "--output",
-        default="assessment_answer.json",
-        help="Output assessment JSON",
-    )
-
-    args = parser.parse_args()
-
-    print("MarineWise STEP 33B")
-    print("Loading assessment workflow...")
-
-    workflow = load_json(
-        args.workflow
-    )
-
-    validate_workflow(
-        workflow
-    )
-
-    evidence = extract_evidence(
-        workflow
-    )
-
-    question_count = get_question_count(
-        workflow
-    )
-
-    print(
-        "Question count:",
-        question_count,
-    )
-
-    api_key = os.getenv(
-        "GROQ_API_KEY"
-    )
-
-    if not api_key:
-        raise RuntimeError(
-            "GROQ_API_KEY environment variable "
-            "is not available."
-        )
-
-    client = Groq(
-        api_key=api_key
-    )
-
-    prompt = build_user_prompt(
-        workflow,
-        evidence,
-    )
-
-    print("Calling Groq...")
-    print("Model:", MODEL)
-
-    response = client.chat.completions.create(
-        model=MODEL,
-        temperature=0.1,
-        max_completion_tokens=7000,
-        messages=[
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT,
-            },
-            {
-                "role": "user",
-                "content": prompt,
-            },
-        ],
-    )
-
-    raw_content = (
-        response.choices[0]
-        .message
-        .content
-    )
-
-    if not raw_content:
-        raise RuntimeError(
-            "Groq returned an empty response."
-        )
-
-    print(
-        "Groq response received."
-    )
-
-    generated = extract_json(
-        raw_content
-    )
-
-    print(
-        "Groq JSON parsed successfully."
-    )
-
-    validate_questions(
-        generated,
-        question_count,
-    )
-
-    print(
-        "Question count validation: GREEN"
-    )
-
-    validate_answer_key(
-        generated
-    )
-
-    validate_required_sections(
-        generated
-    )
-
-    final_output = add_metadata(
-        generated,
-        workflow,
-    )
-
-    save_json(
-        args.output,
-        final_output,
-    )
-
-    print("")
-    print("========================================")
-    print("STEP 33B")
-    print("========================================")
-    print(
-        "Questions generated:",
-        question_count,
-    )
-    print("Model:", MODEL)
-    print("Output:", args.output)
-    print("Status: SUCCESS")
-    print("STEP 33 FILE 2 STATUS: GREEN")
-    print("========================================")
-
-
-if __name__ == "__main__":
-    main()
-```
+    cleaned = re.sub(
+        r"\s*```$
