@@ -6,3 +6,4 @@ python-docx
 rank_bm25
 sentence-transformers
 faiss-cpu
+requests
