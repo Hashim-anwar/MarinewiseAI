@@ -1,0 +1,206 @@
+{
+  "project": "MarineWise AI",
+  "step": "STEP 19",
+  "query": "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm",
+  "selected_count": 10,
+  "results": [
+    {
+      "catalog_id": 217,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "16V175D MM",
+      "document_type": "General OEM Document",
+      "manual_category": "Technical Document",
+      "file_name": "LANDING CRAFT QL 40_699_LCM00_8564_001_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_PMS_20220315.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_699_LCM00_8564_001_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_PMS_20220315.pdf",
+      "google_drive_file_id": "1G0QRXRL6YPjHLob6YyYQ55Ofb6KY4t5e",
+      "_score": 158,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "Exact engine model: 16V175D MM",
+        "System: main engine",
+        "Filename relevance: +14",
+        "Additional keyword matches: +4"
+      ]
+    },
+    {
+      "catalog_id": 216,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "16V175D MM",
+      "document_type": "Technical Documentation",
+      "manual_category": "Technical Document",
+      "file_name": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+      "google_drive_file_id": "1ynK6kgAwsCSyRXAYlPJSnK9IoY4pi6rZ",
+      "_score": 158,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "Exact engine model: 16V175D MM",
+        "System: main engine",
+        "Filename relevance: +14",
+        "Additional keyword matches: +4"
+      ]
+    },
+    {
+      "catalog_id": 176,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "16V175D-MM",
+      "document_type": "General OEM Document",
+      "manual_category": "Technical Document",
+      "file_name": "16V175D-MM.PDF",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_MAN-MAIN ENGINE/16V175D-MM.PDF",
+      "google_drive_file_id": "1nQa-qHhPgJxQB52vTlG7ZJ5qmaTAW1q_",
+      "_score": 156,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "Exact engine model: 16V175D MM",
+        "System: main engine",
+        "Filename relevance: +12",
+        "Additional keyword matches: +4"
+      ]
+    },
+    {
+      "catalog_id": 178,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "Unknown",
+      "document_type": "General OEM Document",
+      "manual_category": "Technical Document",
+      "file_name": "MAN-SPC_8351291,8351292_en.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_MAN-MAIN ENGINE/MAN-SPC_8351291,8351292_en.pdf",
+      "google_drive_file_id": "1HrBAMDsGwr-4nrfKYSzXikbQg2dH_fzH",
+      "_score": 94,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "System: main engine",
+        "Filename relevance: +2",
+        "Additional keyword matches: +2"
+      ]
+    },
+    {
+      "catalog_id": 177,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "Unknown",
+      "document_type": "General OEM Document",
+      "manual_category": "Technical Document",
+      "file_name": "MAN-OI_8351291,8351292_en.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_MAN-MAIN ENGINE/MAN-OI_8351291,8351292_en.pdf",
+      "google_drive_file_id": "11VRXxAonynU9Xn3IVQdI0Nzc4bl0MJXQ",
+      "_score": 94,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "System: main engine",
+        "Filename relevance: +2",
+        "Additional keyword matches: +2"
+      ]
+    },
+    {
+      "catalog_id": 193,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "Unknown",
+      "document_type": "Maintenance Manual",
+      "manual_category": "OEM Technical Documentation",
+      "file_name": "ML-3 MAINTENANCE-9.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_MAN-MAIN ENGINE/ML-3 MAINTENANCE-9.pdf",
+      "google_drive_file_id": "1VPgBsBSm_VVgoMaWQyHHQeKNNYbu0Q2A",
+      "_score": 92,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "System: main engine",
+        "Additional keyword matches: +2"
+      ]
+    },
+    {
+      "catalog_id": 192,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "Unknown",
+      "document_type": "Maintenance Manual",
+      "manual_category": "OEM Technical Documentation",
+      "file_name": "ML-3 MAINTENANCE-8.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_MAN-MAIN ENGINE/ML-3 MAINTENANCE-8.pdf",
+      "google_drive_file_id": "1FYv32xzgCPiplVcd5NZ4ZCBMbgsiwa4a",
+      "_score": 92,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "System: main engine",
+        "Additional keyword matches: +2"
+      ]
+    },
+    {
+      "catalog_id": 191,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "Unknown",
+      "document_type": "Maintenance Manual",
+      "manual_category": "OEM Technical Documentation",
+      "file_name": "ML-3 MAINTENANCE-7.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_MAN-MAIN ENGINE/ML-3 MAINTENANCE-7.pdf",
+      "google_drive_file_id": "10llF_YLz4AwQNA9RknUsSaPGV0x0KIPj",
+      "_score": 92,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "System: main engine",
+        "Additional keyword matches: +2"
+      ]
+    },
+    {
+      "catalog_id": 190,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "Unknown",
+      "document_type": "Maintenance Manual",
+      "manual_category": "OEM Technical Documentation",
+      "file_name": "ML-3 MAINTENANCE-6.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_MAN-MAIN ENGINE/ML-3 MAINTENANCE-6.pdf",
+      "google_drive_file_id": "19urxiL3t5OF--YrE4-vbn_qgF41GVNni",
+      "_score": 92,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "System: main engine",
+        "Additional keyword matches: +2"
+      ]
+    },
+    {
+      "catalog_id": 189,
+      "vessel": "QL 40",
+      "system": "Main Engine",
+      "manufacturer": "MAN",
+      "engine_model": "Unknown",
+      "document_type": "Maintenance Manual",
+      "manual_category": "OEM Technical Documentation",
+      "file_name": "ML-3 MAINTENANCE-5.pdf",
+      "drive_path": "MAIN ENGINES/LANDING CRAFT QL 40_MAN-MAIN ENGINE/ML-3 MAINTENANCE-5.pdf",
+      "google_drive_file_id": "1uMAbObsuwxYjmPBpaEGo0ogE1A3r0RXV",
+      "_score": 92,
+      "_reasons": [
+        "Exact vessel: QL-40",
+        "Manufacturer: MAN",
+        "System: main engine",
+        "Additional keyword matches: +2"
+      ]
+    }
+  ]
+}
