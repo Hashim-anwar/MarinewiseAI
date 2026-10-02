@@ -1,0 +1,1237 @@
+{
+  "step": 32,
+  "substep": "32C",
+  "stage": "oem_visual_quality_validator",
+  "status": "SUCCESS",
+  "input": {
+    "manufacturer": "MAN",
+    "engine_model": "16V175D-MM",
+    "topic": "Fuel System and Injector Maintenance",
+    "vessel": "QL-40"
+  },
+  "manual_count": 10,
+  "visual_sections": 10,
+  "candidate_count": 50,
+  "usable_oem_visuals": 10,
+  "oem_visual_sections": 10,
+  "ai_fallback_sections": 0,
+  "ai_visual_label": "AI Training Illustration — Not an OEM Figure",
+  "section_results": {
+    "INSTALLATION": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "planner_score": 15,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 50,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=50",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "planner_score": 15,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 47,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=47",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 149,
+          "planner_score": 15,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 5,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=5",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/INSTALLATION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_149.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 762,
+          "planner_score": 13,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 14,
+          "image_count": 3,
+          "drawing_count": 91,
+          "figure_mentions": 0,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=3",
+            "vector drawings=91",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/INSTALLATION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_762.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 1434,
+          "planner_score": 13,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 3,
+          "drawing_count": 89,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=3",
+            "vector drawings=89",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/INSTALLATION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_1434.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 149,
+        "planner_score": 15,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 18,
+        "image_count": 2,
+        "drawing_count": 61,
+        "figure_mentions": 5,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=2",
+          "vector drawings=61",
+          "figure-related terms=5",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/INSTALLATION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_149.png"
+      },
+      "ai_request_created": false
+    },
+    "INSPECTION": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/INSPECTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_419.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 724,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 16,
+          "image_count": 4,
+          "drawing_count": 180,
+          "figure_mentions": 1,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=4",
+            "vector drawings=180",
+            "figure-related terms=1",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/INSPECTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_724.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 762,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 14,
+          "image_count": 3,
+          "drawing_count": 91,
+          "figure_mentions": 0,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=3",
+            "vector drawings=91",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/INSPECTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_762.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 763,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 16,
+          "image_count": 4,
+          "drawing_count": 73,
+          "figure_mentions": 1,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=4",
+            "vector drawings=73",
+            "figure-related terms=1",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/INSPECTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_763.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 428,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 4,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=4",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/INSPECTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_428.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 419,
+        "planner_score": 12,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 18,
+        "image_count": 2,
+        "drawing_count": 61,
+        "figure_mentions": 2,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=2",
+          "vector drawings=61",
+          "figure-related terms=2",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/INSPECTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_419.png"
+      },
+      "ai_request_created": false
+    },
+    "TROUBLESHOOTING": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "planner_score": 14,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 47,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=47",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "ML-3 MAINTENANCE-5.pdf",
+          "page": 7,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 10,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=10",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/TROUBLESHOOTING_ML_3_MAINTENANCE_5_page_7.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/TROUBLESHOOTING_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_359.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 367,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 116,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=116",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/TROUBLESHOOTING_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_367.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/TROUBLESHOOTING_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_419.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "ML-3 MAINTENANCE-5.pdf",
+        "page": 7,
+        "planner_score": 12,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 18,
+        "image_count": 1,
+        "drawing_count": 10,
+        "figure_mentions": 2,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=1",
+          "vector drawings=10",
+          "figure-related terms=2",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/TROUBLESHOOTING_ML_3_MAINTENANCE_5_page_7.png"
+      },
+      "ai_request_created": false
+    },
+    "SAFETY PRECAUTIONS": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 724,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 16,
+          "image_count": 4,
+          "drawing_count": 180,
+          "figure_mentions": 1,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=4",
+            "vector drawings=180",
+            "figure-related terms=1",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/SAFETY_PRECAUTIONS_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_724.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 762,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 14,
+          "image_count": 3,
+          "drawing_count": 91,
+          "figure_mentions": 0,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=3",
+            "vector drawings=91",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/SAFETY_PRECAUTIONS_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_762.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/SAFETY_PRECAUTIONS_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_419.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 557,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 14,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 0,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/SAFETY_PRECAUTIONS_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_557.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 606,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 16,
+          "image_count": 3,
+          "drawing_count": 131,
+          "figure_mentions": 1,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=3",
+            "vector drawings=131",
+            "figure-related terms=1",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/SAFETY_PRECAUTIONS_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_606.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 724,
+        "planner_score": 12,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 16,
+        "image_count": 4,
+        "drawing_count": 180,
+        "figure_mentions": 1,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=4",
+          "vector drawings=180",
+          "figure-related terms=1",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/SAFETY_PRECAUTIONS_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_724.png"
+      },
+      "ai_request_created": false
+    },
+    "ENGINE INTRODUCTION": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 149,
+          "planner_score": 16,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 5,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=5",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/ENGINE_INTRODUCTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_149.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "planner_score": 15,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 50,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=50",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "planner_score": 14,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 47,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=47",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "planner_score": 13,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/ENGINE_INTRODUCTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_359.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 78,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 59,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=59",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 149,
+        "planner_score": 16,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 18,
+        "image_count": 2,
+        "drawing_count": 61,
+        "figure_mentions": 5,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=2",
+          "vector drawings=61",
+          "figure-related terms=5",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/ENGINE_INTRODUCTION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_149.png"
+      },
+      "ai_request_created": false
+    },
+    "TOOLS REQUIRED": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 78,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 59,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=59",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/TOOLS_REQUIRED_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_419.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 719,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 16,
+          "image_count": 4,
+          "drawing_count": 85,
+          "figure_mentions": 1,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=4",
+            "vector drawings=85",
+            "figure-related terms=1",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/TOOLS_REQUIRED_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_719.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 724,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 16,
+          "image_count": 4,
+          "drawing_count": 180,
+          "figure_mentions": 1,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=4",
+            "vector drawings=180",
+            "figure-related terms=1",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/TOOLS_REQUIRED_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_724.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 762,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 14,
+          "image_count": 3,
+          "drawing_count": 91,
+          "figure_mentions": 0,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=3",
+            "vector drawings=91",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/TOOLS_REQUIRED_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_762.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 419,
+        "planner_score": 11,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 18,
+        "image_count": 2,
+        "drawing_count": 61,
+        "figure_mentions": 2,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=2",
+          "vector drawings=61",
+          "figure-related terms=2",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/TOOLS_REQUIRED_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_419.png"
+      },
+      "ai_request_created": false
+    },
+    "SYSTEM OVERVIEW": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "planner_score": 18,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 47,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=47",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 149,
+          "planner_score": 18,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 5,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=5",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/SYSTEM_OVERVIEW_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_149.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "planner_score": 15,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 50,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=50",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "planner_score": 15,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/SYSTEM_OVERVIEW_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_359.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 367,
+          "planner_score": 14,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 116,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=116",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/SYSTEM_OVERVIEW_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_367.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 149,
+        "planner_score": 18,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 18,
+        "image_count": 2,
+        "drawing_count": 61,
+        "figure_mentions": 5,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=2",
+          "vector drawings=61",
+          "figure-related terms=5",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/SYSTEM_OVERVIEW_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_149.png"
+      },
+      "ai_request_created": false
+    },
+    "PRACTICAL EXERCISE": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "planner_score": 13,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 47,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=47",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/PRACTICAL_EXERCISE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_359.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 428,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 4,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=4",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/PRACTICAL_EXERCISE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_428.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 622,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 16,
+          "image_count": 3,
+          "drawing_count": 73,
+          "figure_mentions": 1,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=3",
+            "vector drawings=73",
+            "figure-related terms=1",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/PRACTICAL_EXERCISE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_622.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 1324,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 5,
+          "drawing_count": 128,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=5",
+            "vector drawings=128",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/PRACTICAL_EXERCISE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_1324.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 359,
+        "planner_score": 11,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 18,
+        "image_count": 1,
+        "drawing_count": 61,
+        "figure_mentions": 2,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=1",
+          "vector drawings=61",
+          "figure-related terms=2",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/PRACTICAL_EXERCISE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_359.png"
+      },
+      "ai_request_created": false
+    },
+    "REMOVAL PROCEDURE": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "planner_score": 13,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 50,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=50",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "planner_score": 13,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 47,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=47",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 622,
+          "planner_score": 13,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 16,
+          "image_count": 3,
+          "drawing_count": 73,
+          "figure_mentions": 1,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=3",
+            "vector drawings=73",
+            "figure-related terms=1",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/REMOVAL_PROCEDURE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_622.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/REMOVAL_PROCEDURE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_359.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "planner_score": 11,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/REMOVAL_PROCEDURE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_419.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 622,
+        "planner_score": 13,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 16,
+        "image_count": 3,
+        "drawing_count": 73,
+        "figure_mentions": 1,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=3",
+          "vector drawings=73",
+          "figure-related terms=1",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/REMOVAL_PROCEDURE_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_622.png"
+      },
+      "ai_request_created": false
+    },
+    "COMPONENT IDENTIFICATION": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_VALIDATED",
+      "validated_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 149,
+          "planner_score": 16,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 2,
+          "drawing_count": 61,
+          "figure_mentions": 5,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=2",
+            "vector drawings=61",
+            "figure-related terms=5",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/COMPONENT_IDENTIFICATION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_149.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "planner_score": 15,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 47,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=47",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "ML-3 MAINTENANCE-5.pdf",
+          "page": 7,
+          "planner_score": 14,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 10,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=10",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/COMPONENT_IDENTIFICATION_ML_3_MAINTENANCE_5_page_7.png"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "planner_score": 13,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": false,
+          "visual_score": 10,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 50,
+          "list_of_figures": true,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=50",
+            "page appears to be a List of Figures/index",
+            "does not meet OEM visual quality threshold"
+          ]
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "planner_score": 12,
+          "validation_status": "VALIDATED",
+          "usable_oem_visual": true,
+          "visual_score": 18,
+          "image_count": 1,
+          "drawing_count": 61,
+          "figure_mentions": 2,
+          "list_of_figures": false,
+          "reasons": [
+            "embedded images=1",
+            "vector drawings=61",
+            "figure-related terms=2",
+            "meets OEM visual quality threshold"
+          ],
+          "rendered_image": "validated_oem_visuals/COMPONENT_IDENTIFICATION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_359.png"
+        }
+      ],
+      "selected_oem_visual": {
+        "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+        "page": 149,
+        "planner_score": 16,
+        "validation_status": "VALIDATED",
+        "usable_oem_visual": true,
+        "visual_score": 18,
+        "image_count": 2,
+        "drawing_count": 61,
+        "figure_mentions": 5,
+        "list_of_figures": false,
+        "reasons": [
+          "embedded images=2",
+          "vector drawings=61",
+          "figure-related terms=5",
+          "meets OEM visual quality threshold"
+        ],
+        "rendered_image": "validated_oem_visuals/COMPONENT_IDENTIFICATION_LANDING_CRAFT_QL_40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC_page_149.png"
+      },
+      "ai_request_created": false
+    }
+  },
+  "ai_visual_requests": [],
+  "visual_policy": {
+    "oem_visual_first": true,
+    "ai_visual_only_when_oem_visual_is_unavailable": true,
+    "ai_visual_is_generic_training_illustration": true,
+    "ai_visual_not_oem_figure": true,
+    "technical_specs_must_come_from_oem": true,
+    "fake_oem_figures_blocked": true,
+    "list_of_figures_pages_rejected": true,
+    "visual_page_must_be_validated": true
+  }
+}
