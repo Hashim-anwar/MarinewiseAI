@@ -1,0 +1,71 @@
+name: MarineWise STEP 21 Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  step21:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pypdf>=5.0.0
+
+      - name: Verify selected manuals
+        run: |
+          echo "=========================================="
+          echo "STEP 21 - VERIFY INPUT MANUALS"
+          echo "=========================================="
+
+          test -d selected_manuals
+
+          PDF_COUNT=$(find selected_manuals -maxdepth 1 -type f -iname "*.pdf" | wc -l)
+
+          echo "PDF manuals found: $PDF_COUNT"
+
+          test "$PDF_COUNT" -eq 10
+
+          echo "GREEN - 10 selected manuals available"
+
+      - name: Run STEP 21 Document Extraction
+        run: |
+          python document_extractor.py
+
+      - name: Verify extracted documents
+        run: |
+          echo "=========================================="
+          echo "STEP 21 - VERIFY OUTPUT"
+          echo "=========================================="
+
+          test -d extracted_documents
+
+          JSON_COUNT=$(find extracted_documents -maxdepth 1 -type f -iname "*.json" | wc -l)
+
+          echo "Extraction JSON files: $JSON_COUNT"
+
+          test "$JSON_COUNT" -eq 10
+
+          echo "GREEN - 10 extraction files created"
+
+      - name: Upload extraction results
+        uses: actions/upload-artifact@v4
+        with:
+          name: marinewise-step21-extracted-documents
+          path: extracted_documents/
+
+      - name: STEP 21 complete
+        run: |
+          echo "=========================================="
+          echo "STEP 21 VERIFICATION WORKFLOW COMPLETE"
+          echo "=========================================="
+          echo "STEP 21: SUCCESS"
+          echo "GREEN"
