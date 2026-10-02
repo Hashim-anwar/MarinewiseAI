@@ -22,13 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install \
-            gdown \
-            pypdf \
-            rank_bm25 \
-            sentence-transformers \
-            faiss-cpu \
-            requests
+          pip install gdown pypdf rank_bm25 sentence-transformers faiss-cpu requests
 
       - name: Verify Tavily secret
         env:
@@ -74,12 +68,59 @@ jobs:
           print("All required STEP 28 pipeline files are present.")
           PY
 
-           - name: Select manuals
+      - name: Select manuals
         run: |
           python manual_selector.py \
             --query "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm" \
             --top-k 10 \
             --output selected_manuals.json
+
+      - name: Verify manual selection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("selected_manuals.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - selected_manuals.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if isinstance(data, list):
+              count = len(data)
+
+          elif isinstance(data, dict):
+              count = 0
+
+              for key in [
+                  "selected_manuals",
+                  "results",
+                  "manuals",
+              ]:
+                  candidate = data.get(key)
+
+                  if isinstance(candidate, list):
+                      count = len(candidate)
+                      break
+
+          else:
+              raise SystemExit(
+                  "ERROR - Invalid selected_manuals.json structure."
+              )
+
+          if count == 0:
+              raise SystemExit(
+                  "ERROR - No manuals were selected."
+              )
+
+          print(f"Selected manuals: {count}")
+          PY
 
       - name: Download selected manuals
         run: |
@@ -198,9 +239,7 @@ jobs:
               )
 
           data = json.loads(
-              output_file.read_text(
-                  encoding="utf-8"
-              )
+              output_file.read_text(encoding="utf-8")
           )
 
           required = [
@@ -257,8 +296,10 @@ jobs:
 
           if failed:
               print("FAILED POLICY CHECKS:")
+
               for item in failed:
                   print(f" - {item}")
+
               raise SystemExit(1)
 
           oem = data["oem_evidence"]
