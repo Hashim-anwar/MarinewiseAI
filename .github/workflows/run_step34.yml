@@ -1,0 +1,282 @@
+name: STEP 34 - Assessment Scoring and Retraining
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assessment-scoring:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify required files
+        run: |
+          test -f assessment_scoring.py
+          test -f assessment_answer.json
+          test -f assessment_evidence.json
+
+          echo "Required files verified."
+
+      - name: Test assessment scoring CLI
+        run: |
+          python assessment_scoring.py --help
+
+          echo "Assessment scoring CLI: GREEN"
+
+      - name: Validate assessment output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("assessment_answer.json")
+
+          assert path.exists(), "assessment_answer.json not found."
+          assert path.stat().st_size > 0, "assessment_answer.json is empty."
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          assert isinstance(data, dict), \
+              "assessment_answer.json must be a JSON object."
+
+          assert data.get("step") == 33, \
+              f"Unexpected step: {data.get('step')}"
+
+          assert data.get("substep") == "33B", \
+              f"Unexpected substep: {data.get('substep')}"
+
+          assert data.get("stage") == "groq_assessment_content_generator", \
+              f"Unexpected stage: {data.get('stage')}"
+
+          assert data.get("status") == "SUCCESS", \
+              f"Unexpected status: {data.get('status')}"
+
+          print("Assessment output validation: GREEN")
+          PY
+
+      - name: Prepare trainee answer sheet
+        run: |
+          python assessment_scoring.py \
+            --assessment assessment_answer.json \
+            --prepare \
+            --output trainee_answer_sheet.json
+
+      - name: Validate trainee answer sheet
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("trainee_answer_sheet.json")
+
+          assert path.exists(), \
+              "trainee_answer_sheet.json was not created."
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          assert isinstance(data, dict), \
+              "Answer sheet must be a JSON object."
+
+          assert data.get("step") == 34
+          assert data.get("mode") == "ANSWER_SHEET"
+          assert data.get("status") == "READY_FOR_TRAINEE"
+
+          answers = data.get("answers")
+
+          assert isinstance(answers, list), \
+              "Answer sheet answers must be a list."
+
+          assert len(answers) > 0, \
+              "Answer sheet contains no questions."
+
+          for item in answers:
+              assert "question_number" in item
+              assert "answer" in item
+
+          print("Questions in answer sheet:", len(answers))
+          print("Answer sheet validation: GREEN")
+          PY
+
+      - name: Create controlled scoring test
+        run: |
+          python - <<'PY'
+          import json
+
+          with open(
+              "trainee_answer_sheet.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          answers = []
+
+          for item in data["answers"]:
+              answers.append(
+                  {
+                      "question_number": item["question_number"],
+                      "answer": ""
+                  }
+              )
+
+          with open(
+              "test_trainee_answers.json",
+              "w",
+              encoding="utf-8"
+          ) as f:
+              json.dump(
+                  {
+                      "answers": answers
+                  },
+                  f,
+                  indent=2
+              )
+
+          print(
+              "Controlled trainee answer file created."
+          )
+          PY
+
+      - name: Run assessment scoring
+        run: |
+          python assessment_scoring.py \
+            --assessment assessment_answer.json \
+            --answers test_trainee_answers.json \
+            --passing-score 70 \
+            --output assessment_result.json
+
+      - name: Validate scoring and retraining result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("assessment_result.json")
+
+          assert path.exists(), \
+              "assessment_result.json was not created."
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          assert isinstance(data, dict), \
+              "Assessment result must be a JSON object."
+
+          assert data.get("step") == 34
+          assert data.get("stage") == \
+              "assessment_scoring_retraining_intelligence"
+          assert data.get("status") == "SUCCESS"
+
+          summary = data.get(
+              "assessment_summary"
+          )
+
+          assert isinstance(summary, dict)
+
+          assert "total_questions" in summary
+          assert "correct_answers" in summary
+          assert "score_percent" in summary
+          assert "passing_score_percent" in summary
+          assert "passed" in summary
+
+          question_results = data.get(
+              "question_results"
+          )
+
+          assert isinstance(
+              question_results,
+              list
+          )
+
+          assert len(question_results) > 0
+
+          area_scores = data.get(
+              "area_scores"
+          )
+
+          assert isinstance(
+              area_scores,
+              dict
+          )
+
+          weak_areas = data.get(
+              "weak_areas"
+          )
+
+          assert isinstance(
+              weak_areas,
+              list
+          )
+
+          retraining = data.get(
+              "retraining_recommendations"
+          )
+
+          assert isinstance(
+              retraining,
+              list
+          )
+
+          print("========================================")
+          print("STEP 34 VALIDATION")
+          print("========================================")
+          print(
+              "Total questions:",
+              summary["total_questions"]
+          )
+          print(
+              "Correct answers:",
+              summary["correct_answers"]
+          )
+          print(
+              "Score:",
+              str(summary["score_percent"]) + "%"
+          )
+          print(
+              "Passing score:",
+              str(summary["passing_score_percent"]) + "%"
+          )
+          print(
+              "Weak areas:",
+              len(weak_areas)
+          )
+          print(
+              "Retraining recommendations:",
+              len(retraining)
+          )
+          print(
+              "STEP 34 STATUS: GREEN"
+          )
+          print("========================================")
+          PY
+
+      - name: Upload STEP 34 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarineWise-Assessment-Scoring-STEP34
+          path: |
+            assessment_answer.json
+            assessment_evidence.json
+            trainee_answer_sheet.json
+            test_trainee_answers.json
+            assessment_result.json
+          if-no-files-found: error
+
+      - name: Final GREEN status
+        run: |
+          echo "========================================"
+          echo "STEP 34 COMPLETE"
+          echo "STATUS: GREEN"
+          echo "========================================"
