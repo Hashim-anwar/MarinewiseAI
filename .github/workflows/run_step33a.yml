@@ -1,0 +1,257 @@
+name: MarineWise STEP 33A Assessment Workflow
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assessment-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify required files
+        shell: bash
+        run: |
+          set -e
+
+          for file in \
+            training_workflow.py \
+            assessment_workflow.py \
+            manual_catalog.json
+          do
+            if [ ! -f "$file" ]; then
+              echo "ERROR: Required file not found: $file"
+              exit 1
+            fi
+          done
+
+          echo "Required files verified."
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install groq gdown
+
+      - name: Verify training workflow script
+        run: |
+          python training_workflow.py --help
+
+      - name: Verify assessment workflow script
+        run: |
+          python assessment_workflow.py --help
+
+      - name: Build STEP 30 training workflow
+        run: |
+          python training_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --topic "Fuel System and Injector Maintenance" \
+            --technician-level "Basic" \
+            --duration "4 Days" \
+            --vessel "QL-40" \
+            --manuals "manual_catalog.json" \
+            --output training_workflow.json
+
+      - name: Validate STEP 30 training workflow
+        shell: bash
+        run: |
+          set -e
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("training_workflow.json")
+
+          if not path.exists():
+              raise SystemExit("ERROR: training_workflow.json was not created.")
+
+          if path.stat().st_size == 0:
+              raise SystemExit("ERROR: training_workflow.json is empty.")
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          if not isinstance(data, dict):
+              raise SystemExit("ERROR: training_workflow.json must contain a JSON object.")
+
+          if data.get("step") != 30:
+              raise SystemExit(f"ERROR: Expected STEP 30, got {data.get('step')}")
+
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  f"ERROR: Expected READY_FOR_GROQ, got {data.get('status')}"
+              )
+
+          if data.get("stage") != "training_workflow":
+              raise SystemExit(
+                  f"ERROR: Expected stage training_workflow, got {data.get('stage')}"
+              )
+
+          print("STEP 30 training workflow validation: GREEN")
+          print("Training workflow status:", data.get("status"))
+          print("Training workflow stage:", data.get("stage"))
+          PY
+
+      - name: Run STEP 33A assessment workflow
+        run: |
+          python assessment_workflow.py \
+            --training training_workflow.json \
+            --output assessment_workflow.json \
+            --question-count 20 \
+            --passing-score 70
+
+      - name: Validate STEP 33A output
+        shell: bash
+        run: |
+          set -e
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("assessment_workflow.json")
+
+          if not path.exists():
+              raise SystemExit("ERROR: assessment_workflow.json was not created.")
+
+          if path.stat().st_size == 0:
+              raise SystemExit("ERROR: assessment_workflow.json is empty.")
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          if not isinstance(data, dict):
+              raise SystemExit("ERROR: assessment_workflow.json must contain a JSON object.")
+
+          if data.get("step") != 33:
+              raise SystemExit(
+                  f"ERROR: Expected step 33, got {data.get('step')}"
+              )
+
+          if data.get("substep") != "33A":
+              raise SystemExit(
+                  f"ERROR: Expected substep 33A, got {data.get('substep')}"
+              )
+
+          if data.get("stage") != "assessment_workflow":
+              raise SystemExit(
+                  f"ERROR: Expected stage assessment_workflow, got {data.get('stage')}"
+              )
+
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  f"ERROR: Expected status READY_FOR_GROQ, got {data.get('status')}"
+              )
+
+          configuration = data.get("assessment_configuration")
+
+          if not isinstance(configuration, dict):
+              raise SystemExit(
+                  "ERROR: assessment_configuration must be a JSON object."
+              )
+
+          if configuration.get("question_count") != 20:
+              raise SystemExit(
+                  f"ERROR: Expected 20 questions, got "
+                  f"{configuration.get('question_count')}"
+              )
+
+          if configuration.get("passing_score_percent") != 70:
+              raise SystemExit(
+                  f"ERROR: Expected passing score 70, got "
+                  f"{configuration.get('passing_score_percent')}"
+              )
+
+          areas = configuration.get("areas")
+
+          if not isinstance(areas, list):
+              raise SystemExit("ERROR: Assessment areas must be a list.")
+
+          if len(areas) != 10:
+              raise SystemExit(
+                  f"ERROR: Expected 10 assessment areas, got {len(areas)}"
+              )
+
+          objectives = data.get("learning_objectives")
+
+          if not isinstance(objectives, list):
+              raise SystemExit(
+                  "ERROR: learning_objectives must be a list."
+              )
+
+          policy = data.get("ai_policy")
+
+          if not isinstance(policy, dict):
+              raise SystemExit(
+                  "ERROR: ai_policy must be a JSON object."
+              )
+
+          print("STEP 33A validation: GREEN")
+          print("Step:", data.get("step"))
+          print("Substep:", data.get("substep"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+          print("Questions:", configuration.get("question_count"))
+          print("Passing score:", configuration.get("passing_score_percent"))
+          print("Assessment areas:", len(areas))
+          print("Learning objectives:", len(objectives))
+          print("Assessment policy: verified")
+          PY
+
+      - name: Display assessment output summary
+        run: |
+          python - <<'PY'
+          import json
+
+          with open("assessment_workflow.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          config = data["assessment_configuration"]
+
+          print("")
+          print("========================================")
+          print("MARINEWISE STEP 33A")
+          print("========================================")
+          print("STATUS:", data["status"])
+          print("QUESTIONS:", config["question_count"])
+          print("PASSING SCORE:", str(config["passing_score_percent"]) + "%")
+          print("ASSESSMENT AREAS:", len(config["areas"]))
+          print("========================================")
+          print("STEP 33A FINAL STATUS: GREEN")
+          print("========================================")
+          PY
+
+      - name: Commit STEP 33A output
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add assessment_workflow.json
+
+          if git diff --cached --quiet; then
+            echo "No assessment workflow changes to commit."
+          else
+            git commit -m "Add MarineWise STEP 33A assessment workflow"
+            git push
+          fi
+
+      - name: Upload STEP 33A artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarineWise-Assessment-Workflow-STEP33A
+          path: |
+            assessment_workflow.json
+            training_workflow.json
+          if-no-files-found: error
