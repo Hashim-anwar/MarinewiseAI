@@ -53,7 +53,7 @@ CRITICAL RULES:
 12. Do not invent alarm meanings.
 13. Do not invent component specifications.
 14. Do not create fake OEM references.
-15. Every technical question must be supported by supplied evidence.
+15. Every technical question must be supported by supplied OEM evidence.
 16. Technical answers must include OEM citations when evidence is available.
 17. Web evidence must never be represented as OEM evidence.
 18. If reliable OEM evidence is unavailable, use exactly:
@@ -83,7 +83,7 @@ Insufficient OEM evidence available for a reliable conclusion.
 """
 
 
-def load_json(path: str) -> dict[str, Any]:
+def load_json(path: str) -> Any:
     file_path = Path(path)
 
     if not file_path.exists():
@@ -95,14 +95,7 @@ def load_json(path: str) -> dict[str, Any]:
         "r",
         encoding="utf-8",
     ) as file:
-        data = json.load(file)
-
-    if not isinstance(data, dict):
-        raise ValueError(
-            f"{path} must contain a JSON object."
-        )
-
-    return data
+        return json.load(file)
 
 
 def save_json(
@@ -130,8 +123,9 @@ def save_json(
 
 def compact_for_prompt(
     value: Any,
-    max_chars: int = 30000,
+    max_chars: int = 50000,
 ) -> str:
+
     text = json.dumps(
         value,
         ensure_ascii=False,
@@ -185,7 +179,10 @@ def extract_context(
         {},
     )
 
-    if not isinstance(input_data, dict):
+    if not isinstance(
+        input_data,
+        dict,
+    ):
         input_data = {}
 
     configuration = workflow.get(
@@ -193,7 +190,10 @@ def extract_context(
         {},
     )
 
-    if not isinstance(configuration, dict):
+    if not isinstance(
+        configuration,
+        dict,
+    ):
         configuration = {}
 
     training_context = workflow.get(
@@ -201,7 +201,10 @@ def extract_context(
         {},
     )
 
-    if not isinstance(training_context, dict):
+    if not isinstance(
+        training_context,
+        dict,
+    ):
         training_context = {}
 
     return {
@@ -227,38 +230,153 @@ def extract_context(
     }
 
 
-def extract_evidence(
-    workflow: dict[str, Any],
-) -> list[Any]:
+def normalize_key(
+    value: Any,
+) -> str:
 
-    possible_keys = [
-        "evidence",
-        "training_evidence",
-        "relevant_evidence",
-        "oem_evidence",
-        "sources",
-    ]
+    text = str(
+        value
+    ).strip().lower()
 
-    for key in possible_keys:
-        value = workflow.get(key)
+    for character in [
+        "_",
+        "-",
+        ":",
+    ]:
+        text = text.replace(
+            character,
+            " ",
+        )
 
-        if isinstance(value, list):
-            return value
-
-    training_context = workflow.get(
-        "training_context",
-        {},
+    return " ".join(
+        text.split()
     )
 
-    if isinstance(training_context, dict):
 
-        for key in possible_keys:
-            value = training_context.get(key)
+def recursive_find_all_lists(
+    value: Any,
+    target_names: set[str],
+) -> list[list[Any]]:
 
-            if isinstance(value, list):
-                return value
+    results: list[list[Any]] = []
 
-    return []
+    if isinstance(
+        value,
+        dict,
+    ):
+
+        for key, item in value.items():
+
+            if normalize_key(key) in target_names:
+
+                if isinstance(
+                    item,
+                    list,
+                ):
+                    results.append(
+                        item
+                    )
+
+            results.extend(
+                recursive_find_all_lists(
+                    item,
+                    target_names,
+                )
+            )
+
+    elif isinstance(
+        value,
+        list,
+    ):
+
+        for item in value:
+
+            results.extend(
+                recursive_find_all_lists(
+                    item,
+                    target_names,
+                )
+            )
+
+    return results
+
+
+def extract_evidence_from_file(
+    evidence_data: Any,
+) -> list[Any]:
+    """
+    Extract OEM evidence from assessment_evidence.json.
+
+    The function supports several safe JSON layouts so the
+    assessment generator does not depend on one exact nesting
+    level.
+    """
+
+    target_names = {
+        "evidence",
+        "oem evidence",
+        "oem evidence records",
+        "records",
+        "evidence records",
+        "items",
+        "oem records",
+    }
+
+    candidates = recursive_find_all_lists(
+        evidence_data,
+        target_names,
+    )
+
+    best: list[Any] = []
+
+    for candidate in candidates:
+
+        if len(candidate) > len(best):
+            best = candidate
+
+    return best
+
+
+def validate_oem_evidence(
+    evidence: list[Any],
+) -> list[dict[str, Any]]:
+
+    validated: list[dict[str, Any]] = []
+
+    for item in evidence:
+
+        if not isinstance(
+            item,
+            dict,
+        ):
+            continue
+
+        source_type = str(
+            item.get(
+                "source_type",
+                "OEM",
+            )
+        ).strip().upper()
+
+        if source_type != "OEM":
+            continue
+
+        text = (
+            item.get("text")
+            or item.get("content")
+            or item.get("evidence")
+            or item.get("page_text")
+            or ""
+        )
+
+        if not str(text).strip():
+            continue
+
+        validated.append(
+            item
+        )
+
+    return validated
 
 
 def get_question_count(
@@ -270,7 +388,10 @@ def get_question_count(
         {},
     )
 
-    if isinstance(configuration, dict):
+    if isinstance(
+        configuration,
+        dict,
+    ):
 
         value = configuration.get(
             "question_count",
@@ -297,7 +418,10 @@ def get_passing_score(
         {},
     )
 
-    if isinstance(configuration, dict):
+    if isinstance(
+        configuration,
+        dict,
+    ):
 
         value = configuration.get(
             "passing_score_percent",
@@ -339,7 +463,8 @@ def build_user_prompt(
         "assessment_context": context,
         "requested_question_count": question_count,
         "passing_score_percent": passing_score,
-        "evidence": evidence,
+        "oem_evidence_count": len(evidence),
+        "oem_evidence": evidence,
     }
 
     return f"""
@@ -352,7 +477,21 @@ questions.
 Passing score:
 {passing_score} percent.
 
-Use the supplied assessment workflow and OEM evidence only.
+Use the supplied assessment workflow and supplied OEM evidence.
+
+The OEM evidence is the primary technical source.
+
+Every technical question must be directly supported by
+one or more supplied OEM evidence records.
+
+Do not use general knowledge when OEM evidence is available.
+
+If a specific technical fact cannot be supported by the
+supplied OEM evidence, do not invent it.
+
+Instead use exactly:
+
+{MISSING_EVIDENCE_TEXT}
 
 Return ONE JSON OBJECT.
 
@@ -407,16 +546,16 @@ include expected answer points.
 Practical scenario:
 include scoring points.
 
-Technical information must remain strictly within
-the supplied evidence.
+OEM citations must use the supplied evidence.
 
-OEM citations should use:
+Preferred citation format:
 
 [OEM: filename, Page X]
 
 Never fabricate an OEM citation.
 
-If reliable OEM evidence is unavailable, use exactly:
+If reliable OEM evidence is unavailable for a question,
+use exactly:
 
 {MISSING_EVIDENCE_TEXT}
 
@@ -431,9 +570,6 @@ SOURCE DATA:
 def extract_json(
     text: str,
 ) -> dict[str, Any]:
-    """
-    Parse JSON returned by Groq JSON Object Mode.
-    """
 
     if not text:
         raise ValueError(
@@ -443,28 +579,44 @@ def extract_json(
     cleaned = text.strip()
 
     try:
+
         data = json.loads(
             cleaned
         )
 
     except json.JSONDecodeError as exc:
 
-        print("========================================")
-        print("GROQ JSON PARSING ERROR")
-        print("========================================")
+        print(
+            "========================================"
+        )
+        print(
+            "GROQ JSON PARSING ERROR"
+        )
+        print(
+            "========================================"
+        )
         print(
             "Response length:",
             len(cleaned),
         )
-        print("Response preview:")
-        print(cleaned[:3000])
-        print("========================================")
+        print(
+            "Response preview:"
+        )
+        print(
+            cleaned[:3000]
+        )
+        print(
+            "========================================"
+        )
 
         raise ValueError(
             "Groq response was not valid JSON."
         ) from exc
 
-    if not isinstance(data, dict):
+    if not isinstance(
+        data,
+        dict,
+    ):
         raise ValueError(
             "Groq response JSON must be an object."
         )
@@ -477,35 +629,18 @@ def recursive_find(
     target_key: str,
 ) -> Any:
 
-    target = (
-        str(target_key)
-        .strip()
-        .lower()
-        .replace("_", " ")
-        .replace("-", " ")
+    target = normalize_key(
+        target_key
     )
 
-    target = " ".join(
-        target.split()
-    )
-
-    if isinstance(value, dict):
+    if isinstance(
+        value,
+        dict,
+    ):
 
         for key, item in value.items():
 
-            normalized_key = (
-                str(key)
-                .strip()
-                .lower()
-                .replace("_", " ")
-                .replace("-", " ")
-            )
-
-            normalized_key = " ".join(
-                normalized_key.split()
-            )
-
-            if normalized_key == target:
+            if normalize_key(key) == target:
                 return item
 
             found = recursive_find(
@@ -516,7 +651,10 @@ def recursive_find(
             if found is not None:
                 return found
 
-    elif isinstance(value, list):
+    elif isinstance(
+        value,
+        list,
+    ):
 
         for item in value:
 
@@ -535,20 +673,16 @@ def find_questions(
     data: dict[str, Any],
 ) -> list[Any] | None:
 
-    candidates = [
+    result = recursive_find(
+        data,
         "QUESTIONS",
-        "questions",
-    ]
+    )
 
-    for name in candidates:
-
-        result = recursive_find(
-            data,
-            name,
-        )
-
-        if isinstance(result, list):
-            return result
+    if isinstance(
+        result,
+        list,
+    ):
+        return result
 
     return None
 
@@ -565,14 +699,6 @@ def validate_questions(
     if questions is None:
         raise ValueError(
             "Groq output does not contain QUESTIONS."
-        )
-
-    if not isinstance(
-        questions,
-        list,
-    ):
-        raise ValueError(
-            "QUESTIONS must be a list."
         )
 
     if len(questions) != expected_count:
@@ -619,12 +745,6 @@ def validate_answer_key(
     )
 
     if answer_key is None:
-        answer_key = recursive_find(
-            data,
-            "answer_key",
-        )
-
-    if answer_key is None:
         raise ValueError(
             "Groq output does not contain ANSWER KEY."
         )
@@ -633,24 +753,6 @@ def validate_answer_key(
 def validate_required_sections(
     data: dict[str, Any],
 ) -> None:
-
-    def normalize(
-        value: Any,
-    ) -> str:
-
-        text = str(
-            value
-        ).strip().lower()
-
-        text = (
-            text.replace("_", " ")
-            .replace("-", " ")
-            .replace(":", " ")
-        )
-
-        return " ".join(
-            text.split()
-        )
 
     serialized = json.dumps(
         data,
@@ -661,40 +763,34 @@ def validate_required_sections(
 
     for section in REQUIRED_SECTIONS:
 
-        normalized = normalize(
-            section
-        )
-
         found = recursive_find(
             data,
             section,
         )
 
-        if found is None:
-            found = recursive_find(
-                data,
-                normalized,
+        if found is not None:
+            continue
+
+        normalized = normalize_key(
+            section
+        )
+
+        variants = [
+            section.lower(),
+            normalized,
+            normalized.replace(
+                " ",
+                "_",
+            ),
+        ]
+
+        if not any(
+            variant in serialized
+            for variant in variants
+        ):
+            missing.append(
+                section
             )
-
-        if found is None:
-
-            variants = [
-                section.lower(),
-                normalized,
-                normalized.replace(
-                    " ",
-                    "_",
-                ),
-            ]
-
-            for variant in variants:
-
-                if variant in serialized:
-                    found = True
-                    break
-
-        if found is None:
-            missing.append(section)
 
     if missing:
         raise ValueError(
@@ -707,6 +803,8 @@ def add_metadata(
     generated: dict[str, Any],
     question_count: int,
     passing_score: int,
+    evidence_count: int,
+    evidence_file: str,
 ) -> dict[str, Any]:
 
     return {
@@ -718,6 +816,8 @@ def add_metadata(
         "question_count": question_count,
         "passing_score_percent": passing_score,
         "source_workflow": "assessment_workflow.json",
+        "source_evidence": evidence_file,
+        "oem_evidence_records_used": evidence_count,
         "evidence_policy": {
             "oem_priority": True,
             "oem_evidence_required": True,
@@ -756,6 +856,12 @@ def main() -> None:
     )
 
     parser.add_argument(
+        "--evidence",
+        required=True,
+        help="Path to assessment_evidence.json",
+    )
+
+    parser.add_argument(
         "--output",
         required=True,
         help="Output assessment JSON path",
@@ -763,9 +869,15 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    print("========================================")
-    print("STEP 33B")
-    print("========================================")
+    print(
+        "========================================"
+    )
+    print(
+        "STEP 33B"
+    )
+    print(
+        "========================================"
+    )
 
     print(
         "Loading assessment workflow..."
@@ -775,12 +887,32 @@ def main() -> None:
         args.workflow
     )
 
+    if not isinstance(
+        workflow,
+        dict,
+    ):
+        raise ValueError(
+            "Assessment workflow must be a JSON object."
+        )
+
     validate_workflow(
         workflow
     )
 
-    evidence = extract_evidence(
-        workflow
+    print(
+        "Loading OEM assessment evidence..."
+    )
+
+    evidence_data = load_json(
+        args.evidence
+    )
+
+    raw_evidence = extract_evidence_from_file(
+        evidence_data
+    )
+
+    evidence = validate_oem_evidence(
+        raw_evidence
     )
 
     question_count = get_question_count(
@@ -800,8 +932,22 @@ def main() -> None:
     )
 
     print(
-        f"Evidence records: {len(evidence)}"
+        f"OEM evidence records found: "
+        f"{len(raw_evidence)}"
     )
+
+    print(
+        f"Valid OEM evidence records: "
+        f"{len(evidence)}"
+    )
+
+    if not evidence:
+        raise RuntimeError(
+            "No valid OEM evidence records were found "
+            "in assessment_evidence.json. "
+            "Assessment generation stopped to prevent "
+            "ungrounded technical questions."
+        )
 
     api_key = os.getenv(
         "GROQ_API_KEY"
@@ -883,6 +1029,8 @@ def main() -> None:
         generated,
         question_count,
         passing_score,
+        len(evidence),
+        args.evidence,
     )
 
     save_json(
@@ -890,9 +1038,14 @@ def main() -> None:
         final_output,
     )
 
-    print("========================================")
+    print(
+        "========================================"
+    )
     print(
         f"Questions generated: {question_count}"
+    )
+    print(
+        f"OEM evidence used: {len(evidence)}"
     )
     print(
         f"Model: {MODEL}"
@@ -906,7 +1059,9 @@ def main() -> None:
     print(
         "STEP 33 FILE 2 STATUS: GREEN"
     )
-    print("========================================")
+    print(
+        "========================================"
+    )
 
 
 if __name__ == "__main__":
