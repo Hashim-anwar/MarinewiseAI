@@ -1,0 +1,159 @@
+{
+  "step": 33,
+  "substep": "33A",
+  "stage": "assessment_workflow",
+  "status": "READY_FOR_GROQ",
+  "input": {
+    "manufacturer": "MAN",
+    "engine_model": "16V175D-MM",
+    "topic": "Fuel System and Injector Maintenance",
+    "vessel": "QL-40",
+    "technician_level": "Basic",
+    "duration": "4 Days"
+  },
+  "assessment_configuration": {
+    "question_count": 20,
+    "passing_score_percent": 70,
+    "assessment_types": [
+      "MULTIPLE_CHOICE",
+      "TRUE_FALSE",
+      "SHORT_ANSWER",
+      "PRACTICAL_SCENARIO"
+    ],
+    "distribution": {
+      "MULTIPLE_CHOICE": 10,
+      "TRUE_FALSE": 3,
+      "SHORT_ANSWER": 3,
+      "PRACTICAL_SCENARIO": 4
+    },
+    "assessment_areas": [
+      {
+        "id": 1,
+        "area": "ENGINE FUNDAMENTALS",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 2,
+        "area": "SYSTEM KNOWLEDGE",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 3,
+        "area": "COMPONENT IDENTIFICATION",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 4,
+        "area": "TOOLS AND SAFETY",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 5,
+        "area": "MAINTENANCE PROCEDURE",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 6,
+        "area": "INSPECTION",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 7,
+        "area": "INSTALLATION",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 8,
+        "area": "TROUBLESHOOTING",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 9,
+        "area": "OEM SPECIFICATIONS",
+        "evidence_required": true,
+        "oem_citation_required": true
+      },
+      {
+        "id": 10,
+        "area": "PRACTICAL APPLICATION",
+        "evidence_required": true,
+        "oem_citation_required": true
+      }
+    ]
+  },
+  "learning_objectives": [
+    "Understand the key principles related to Fuel System and Injector Maintenance.",
+    "Identify major components and systems of the 16V175D-MM.",
+    "Apply required workshop safety practices.",
+    "Understand the sequence of maintenance activities.",
+    "Recognize inspection requirements from OEM evidence.",
+    "Apply OEM-supported troubleshooting methods.",
+    "Identify when additional OEM information is required.",
+    "Demonstrate knowledge through practical scenarios."
+  ],
+  "training_context": {
+    "curriculum_available": true,
+    "curriculum_count": 17,
+    "evidence_available": false,
+    "evidence_count": 0
+  },
+  "assessment_instructions": [
+    "Generate questions only from supplied training/OEM evidence.",
+    "Every technical question must have supporting evidence.",
+    "Every answer must be traceable to an OEM source where applicable.",
+    "Do not invent technical specifications.",
+    "Do not invent part numbers.",
+    "Do not invent torque values.",
+    "Do not invent pressure values.",
+    "Do not invent dimensions or clearances.",
+    "Do not create unsupported maintenance procedures.",
+    "Clearly identify information that is not supported by evidence.",
+    "Provide an answer key for every scored question.",
+    "Provide an OEM citation for every technical answer.",
+    "Use practical scenarios relevant to marine workshop technicians.",
+    "Keep questions appropriate for the specified technician level."
+  ],
+  "required_output": {
+    "questions": true,
+    "answer_key": true,
+    "explanations": true,
+    "oem_citations": true,
+    "difficulty_level": true,
+    "assessment_area": true,
+    "question_type": true,
+    "practical_scenarios": true,
+    "scoring": true,
+    "weak_area_identification": true,
+    "retraining_recommendations": true
+  },
+  "scoring_model": {
+    "multiple_choice": 1,
+    "true_false": 1,
+    "short_answer": 2,
+    "practical_scenario": 3,
+    "passing_score_percent": 70
+  },
+  "ai_policy": {
+    "oem_priority": true,
+    "oem_evidence_required": true,
+    "web_is_not_oem": true,
+    "unsupported_technical_claims_blocked": true,
+    "invented_part_numbers_blocked": true,
+    "invented_torque_values_blocked": true,
+    "invented_pressures_blocked": true,
+    "invented_clearances_blocked": true,
+    "invented_dimensions_blocked": true,
+    "invented_procedures_blocked": true,
+    "fake_oem_references_blocked": true,
+    "answer_key_required": true,
+    "source_citation_required": true
+  }
+}
