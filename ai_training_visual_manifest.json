@@ -1,0 +1,35 @@
+{
+  "step": 32,
+  "substep": "32D",
+  "stage": "controlled_ai_visual_generator",
+  "status": "SUCCESS",
+  "input": {
+    "manufacturer": "MAN",
+    "engine_model": "16V175D-MM",
+    "topic": "Fuel System and Injector Maintenance",
+    "vessel": "QL-40"
+  },
+  "ai_visual_label": "AI Training Illustration — Not an OEM Figure",
+  "requested_ai_visuals": 0,
+  "generated_ai_visuals": 0,
+  "failed_ai_visuals": 0,
+  "skipped_non_ai_requests": 0,
+  "generated_visuals": [],
+  "failed_visuals": [],
+  "visual_policy": {
+    "oem_visual_first": true,
+    "generate_only_ai_fallbacks": true,
+    "ai_visual_is_generic_training_illustration": true,
+    "ai_visual_not_oem_figure": true,
+    "required_label": "AI Training Illustration — Not an OEM Figure",
+    "technical_specs_must_come_from_oem": true,
+    "part_numbers_must_come_from_oem": true,
+    "torque_values_must_come_from_oem": true,
+    "pressures_must_come_from_oem": true,
+    "temperatures_must_come_from_oem": true,
+    "dimensions_must_come_from_oem": true,
+    "clearances_must_come_from_oem": true,
+    "wiring_details_must_come_from_oem": true,
+    "fake_oem_figures_blocked": true
+  }
+}
