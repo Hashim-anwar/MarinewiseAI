@@ -18,9 +18,27 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pypdf>=5.0.0
+          pip install pypdf gdown
 
-      - name: Verify selected manuals
+      - name: Verify STEP 19 selection
+        run: |
+          echo "=========================================="
+          echo "STEP 21 - VERIFY SELECTED MANUALS"
+          echo "=========================================="
+
+          test -f selected_manuals.json
+
+          echo "GREEN - selected_manuals.json found"
+
+      - name: Download STEP 19 selected manuals
+        run: |
+          echo "=========================================="
+          echo "STEP 21 - DOWNLOAD SELECTED MANUALS"
+          echo "=========================================="
+
+          python manual_downloader.py
+
+      - name: Verify downloaded manuals
         run: |
           echo "=========================================="
           echo "STEP 21 - VERIFY INPUT MANUALS"
@@ -65,7 +83,7 @@ jobs:
       - name: STEP 21 complete
         run: |
           echo "=========================================="
-          echo "STEP 21 VERIFICATION WORKFLOW COMPLETE"
+          echo "STEP 21 VERIFICATION COMPLETE"
           echo "=========================================="
           echo "STEP 21: SUCCESS"
           echo "GREEN"
