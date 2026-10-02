@@ -33,3 +33,24 @@ jobs:
           echo "=========================================="
           echo "STEP 19 VERIFICATION WORKFLOW COMPLETE"
           echo "=========================================="
+      - name: Save STEP 19 selection
+        run: |
+          echo "=========================================="
+          echo "SAVING STEP 19 SELECTION"
+          echo "=========================================="
+
+          test -f selected_manuals.json
+          echo "GREEN - selected_manuals.json created"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add selected_manuals.json
+
+          if git diff --cached --quiet; then
+            echo "No selection changes to commit."
+          else
+            git commit -m "Update MarineWise selected manuals"
+            git push
+            echo "GREEN - selected_manuals.json committed"
+          fi
