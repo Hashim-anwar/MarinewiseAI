@@ -1,0 +1,97 @@
+name: MarineWise STEP 22 Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  step22:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pypdf gdown
+
+      - name: Verify STEP 19 selection
+        run: |
+          echo "=========================================="
+          echo "STEP 22 - VERIFY SELECTION"
+          echo "=========================================="
+
+          test -f selected_manuals.json
+
+          echo "GREEN - selected_manuals.json found"
+
+      - name: Download selected manuals
+        run: |
+          echo "=========================================="
+          echo "STEP 22 - DOWNLOAD SELECTED MANUALS"
+          echo "=========================================="
+
+          python manual_downloader.py
+
+      - name: Verify downloaded PDFs
+        run: |
+          PDF_COUNT=$(find selected_manuals -maxdepth 1 -type f -iname "*.pdf" | wc -l)
+
+          echo "PDF manuals found: $PDF_COUNT"
+
+          test "$PDF_COUNT" -eq 10
+
+          echo "GREEN - 10 PDFs available"
+
+      - name: Extract document text
+        run: |
+          echo "=========================================="
+          echo "STEP 22 - DOCUMENT EXTRACTION"
+          echo "=========================================="
+
+          python document_extractor.py
+
+      - name: Verify extraction
+        run: |
+          JSON_COUNT=$(find extracted_documents -maxdepth 1 -type f -iname "*.json" | wc -l)
+
+          echo "Extraction JSON files: $JSON_COUNT"
+
+          test "$JSON_COUNT" -eq 10
+
+          echo "GREEN - extraction verified"
+
+      - name: Run STEP 22 Smart Chunking
+        run: |
+          python document_chunker.py
+
+      - name: Verify chunks
+        run: |
+          echo "=========================================="
+          echo "STEP 22 - VERIFY CHUNKS"
+          echo "=========================================="
+
+          test -f chunks/all_chunks.json
+          test -f chunks/all_chunks.jsonl
+
+          echo "GREEN - all_chunks.json found"
+          echo "GREEN - all_chunks.jsonl found"
+
+      - name: Upload chunk index
+        uses: actions/upload-artifact@v4
+        with:
+          name: marinewise-step22-chunks
+          path: chunks/
+
+      - name: STEP 22 complete
+        run: |
+          echo "=========================================="
+          echo "STEP 22 VERIFICATION COMPLETE"
+          echo "=========================================="
+          echo "STEP 22: SUCCESS"
+          echo "GREEN"
