@@ -1,0 +1,499 @@
+name: STEP 29C - Groq Troubleshooting Answer Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  troubleshooting-answer:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install gdown pypdf rank_bm25 sentence-transformers faiss-cpu requests groq
+
+      - name: Verify API secrets
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "ERROR - GROQ_API_KEY is not configured."
+            exit 1
+          fi
+
+          if [ -z "$TAVILY_API_KEY" ]; then
+            echo "ERROR - TAVILY_API_KEY is not configured."
+            exit 1
+          fi
+
+          echo "Required API secrets are configured."
+
+      - name: Verify required files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          required = [
+              "manual_catalog.json",
+              "manual_selector.py",
+              "manual_downloader.py",
+              "document_extractor.py",
+              "document_chunker.py",
+              "vector_indexer.py",
+              "hybrid_retriever.py",
+              "evidence_reranker.py",
+              "tavily_research.py",
+              "evidence_fusion.py",
+              "troubleshooting_workflow.py",
+              "troubleshooting_answer.py",
+          ]
+
+          missing = [
+              item
+              for item in required
+              if not Path(item).exists()
+          ]
+
+          if missing:
+              print("ERROR - Missing required files:")
+
+              for item in missing:
+                  print(f" - {item}")
+
+              raise SystemExit(1)
+
+          print("All STEP 29C required files are present.")
+          PY
+
+      - name: Select relevant manuals
+        run: |
+          python manual_selector.py \
+            --query "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm" \
+            --top-k 10 \
+            --output selected_manuals.json
+
+      - name: Verify manual selection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("selected_manuals.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - selected_manuals.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if isinstance(data, list):
+              count = len(data)
+
+          elif isinstance(data, dict):
+              count = 0
+
+              for key in [
+                  "selected_manuals",
+                  "results",
+                  "manuals",
+              ]:
+                  value = data.get(key)
+
+                  if isinstance(value, list):
+                      count = len(value)
+                      break
+
+          else:
+              raise SystemExit(
+                  "ERROR - Invalid selected_manuals.json structure."
+              )
+
+          if count == 0:
+              raise SystemExit(
+                  "ERROR - No manuals were selected."
+              )
+
+          print(f"Selected manuals: {count}")
+          PY
+
+      - name: Download selected manuals
+        run: |
+          python manual_downloader.py
+
+      - name: Extract manuals
+        run: |
+          python document_extractor.py
+
+      - name: Create chunks
+        run: |
+          python document_chunker.py
+
+      - name: Build FAISS index
+        run: |
+          python vector_indexer.py
+
+      - name: Run hybrid retrieval
+        run: |
+          python hybrid_retriever.py
+
+      - name: Re-rank OEM evidence
+        run: |
+          python evidence_reranker.py
+
+      - name: Verify OEM evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("reranked_evidence.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - reranked_evidence.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if not isinstance(data, dict):
+              raise SystemExit(
+                  "ERROR - Invalid reranked evidence."
+              )
+
+          print("OEM evidence verified.")
+          PY
+
+      - name: Run Tavily research
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: |
+          python tavily_research.py
+
+      - name: Verify Tavily evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("tavily_results.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - tavily_results.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if data.get("step") != 27:
+              raise SystemExit(
+                  "ERROR - Invalid Tavily step."
+              )
+
+          if data.get("provider") != "Tavily":
+              raise SystemExit(
+                  "ERROR - Invalid Tavily provider."
+              )
+
+          evidence = data.get("web_evidence")
+
+          if not isinstance(evidence, list):
+              raise SystemExit(
+                  "ERROR - web_evidence is not a list."
+              )
+
+          if len(evidence) == 0:
+              raise SystemExit(
+                  "ERROR - No Tavily evidence."
+              )
+
+          print(f"WEB evidence: {len(evidence)}")
+          PY
+
+      - name: Run evidence fusion
+        run: |
+          python evidence_fusion.py
+
+      - name: Verify final evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("final_evidence.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - final_evidence.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if data.get("step") != 28:
+              raise SystemExit(
+                  "ERROR - Incorrect evidence step."
+              )
+
+          oem = data.get("oem_evidence")
+          web = data.get("web_evidence")
+          combined = data.get("combined_evidence")
+
+          if not isinstance(oem, list):
+              raise SystemExit(
+                  "ERROR - OEM evidence invalid."
+              )
+
+          if not isinstance(web, list):
+              raise SystemExit(
+                  "ERROR - WEB evidence invalid."
+              )
+
+          if not isinstance(combined, list):
+              raise SystemExit(
+                  "ERROR - Combined evidence invalid."
+              )
+
+          if len(oem) == 0:
+              raise SystemExit(
+                  "ERROR - No OEM evidence."
+              )
+
+          if len(combined) != len(oem) + len(web):
+              raise SystemExit(
+                  "ERROR - Evidence count mismatch."
+              )
+
+          print("Final evidence verified.")
+          print(f"OEM evidence      : {len(oem)}")
+          print(f"WEB evidence      : {len(web)}")
+          print(f"Combined evidence : {len(combined)}")
+          PY
+
+      - name: Build structured troubleshooting workflow
+        run: |
+          python troubleshooting_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --serial-number "" \
+            --vessel "QL-40" \
+            --operating-hours "5000" \
+            --system "Main Engine" \
+            --fault "High exhaust temperature alarm" \
+            --evidence final_evidence.json \
+            --output troubleshooting_workflow.json
+
+      - name: Verify structured workflow
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("troubleshooting_workflow.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - troubleshooting_workflow.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if data.get("step") != 29:
+              raise SystemExit(
+                  "ERROR - Incorrect workflow step."
+              )
+
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  "ERROR - Workflow is not ready for Groq."
+              )
+
+          if not data.get("oem_evidence"):
+              raise SystemExit(
+                  "ERROR - No OEM evidence in workflow."
+              )
+
+          print("Structured troubleshooting workflow verified.")
+          PY
+
+      - name: Generate Groq troubleshooting answer
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python troubleshooting_answer.py \
+            --workflow troubleshooting_workflow.json \
+            --output troubleshooting_answer.json \
+            --model "openai/gpt-oss-120b"
+
+      - name: Verify Groq troubleshooting answer
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("troubleshooting_answer.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - troubleshooting_answer.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          required = [
+              "step",
+              "stage",
+              "status",
+              "model",
+              "input",
+              "constructed_query",
+              "evidence_summary",
+              "report_sections",
+              "answer",
+              "source_policy",
+          ]
+
+          for key in required:
+              if key not in data:
+                  raise SystemExit(
+                      f"ERROR - Missing answer key: {key}"
+                  )
+
+          if data["step"] != 29:
+              raise SystemExit(
+                  "ERROR - Incorrect answer step."
+              )
+
+          if data["stage"] != (
+              "groq_troubleshooting_answer"
+          ):
+              raise SystemExit(
+                  "ERROR - Incorrect answer stage."
+              )
+
+          if data["status"] != "SUCCESS":
+              raise SystemExit(
+                  "ERROR - Groq answer status is not SUCCESS."
+              )
+
+          answer = data["answer"]
+
+          if not isinstance(answer, str):
+              raise SystemExit(
+                  "ERROR - Answer is not text."
+              )
+
+          if len(answer.strip()) < 200:
+              raise SystemExit(
+                  "ERROR - Groq answer is too short."
+              )
+
+          required_sections = [
+              "PROBLEM IDENTIFICATION",
+              "ENGINE AND EQUIPMENT",
+              "RELEVANT OEM EVIDENCE",
+              "PROBABLE CAUSES",
+              "TROUBLESHOOTING STEPS",
+              "CHECKS AND MEASUREMENTS",
+              "CORRECTIVE ACTION",
+              "PARTS AND TOOLS",
+              "OEM REFERENCES",
+              "EVIDENCE STATUS",
+              "SAFETY NOTE",
+          ]
+
+          for section in required_sections:
+              if section not in answer:
+                  raise SystemExit(
+                      f"ERROR - Missing report section: {section}"
+                  )
+
+          if "[OEM:" not in answer:
+              raise SystemExit(
+                  "ERROR - No OEM citation found."
+              )
+
+          policy = data["source_policy"]
+
+          if policy.get("oem_priority") is not True:
+              raise SystemExit(
+                  "ERROR - OEM priority policy failed."
+              )
+
+          if policy.get("web_is_not_oem") is not True:
+              raise SystemExit(
+                  "ERROR - WEB/OEM separation failed."
+              )
+
+          if policy.get("citations_required") is not True:
+              raise SystemExit(
+                  "ERROR - Citation policy failed."
+              )
+
+          if policy.get("unsupported_claims_blocked") is not True:
+              raise SystemExit(
+                  "ERROR - Evidence control policy failed."
+              )
+
+          print("=" * 70)
+          print("STEP 29C VERIFICATION COMPLETE")
+          print("=" * 70)
+          print(
+              f"Model             : {data['model']}"
+          )
+          print(
+              f"OEM evidence      : "
+              f"{data['evidence_summary'].get('oem_count', 0)}"
+          )
+          print(
+              f"WEB evidence      : "
+              f"{data['evidence_summary'].get('web_count', 0)}"
+          )
+          print(
+              f"Answer length     : {len(answer)} characters"
+          )
+          print()
+          print("Required sections : TRUE")
+          print("OEM citation      : TRUE")
+          print("OEM priority      : TRUE")
+          print("WEB separation    : TRUE")
+          print("Evidence control  : TRUE")
+          print("Groq generation   : TRUE")
+          print()
+          print("STEP 29C: SUCCESS")
+          print("GREEN")
+          PY
+
+      - name: Upload STEP 29C artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: step29c-groq-troubleshooting-answer
+          path: |
+            troubleshooting_workflow.json
+            troubleshooting_answer.json
+            final_evidence.json
