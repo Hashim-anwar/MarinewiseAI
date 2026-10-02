@@ -1,0 +1,63 @@
+name: MarineWise STEP 23 Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  step23:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install sentence-transformers faiss-cpu
+
+      - name: Verify STEP 22 chunk file
+        run: |
+          echo "=========================================="
+          echo "STEP 23 - VERIFY CHUNK INPUT"
+          echo "=========================================="
+
+          test -f chunks/all_chunks.json
+
+          echo "GREEN - all_chunks.json found"
+
+      - name: Run STEP 23 Vector Indexer
+        run: |
+          python vector_indexer.py
+
+      - name: Verify vector store
+        run: |
+          echo "=========================================="
+          echo "STEP 23 - VERIFY VECTOR STORE"
+          echo "=========================================="
+
+          test -f vector_store/marinewise.faiss
+          test -f vector_store/metadata.json
+          test -f vector_store/index_info.json
+
+          echo "GREEN - FAISS index found"
+          echo "GREEN - metadata found"
+          echo "GREEN - index information found"
+
+      - name: Upload vector store
+        uses: actions/upload-artifact@v4
+        with:
+          name: marinewise-step23-vector-store
+          path: vector_store/
+
+      - name: STEP 23 complete
+        run: |
+          echo "=========================================="
+          echo "STEP 23 VERIFICATION COMPLETE"
+          echo "=========================================="
+          echo "STEP 23: SUCCESS"
+          echo "GREEN"
