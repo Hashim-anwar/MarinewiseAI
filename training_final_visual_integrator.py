@@ -23,364 +23,624 @@ VISUAL_SECTIONS = [
 ]
 
 
-def load_json(path: Path) -> dict[str, Any]:
+# ============================================================
+# BASIC HELPERS
+# ============================================================
+
+def load_json(path: str | Path) -> dict[str, Any]:
+    path = Path(path)
+
     if not path.exists():
-        raise FileNotFoundError(f"Required file not found: {path}")
+        raise FileNotFoundError(f"Required JSON file not found: {path}")
 
     with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"{path} must contain a JSON object."
+        )
+
+    return data
 
 
-def save_json(path: Path, data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
+def save_json(path: str | Path, data: dict[str, Any]) -> None:
+    path = Path(path)
 
-    with path.open("w", encoding="utf-8") as f:
+    path.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    with path.open(
+        "w",
+        encoding="utf-8"
+    ) as f:
         json.dump(
             data,
             f,
             indent=2,
-            ensure_ascii=False,
+            ensure_ascii=False
         )
 
 
-def get_section_result(
-    validated_data: dict[str, Any],
-    section: str,
-) -> dict[str, Any] | None:
+# ============================================================
+# NORMALIZE COLLECTIONS
+# ============================================================
 
-    for item in validated_data.get("section_results", []):
-        if item.get("section") == section:
-            return item
+def normalize_items(value: Any) -> list[dict[str, Any]]:
+    """
+    Convert supported JSON collection formats into a list
+    of dictionaries.
+
+    Supported:
+
+    1. List of dictionaries
+
+       [
+         {"section": "..."},
+         {"section": "..."}
+       ]
+
+    2. Dictionary keyed by section
+
+       {
+         "ENGINE INTRODUCTION": {
+             "section": "ENGINE INTRODUCTION"
+         }
+       }
+
+    3. Dictionary containing a list
+
+       {
+         "visuals": [
+             {"section": "..."}
+         ]
+       }
+
+    4. Dictionary containing section records directly
+
+       {
+         "ENGINE INTRODUCTION": {...},
+         "SYSTEM OVERVIEW": {...}
+       }
+    """
+
+    if value is None:
+        return []
+
+    if isinstance(value, list):
+        return [
+            item
+            for item in value
+            if isinstance(item, dict)
+        ]
+
+    if isinstance(value, dict):
+
+        # A dictionary containing a list
+        for key in (
+            "visuals",
+            "visual_results",
+            "results",
+            "sections",
+            "items",
+            "requests",
+            "ai_visual_requests",
+            "accepted_candidates",
+            "candidates",
+        ):
+            nested = value.get(key)
+
+            if isinstance(nested, list):
+                return [
+                    item
+                    for item in nested
+                    if isinstance(item, dict)
+                ]
+
+        # Dictionary keyed by section
+        result = []
+
+        for key, item in value.items():
+
+            if isinstance(item, dict):
+                record = dict(item)
+
+                if not record.get("section"):
+                    record["section"] = key
+
+                result.append(record)
+
+        return result
+
+    return []
+
+
+# ============================================================
+# SECTION LOOKUP
+# ============================================================
+
+def get_section_result(
+    data: dict[str, Any],
+    section: str
+) -> dict[str, Any] | None:
+    """
+    Safely find one section regardless of whether the
+    source JSON stores sections as a list or dictionary.
+    """
+
+    possible_collections = [
+        data.get("visuals"),
+        data.get("visual_results"),
+        data.get("results"),
+        data.get("sections"),
+        data.get("items"),
+        data.get("requests"),
+        data.get("ai_visual_requests"),
+    ]
+
+    for collection in possible_collections:
+
+        items = normalize_items(collection)
+
+        for item in items:
+
+            item_section = item.get("section")
+
+            if item_section == section:
+                return item
+
+    # Some files may store the sections directly at root level.
+    direct = data.get(section)
+
+    if isinstance(direct, dict):
+        result = dict(direct)
+
+        if not result.get("section"):
+            result["section"] = section
+
+        return result
 
     return None
 
+
+# ============================================================
+# AI REQUEST LOOKUP
+# ============================================================
 
 def get_ai_request(
-    validated_data: dict[str, Any],
-    section: str,
+    data: dict[str, Any],
+    section: str
 ) -> dict[str, Any] | None:
 
-    for item in validated_data.get("ai_visual_requests", []):
+    requests = data.get("ai_visual_requests")
+
+    for item in normalize_items(requests):
+
         if item.get("section") == section:
             return item
 
     return None
 
+
+# ============================================================
+# AI GENERATED VISUAL LOOKUP
+# ============================================================
 
 def get_ai_generated(
-    ai_manifest: dict[str, Any],
-    section: str,
+    data: dict[str, Any],
+    section: str
 ) -> dict[str, Any] | None:
 
-    for item in ai_manifest.get("generated", []):
+    possible_collections = [
+        data.get("generated_visuals"),
+        data.get("ai_visuals"),
+        data.get("results"),
+        data.get("visuals"),
+    ]
+
+    for collection in possible_collections:
+
+        for item in normalize_items(collection):
+
+            if item.get("section") == section:
+                return item
+
+    # Some generators may store generated items directly
+    # inside ai_visual_requests.
+    for item in normalize_items(
+        data.get("ai_visual_requests")
+    ):
+
         if item.get("section") == section:
             return item
 
     return None
 
 
+# ============================================================
+# PATH RESOLUTION
+# ============================================================
+
 def resolve_path(
-    value: str | None,
-    base_dir: Path,
+    value: Any,
+    base_dir: Path
 ) -> Path | None:
 
     if not value:
         return None
 
-    path = Path(value)
+    try:
+        candidate = Path(str(value))
+    except Exception:
+        return None
 
-    if path.exists():
-        return path
+    # Absolute path
+    if candidate.is_absolute() and candidate.exists():
+        return candidate
 
-    candidate = base_dir / path
-
+    # Relative to current working directory
     if candidate.exists():
         return candidate
+
+    # Relative to supplied base directory
+    candidate2 = base_dir / candidate
+
+    if candidate2.exists():
+        return candidate2
 
     return None
 
 
+# ============================================================
+# COPY VISUAL
+# ============================================================
+
 def copy_visual(
     source: Path,
-    destination: Path,
-) -> None:
+    destination: Path
+) -> bool:
+
+    if not source.exists():
+        return False
 
     destination.parent.mkdir(
         parents=True,
-        exist_ok=True,
+        exist_ok=True
     )
 
     shutil.copy2(
         source,
-        destination,
+        destination
     )
 
+    return destination.exists()
+
+
+# ============================================================
+# FIND RENDERED IMAGE
+# ============================================================
+
+def find_rendered_image(
+    record: dict[str, Any],
+    base_dir: Path
+) -> Path | None:
+
+    possible_keys = [
+        "rendered_image",
+        "image",
+        "image_path",
+        "visual_path",
+        "file",
+        "path",
+        "output_file",
+    ]
+
+    for key in possible_keys:
+
+        value = record.get(key)
+
+        path = resolve_path(
+            value,
+            base_dir
+        )
+
+        if path:
+            return path
+
+    return None
+
+
+# ============================================================
+# INTEGRATE VISUALS
+# ============================================================
 
 def integrate_visuals(
-    validated_data: dict[str, Any],
+    training: dict[str, Any],
+    validated: dict[str, Any],
     ai_manifest: dict[str, Any],
-    output_dir: Path,
+    output_dir: Path
 ) -> list[dict[str, Any]]:
 
-    integrated_dir = output_dir / "visuals"
-    integrated_dir.mkdir(
+    visuals_dir = (
+        output_dir / "visuals"
+    )
+
+    visuals_dir.mkdir(
         parents=True,
-        exist_ok=True,
+        exist_ok=True
     )
 
     results: list[dict[str, Any]] = []
 
+    # Base directories used for relative image paths
+    validated_base = Path.cwd()
+    ai_base = Path.cwd()
+
     for section in VISUAL_SECTIONS:
 
-        validated = get_section_result(
-            validated_data,
-            section,
+        result: dict[str, Any] = {
+            "section": section,
+            "visual_source": "NONE",
+            "status": "NO_USABLE_VISUAL",
+            "image": None,
+            "source_file": None,
+            "page": None,
+            "citation": None,
+            "ai_label": None,
+        }
+
+        validated_record = get_section_result(
+            validated,
+            section
         )
 
-        if not validated:
-            results.append(
-                {
-                    "section": section,
-                    "status": "NO_VISUAL_RESULT",
-                    "visual_source": None,
-                }
-            )
-            continue
+        # ----------------------------------------------------
+        # OEM VISUAL
+        # ----------------------------------------------------
 
-        visual_source = validated.get(
-            "visual_source"
-        )
+        if validated_record:
 
-        status = validated.get(
-            "status"
-        )
+            visual_source = str(
+                validated_record.get(
+                    "visual_source",
+                    ""
+                )
+            ).upper()
 
-        # ---------------------------------------------------------
-        # OEM VISUAL HAS PRIORITY
-        # ---------------------------------------------------------
+            if visual_source == "OEM":
 
-        if visual_source == "OEM":
-
-            candidates = validated.get(
-                "accepted_candidates",
-                [],
-            )
-
-            if not candidates:
-                candidates = validated.get(
-                    "candidates",
-                    [],
+                # First try direct rendered image
+                source = find_rendered_image(
+                    validated_record,
+                    validated_base
                 )
 
-            selected = None
+                # Then inspect accepted candidates
+                if source is None:
 
-            for candidate in candidates:
-                candidate_path = resolve_path(
-                    candidate.get("rendered_image"),
-                    Path("."),
-                )
-
-                if candidate_path:
-                    selected = (
-                        candidate,
-                        candidate_path,
+                    candidates = validated_record.get(
+                        "accepted_candidates"
                     )
-                    break
 
-            if selected:
+                    if not isinstance(
+                        candidates,
+                        list
+                    ):
+                        candidates = validated_record.get(
+                            "candidates"
+                        )
 
-                candidate, source_path = selected
+                    for candidate in normalize_items(
+                        candidates
+                    ):
 
-                destination = (
-                    integrated_dir
-                    / f"{section.lower().replace(' ', '_')}_oem.png"
-                )
+                        source = find_rendered_image(
+                            candidate,
+                            validated_base
+                        )
 
-                copy_visual(
-                    source_path,
-                    destination,
-                )
+                        if source:
+                            break
 
-                results.append(
-                    {
-                        "section": section,
-                        "status": "INTEGRATED",
-                        "visual_source": "OEM",
-                        "file": str(destination),
-                        "source_file": candidate.get(
-                            "source_file"
-                        ),
-                        "page": candidate.get(
-                            "page"
-                        ),
-                        "citation": candidate.get(
-                            "citation"
-                        ),
-                        "ai_label_required": False,
-                    }
-                )
-
-                continue
-
-        # ---------------------------------------------------------
-        # AI FALLBACK
-        # ONLY USED WHEN OEM VISUAL IS UNAVAILABLE
-        # ---------------------------------------------------------
-
-        if visual_source == "AI_FALLBACK":
-
-            ai_request = get_ai_request(
-                validated_data,
-                section,
-            )
-
-            ai_generated = get_ai_generated(
-                ai_manifest,
-                section,
-            )
-
-            if ai_generated:
-
-                source_path = resolve_path(
-                    ai_generated.get("file"),
-                    Path("."),
-                )
-
-                if source_path:
+                if source:
 
                     destination = (
-                        integrated_dir
-                        / f"{section.lower().replace(' ', '_')}_ai.png"
+                        visuals_dir
+                        / f"{section.lower().replace(' ', '_')}_oem.png"
                     )
 
-                    copy_visual(
-                        source_path,
-                        destination,
+                    copied = copy_visual(
+                        source,
+                        destination
                     )
 
-                    results.append(
-                        {
-                            "section": section,
-                            "status": "INTEGRATED",
-                            "visual_source": "AI_FALLBACK",
-                            "file": str(destination),
-                            "source_file": None,
-                            "page": None,
-                            "citation": None,
-                            "ai_label_required": True,
-                            "ai_visual_label": AI_LABEL,
-                            "prompt": (
-                                ai_generated.get("prompt")
-                                or (
-                                    ai_request or {}
-                                ).get("prompt")
-                            ),
-                        }
-                    )
+                    if copied:
 
-                    continue
+                        source_file = (
+                            validated_record.get(
+                                "source_file"
+                            )
+                        )
 
-            results.append(
-                {
-                    "section": section,
-                    "status": "AI_VISUAL_NOT_AVAILABLE",
-                    "visual_source": "AI_FALLBACK",
-                    "file": None,
-                    "source_file": None,
-                    "page": None,
-                    "citation": None,
-                    "ai_label_required": True,
-                    "ai_visual_label": AI_LABEL,
-                }
-            )
+                        page = (
+                            validated_record.get(
+                                "page"
+                            )
+                        )
 
-            continue
+                        citation = (
+                            validated_record.get(
+                                "citation"
+                            )
+                        )
 
-        # ---------------------------------------------------------
-        # NO USABLE VISUAL
-        # ---------------------------------------------------------
+                        if not citation and source_file:
+                            if page is not None:
+                                citation = (
+                                    f"[OEM: "
+                                    f"{source_file}, "
+                                    f"Page {page}]"
+                                )
+                            else:
+                                citation = (
+                                    f"[OEM: {source_file}]"
+                                )
 
-        results.append(
-            {
-                "section": section,
-                "status": "NO_USABLE_VISUAL",
-                "visual_source": visual_source,
-                "file": None,
-                "source_file": None,
-                "page": None,
-                "citation": None,
-                "ai_label_required": False,
-            }
+                        result.update(
+                            {
+                                "visual_source": "OEM",
+                                "status": "OEM_INTEGRATED",
+                                "image": str(destination),
+                                "source_file": source_file,
+                                "page": page,
+                                "citation": citation,
+                            }
+                        )
+
+                        results.append(result)
+                        continue
+
+        # ----------------------------------------------------
+        # AI FALLBACK
+        # ----------------------------------------------------
+
+        ai_request = get_ai_request(
+            validated,
+            section
         )
+
+        ai_generated = get_ai_generated(
+            ai_manifest,
+            section
+        )
+
+        if ai_request:
+
+            request_source = str(
+                ai_request.get(
+                    "visual_source",
+                    ""
+                )
+            ).upper()
+
+            if request_source == "AI_FALLBACK":
+
+                if ai_generated:
+
+                    source = find_rendered_image(
+                        ai_generated,
+                        ai_base
+                    )
+
+                    if source:
+
+                        destination = (
+                            visuals_dir
+                            / f"{section.lower().replace(' ', '_')}_ai.png"
+                        )
+
+                        copied = copy_visual(
+                            source,
+                            destination
+                        )
+
+                        if copied:
+
+                            result.update(
+                                {
+                                    "visual_source": "AI_FALLBACK",
+                                    "status": "AI_INTEGRATED",
+                                    "image": str(destination),
+                                    "source_file": None,
+                                    "page": None,
+                                    "citation": None,
+                                    "ai_label": AI_LABEL,
+                                }
+                            )
+
+                            results.append(result)
+                            continue
+
+        # ----------------------------------------------------
+        # NO VISUAL
+        # ----------------------------------------------------
+
+        results.append(result)
 
     return results
 
 
+# ============================================================
+# POLICY VALIDATION
+# ============================================================
+
 def validate_visual_policy(
-    validated_data: dict[str, Any],
-    ai_manifest: dict[str, Any],
+    validated: dict[str, Any],
+    ai_manifest: dict[str, Any]
 ) -> None:
 
-    if validated_data.get("step") != 32:
+    if validated.get("step") != 32:
         raise ValueError(
-            "Invalid STEP 32 input."
+            "Validated visual manifest is not STEP 32."
         )
 
-    if validated_data.get("substep") != "32C":
+    if validated.get("substep") != "32C":
         raise ValueError(
-            "Invalid STEP 32C input."
+            "Validated visual manifest is not STEP 32C."
         )
 
-    if validated_data.get("status") != "SUCCESS":
+    if validated.get("status") != "SUCCESS":
         raise ValueError(
-            "STEP 32C input is not SUCCESS."
+            "Validated visual manifest status is not SUCCESS."
         )
 
-    label = validated_data.get(
-        "ai_visual_label"
+    label = (
+        validated.get("ai_visual_label")
+        or ai_manifest.get("ai_visual_label")
     )
 
     if label != AI_LABEL:
         raise ValueError(
-            "STEP 32C AI visual label is incorrect."
+            "AI visual label does not match the required label."
         )
 
-    ai_label = ai_manifest.get(
-        "ai_visual_label"
-    )
 
-    if ai_label and ai_label != AI_LABEL:
-        raise ValueError(
-            "STEP 32D AI visual label is incorrect."
-        )
-
+# ============================================================
+# BUILD FINAL MANIFEST
+# ============================================================
 
 def build_manifest(
-    training_answer: dict[str, Any],
-    validated_data: dict[str, Any],
-    ai_manifest: dict[str, Any],
-    visual_results: list[dict[str, Any]],
+    training: dict[str, Any],
+    visual_results: list[dict[str, Any]]
 ) -> dict[str, Any]:
 
     oem_count = sum(
         1
         for item in visual_results
         if item.get("visual_source") == "OEM"
-        and item.get("status") == "INTEGRATED"
     )
 
     ai_count = sum(
         1
         for item in visual_results
         if item.get("visual_source") == "AI_FALLBACK"
-        and item.get("status") == "INTEGRATED"
     )
 
     unavailable_count = sum(
         1
         for item in visual_results
-        if item.get("status") != "INTEGRATED"
+        if item.get("visual_source") == "NONE"
     )
+
+    input_data = training.get(
+        "input",
+        {}
+    )
+
+    if not isinstance(input_data, dict):
+        input_data = {}
 
     return {
         "step": 32,
@@ -388,24 +648,22 @@ def build_manifest(
         "stage": "final_visual_package_integrator",
         "status": "SUCCESS",
         "input": {
-            "manufacturer": (
-                training_answer.get("input", {})
-                .get("manufacturer")
+            "manufacturer": input_data.get(
+                "manufacturer"
             ),
-            "engine_model": (
-                training_answer.get("input", {})
-                .get("engine_model")
+            "engine_model": input_data.get(
+                "engine_model"
             ),
-            "topic": (
-                training_answer.get("input", {})
-                .get("topic")
+            "topic": input_data.get(
+                "topic"
             ),
-            "vessel": (
-                training_answer.get("input", {})
-                .get("vessel")
+            "vessel": input_data.get(
+                "vessel"
             ),
         },
-        "visual_sections": len(VISUAL_SECTIONS),
+        "visual_sections": len(
+            VISUAL_SECTIONS
+        ),
         "oem_visuals_integrated": oem_count,
         "ai_visuals_integrated": ai_count,
         "visuals_unavailable": unavailable_count,
@@ -417,124 +675,128 @@ def build_manifest(
             "ai_visual_not_oem_figure": True,
             "technical_specs_must_come_from_oem": True,
             "fake_oem_figures_blocked": True,
-            "oem_source_traceability_required": True,
+            "validated_oem_visuals_are_never_replaced_by_ai": True,
         },
         "visuals": visual_results,
     }
 
 
+# ============================================================
+# MAIN
+# ============================================================
+
 def main() -> None:
 
     parser = argparse.ArgumentParser(
         description=(
-            "MarineWise STEP 32E final visual "
-            "package integrator."
+            "MarineWise STEP 32E "
+            "Final Visual Package Integrator"
         )
     )
 
     parser.add_argument(
         "--training",
-        required=True,
-        help="Path to training_answer.json",
+        required=True
     )
 
     parser.add_argument(
         "--validated",
-        required=True,
-        help="Path to validated_visual_requests.json",
+        required=True
     )
 
     parser.add_argument(
         "--ai-manifest",
-        required=True,
-        help="Path to ai_training_visual_manifest.json",
+        required=True
     )
 
     parser.add_argument(
         "--output-dir",
-        default="final_training_package",
-        help="Final integration output directory.",
+        default="final_training_package"
     )
 
     parser.add_argument(
         "--manifest",
-        default="final_visual_package_manifest.json",
-        help="Output STEP 32E manifest.",
+        default="final_visual_package_manifest.json"
     )
 
     args = parser.parse_args()
 
-    training_path = Path(args.training)
-    validated_path = Path(args.validated)
-    ai_manifest_path = Path(args.ai_manifest)
-    output_dir = Path(args.output_dir)
-    manifest_path = Path(args.manifest)
-
-    training_answer = load_json(
-        training_path
+    training = load_json(
+        args.training
     )
 
-    validated_data = load_json(
-        validated_path
+    validated = load_json(
+        args.validated
     )
 
     ai_manifest = load_json(
-        ai_manifest_path
+        args.ai_manifest
     )
 
+    # Validate source policies first.
     validate_visual_policy(
-        validated_data,
-        ai_manifest,
+        validated,
+        ai_manifest
+    )
+
+    output_dir = Path(
+        args.output_dir
+    )
+
+    output_dir.mkdir(
+        parents=True,
+        exist_ok=True
     )
 
     visual_results = integrate_visuals(
-        validated_data=validated_data,
+        training=training,
+        validated=validated,
         ai_manifest=ai_manifest,
-        output_dir=output_dir,
+        output_dir=output_dir
     )
 
     final_manifest = build_manifest(
-        training_answer=training_answer,
-        validated_data=validated_data,
-        ai_manifest=ai_manifest,
-        visual_results=visual_results,
+        training=training,
+        visual_results=visual_results
     )
 
     save_json(
-        manifest_path,
-        final_manifest,
+        args.manifest,
+        final_manifest
     )
 
-    print("")
-    print("==============================================")
-    print("MARINEWISE STEP 32E")
-    print("FINAL VISUAL PACKAGE INTEGRATOR")
-    print("==============================================")
+    print(
+        "STEP 32E FILE 1 STATUS: GREEN"
+    )
+
+    print(
+        f"Visual sections: {len(VISUAL_SECTIONS)}"
+    )
+
     print(
         "OEM visuals integrated:",
         final_manifest[
             "oem_visuals_integrated"
-        ],
+        ]
     )
+
     print(
         "AI visuals integrated:",
         final_manifest[
             "ai_visuals_integrated"
-        ],
+        ]
     )
+
     print(
         "Visuals unavailable:",
         final_manifest[
             "visuals_unavailable"
-        ],
+        ]
     )
+
     print(
-        "Manifest:",
-        manifest_path,
+        f"Manifest: {args.manifest}"
     )
-    print("==============================================")
-    print("STEP 32E FILE 1 STATUS: GREEN")
-    print("==============================================")
 
 
 if __name__ == "__main__":
