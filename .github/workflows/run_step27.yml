@@ -1,0 +1,149 @@
+name: STEP 27 - Tavily Controlled Online Research
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tavily-research:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Verify Tavily secret
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: |
+          if [ -z "$TAVILY_API_KEY" ]; then
+            echo "ERROR - TAVILY_API_KEY is not configured."
+            exit 1
+          fi
+
+          echo "TAVILY_API_KEY is configured."
+
+      - name: Run Tavily controlled research
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: |
+          python tavily_research.py
+
+      - name: Verify Tavily output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          output = Path("tavily_results.json")
+
+          if not output.exists():
+              raise SystemExit(
+                  "ERROR - tavily_results.json was not created."
+              )
+
+          data = json.loads(
+              output.read_text(encoding="utf-8")
+          )
+
+          required_keys = [
+              "step",
+              "research_type",
+              "provider",
+              "query",
+              "input",
+              "web_evidence_count",
+              "web_evidence",
+              "source_policy",
+          ]
+
+          for key in required_keys:
+              if key not in data:
+                  raise SystemExit(
+                      f"ERROR - Missing required key: {key}"
+                  )
+
+          if data["step"] != 27:
+              raise SystemExit(
+                  "ERROR - Incorrect step number."
+              )
+
+          if data["provider"] != "Tavily":
+              raise SystemExit(
+                  "ERROR - Incorrect research provider."
+              )
+
+          evidence = data["web_evidence"]
+
+          if not isinstance(evidence, list):
+              raise SystemExit(
+                  "ERROR - web_evidence is not a list."
+              )
+
+          if len(evidence) == 0:
+              raise SystemExit(
+                  "ERROR - No usable Tavily evidence returned."
+              )
+
+          for item in evidence:
+              if not item.get("url"):
+                  raise SystemExit(
+                      "ERROR - Web evidence missing source URL."
+                  )
+
+              if not item.get("evidence"):
+                  raise SystemExit(
+                      "ERROR - Web evidence missing evidence text."
+                  )
+
+          policy = data["source_policy"]
+
+          if policy.get("oem_evidence_priority") is not True:
+              raise SystemExit(
+                  "ERROR - OEM priority policy failed."
+              )
+
+          if policy.get("web_evidence_is_not_oem") is not True:
+              raise SystemExit(
+                  "ERROR - Web/OEM separation policy failed."
+              )
+
+          print("=" * 70)
+          print("STEP 27 VERIFICATION COMPLETE")
+          print("=" * 70)
+          print(f"Provider       : {data['provider']}")
+          print(f"Query          : {data['query']}")
+          print(
+              f"Web evidence   : {len(evidence)}"
+          )
+          print(
+              "OEM priority   : "
+              f"{policy['oem_evidence_priority']}"
+          )
+          print(
+              "Web != OEM     : "
+              f"{policy['web_evidence_is_not_oem']}"
+          )
+
+          print()
+          print("STEP 27: SUCCESS")
+          print("GREEN")
+          PY
+
+      - name: Upload Tavily research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: step27-tavily-research
+          path: tavily_results.json
