@@ -643,6 +643,109 @@ def validate_answer_key(
 def validate_required_sections(
     data: dict[str, Any],
 ) -> None:
+    """
+    Validate that the assessment contains the required content.
+
+    Groq may return the sections:
+    - at the top level
+    - inside an assessment object
+    - inside a nested content object
+    - using underscores instead of spaces
+
+    Therefore validation is recursive and normalizes section names.
+    """
+
+    def normalize_key(value: Any) -> str:
+        if value is None:
+            return ""
+
+        text = str(value).strip().lower()
+
+        replacements = {
+            "_": " ",
+            "-": " ",
+            ":": " ",
+        }
+
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+
+        text = " ".join(text.split())
+
+        return text
+
+    required = {
+        normalize_key(section)
+        for section in REQUIRED_SECTIONS
+    }
+
+    found = set()
+
+    def walk(value: Any) -> None:
+
+        if isinstance(value, dict):
+
+            for key, item in value.items():
+
+                normalized = normalize_key(key)
+
+                if normalized in required:
+                    found.add(normalized)
+
+                walk(item)
+
+        elif isinstance(value, list):
+
+            for item in value:
+                walk(item)
+
+        elif isinstance(value, str):
+
+            normalized = normalize_key(value)
+
+            if normalized in required:
+                found.add(normalized)
+
+    walk(data)
+
+    # Some models return sections as strings such as:
+    # "1. ASSESSMENT OVERVIEW"
+    # "ASSESSMENT OVERVIEW:"
+    #
+    # Check the complete JSON text as a secondary safeguard.
+
+    serialized = json.dumps(
+        data,
+        ensure_ascii=False,
+    ).lower()
+
+    for section in REQUIRED_SECTIONS:
+
+        normalized = normalize_key(section)
+
+        variants = [
+            section.lower(),
+            normalized,
+            normalized.replace(" ", "_"),
+        ]
+
+        for variant in variants:
+
+            if variant in serialized:
+                found.add(normalized)
+                break
+
+    missing = [
+        section
+        for section in REQUIRED_SECTIONS
+        if normalize_key(section) not in found
+    ]
+
+    if missing:
+        raise ValueError(
+            "Missing required assessment sections: "
+            + ", ".join(missing)
+        )
 
     missing = []
 
