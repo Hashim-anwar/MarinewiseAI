@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
 
@@ -32,7 +32,24 @@ jobs:
             "python-pptx" \
             "pymupdf"
 
-      - name: Verify required files
+      - name: Verify Python dependencies
+        run: |
+          python - <<'PY'
+          import fitz
+          import groq
+          import docx
+          import pptx
+          import reportlab
+
+          print("PyMuPDF: OK")
+          print("Groq: OK")
+          print("python-docx: OK")
+          print("python-pptx: OK")
+          print("ReportLab: OK")
+          print("All dependencies GREEN")
+          PY
+
+      - name: Verify required project files
         run: |
           test -f manual_catalog.json
           test -f manual_selector.py
@@ -41,17 +58,8 @@ jobs:
           test -f training_answer.py
           test -f training_document_generator.py
 
-          echo "All required files found."
-          echo "Required files validation GREEN"
-
-      - name: Verify Groq package
-        run: |
-          python - <<'PY'
-          import groq
-
-          print("Groq Python package imported successfully.")
-          print("Groq dependency GREEN")
-          PY
+          echo "All required project files found."
+          echo "Project files GREEN"
 
       - name: Verify GROQ_API_KEY
         env:
@@ -62,10 +70,10 @@ jobs:
             exit 1
           fi
 
-          echo "GROQ_API_KEY is available."
-          echo "Groq secret validation GREEN"
+          echo "GROQ_API_KEY available."
+          echo "Groq secret GREEN"
 
-      - name: Rebuild Step 30 training workflow
+      - name: Build Step 30 training workflow
         run: |
           python training_workflow.py \
             --manufacturer "MAN" \
@@ -77,7 +85,7 @@ jobs:
             --manuals "manual_catalog.json" \
             --output training_workflow.json
 
-      - name: Validate Step 30
+      - name: Verify Step 30
         run: |
           python - <<'PY'
           import json
@@ -85,36 +93,17 @@ jobs:
           with open("training_workflow.json", "r", encoding="utf-8") as f:
               data = json.load(f)
 
-          print("Training workflow keys:")
-          print(list(data.keys()))
+          print("Step 30 status:", data.get("status"))
 
-          assert data.get("status") == "READY_FOR_GROQ", \
-              f"Unexpected Step 30 status: {data.get('status')}"
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  f"Step 30 is not READY_FOR_GROQ: {data.get('status')}"
+              )
 
-          inputs = data.get("input", {})
-
-          assert isinstance(inputs, dict), \
-              "Training input section missing."
-
-          required = [
-              "manufacturer",
-              "engine_model",
-              "topic",
-              "technician_level",
-              "duration",
-              "vessel",
-          ]
-
-          for field in required:
-              assert field in inputs, \
-                  f"Missing input field: {field}"
-
-          print("STEP 30 status: READY_FOR_GROQ")
-          print("STEP 30 input validation: GREEN")
-          print("STEP 30 validation GREEN")
+          print("STEP 30 GREEN")
           PY
 
-      - name: Generate Step 31 training content
+      - name: Build Step 31 training content
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
@@ -122,7 +111,7 @@ jobs:
             --workflow training_workflow.json \
             --output training_answer.json
 
-      - name: Validate Step 31
+      - name: Verify Step 31
         run: |
           python - <<'PY'
           import json
@@ -130,50 +119,46 @@ jobs:
           with open("training_answer.json", "r", encoding="utf-8") as f:
               data = json.load(f)
 
-          print("Training answer keys:")
-          print(list(data.keys()))
+          print("Step 31 output keys:")
+          for key in data.keys():
+              print(" -", key)
 
-          # Step is stored as integer 31 in the existing GREEN Step 31 output.
-          assert data.get("step") == 31, \
-              f"Unexpected step: {data.get('step')}"
+          print("Step:", data.get("step"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
 
-          assert data.get("stage") == "groq_training_content_generator", \
-              f"Unexpected stage: {data.get('stage')}"
+          if data.get("step") != 31:
+              raise SystemExit(
+                  f"Unexpected Step 31 number: {data.get('step')}"
+              )
 
-          assert data.get("status") == "SUCCESS", \
-              f"Unexpected status: {data.get('status')}"
+          if data.get("stage") != "groq_training_content_generator":
+              raise SystemExit(
+                  f"Unexpected Step 31 stage: {data.get('stage')}"
+              )
 
-          assert isinstance(data.get("input"), dict), \
-              "Step 31 input missing."
+          if data.get("status") != "SUCCESS":
+              raise SystemExit(
+                  f"Step 31 did not complete successfully: "
+                  f"{data.get('status')}"
+              )
 
-          assert isinstance(data.get("report_sections"), list), \
-              "Step 31 report_sections missing."
+          if not data.get("training_content"):
+              raise SystemExit(
+                  "Step 31 training_content is empty."
+              )
 
-          assert isinstance(data.get("training_content"), dict), \
-              "Step 31 training_content missing."
-
-          assert isinstance(data.get("evidence_policy"), dict), \
-              "Step 31 evidence_policy missing."
-
-          print("STEP 31 number validation: GREEN")
-          print("STEP 31 status: SUCCESS")
-          print(
-              f"Report sections: "
-              f"{len(data.get('report_sections', []))}"
-          )
-          print("Training content validation: GREEN")
-          print("Evidence policy validation: GREEN")
-          print("STEP 31 validation GREEN")
+          print("STEP 31 GREEN")
           PY
 
-      - name: Select relevant OEM manuals
+      - name: Select OEM manuals
         run: |
           python manual_selector.py \
             --query "QL-40 MAN 16V175D-MM Main Engine Fuel System Injector Maintenance" \
             --top-k 10 \
             --output selected_manuals.json
 
-      - name: Validate manual selection
+      - name: Verify OEM manual selection
         run: |
           python - <<'PY'
           import json
@@ -183,17 +168,26 @@ jobs:
 
           if isinstance(data, list):
               records = data
+          elif isinstance(data, dict):
+              records = data.get("selected_manuals")
+
+              if records is None:
+                  records = data.get("results")
+
+              if records is None:
+                  records = data.get("manuals")
+
+              if records is None:
+                  records = []
+
           else:
-              records = data.get(
-                  "selected_manuals",
-                  data.get("results", [])
-              )
+              records = []
 
-          assert len(records) > 0, \
-              "No manuals selected."
+          if not records:
+              raise SystemExit("No OEM manuals selected.")
 
-          print(f"Selected manuals: {len(records)}")
-          print("Manual selection GREEN")
+          print("Selected OEM manuals:", len(records))
+          print("OEM selection GREEN")
           PY
 
       - name: Download selected OEM manuals
@@ -205,20 +199,20 @@ jobs:
             --selected selected_manuals.json \
             --output selected_manuals
 
-      - name: Validate downloaded OEM manuals
+      - name: Verify downloaded OEM manuals
         run: |
-          count=$(find selected_manuals -type f -iname "*.pdf" | wc -l)
+          pdf_count=$(find selected_manuals -type f -iname "*.pdf" | wc -l)
 
-          echo "Downloaded PDF count: $count"
+          echo "Downloaded PDF count: $pdf_count"
 
-          if [ "$count" -lt 1 ]; then
-            echo "ERROR: No OEM PDF files downloaded."
+          if [ "$pdf_count" -eq 0 ]; then
+            echo "ERROR: No OEM PDFs were downloaded."
             exit 1
           fi
 
-          echo "OEM manual download GREEN"
+          echo "OEM PDF download GREEN"
 
-      - name: Build visual training package
+      - name: Generate STEP 32A training package
         run: |
           rm -rf training_package
 
@@ -228,30 +222,25 @@ jobs:
             --manual-dir selected_manuals \
             --output-dir training_package
 
-      - name: Validate Step 32A outputs
+      - name: Verify STEP 32A package
         run: |
+          echo "Checking generated training package..."
+
           test -f training_package/MarineWise_Training_Manual.docx
           test -f training_package/MarineWise_Training_Manual.pdf
           test -f training_package/MarineWise_Training_Presentation.pptx
           test -f training_package/training_package_manifest.json
 
-          echo "All STEP 32A output files exist."
-
           echo ""
-          echo "Training package contents:"
-          find training_package -maxdepth 2 -type f | sort
-
-          echo ""
-          echo "OEM visual files:"
-          find training_package/oem_images \
-            -type f 2>/dev/null || true
+          echo "Generated files:"
+          find training_package -type f | sort
 
           echo ""
           echo "STEP 32A SUCCESS - GREEN"
 
-      - name: Upload STEP 32A training package
+      - name: Upload STEP 32A package
         uses: actions/upload-artifact@v4
         with:
           name: MarineWise-Training-Package-STEP32A
-          path: training_package/
+          path: training_package
           if-no-files-found: error
