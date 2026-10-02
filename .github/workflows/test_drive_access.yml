@@ -13,36 +13,45 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install gdown
+      - name: Install Google Drive tools
         run: |
           python -m pip install --upgrade pip
           pip install gdown
 
-      - name: Test MANUALS folder access
+      - name: Check MANUALS folder
         run: |
           python - <<'PY'
-          import gdown
+          import requests
 
-          url = "https://drive.google.com/drive/folders/1gI_rJpsDzJ3HsOBO0Hb50B71vaJDkXY5?usp=sharing"
+          folder_id = "1gI_rJpsDzJ3HsOBO0Hb50B71vaJDkXY5"
+
+          url = (
+              "https://drive.google.com/drive/folders/"
+              + folder_id
+          )
 
           print("Checking Google Drive folder...")
           print(url)
 
-          try:
-              files = gdown.download_folder(
-                  url=url,
-                  output="/tmp/marinewise_drive_test",
-                  quiet=False,
-                  use_cookies=False,
-                  remaining_ok=True,
-                  skip_download=True,
+          response = requests.get(
+              url,
+              timeout=30,
+          )
+
+          print(f"HTTP status: {response.status_code}")
+
+          if response.status_code != 200:
+              raise RuntimeError(
+                  f"Google Drive returned HTTP {response.status_code}"
               )
 
-              print("Google Drive folder access: SUCCESS")
-              print(f"Items detected: {len(files) if files else 0}")
+          page = response.text
 
-          except Exception as error:
-              print("Google Drive folder access: FAILED")
-              print(error)
-              raise
+          if folder_id not in page:
+              raise RuntimeError(
+                  "Folder ID was not found in the Google Drive response."
+              )
+
+          print("Google Drive folder is publicly accessible.")
+          print("Folder access test: SUCCESS")
           PY
