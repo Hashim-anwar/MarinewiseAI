@@ -1,0 +1,150 @@
+name: MarineWise STEP 24 Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  step24:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install gdown pypdf sentence-transformers faiss-cpu rank_bm25
+
+      - name: Verify STEP 19 selection
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - VERIFY MANUAL SELECTION"
+          echo "=========================================="
+
+          test -f selected_manuals.json
+
+          echo "GREEN - selected_manuals.json found"
+
+      - name: Rebuild selected manual PDFs
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - DOWNLOAD SELECTED MANUALS"
+          echo "=========================================="
+
+          python manual_downloader.py
+
+      - name: Verify selected PDFs
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - VERIFY SELECTED PDFS"
+          echo "=========================================="
+
+          COUNT=$(find selected_manuals -maxdepth 1 -type f \( -iname "*.pdf" \) | wc -l)
+
+          echo "Selected PDF files: $COUNT"
+
+          test "$COUNT" -eq 10
+
+          echo "GREEN - 10 selected manuals available"
+
+      - name: Extract documents
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - DOCUMENT EXTRACTION"
+          echo "=========================================="
+
+          python document_extractor.py
+
+      - name: Verify extracted documents
+        run: |
+          COUNT=$(find extracted_documents -maxdepth 1 -type f -name "*.json" | wc -l)
+
+          echo "Extraction JSON files: $COUNT"
+
+          test "$COUNT" -eq 10
+
+          echo "GREEN - 10 extraction files available"
+
+      - name: Build document chunks
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - BUILD CHUNKS"
+          echo "=========================================="
+
+          python document_chunker.py
+
+      - name: Verify chunk index
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - VERIFY CHUNK INPUT"
+          echo "=========================================="
+
+          test -f chunks/all_chunks.json
+          test -f chunks/all_chunks.jsonl
+
+          echo "GREEN - all_chunks.json found"
+          echo "GREEN - all_chunks.jsonl found"
+
+      - name: Build FAISS vector index
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - BUILD FAISS INDEX"
+          echo "=========================================="
+
+          python vector_indexer.py
+
+      - name: Verify FAISS vector store
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - VERIFY FAISS"
+          echo "=========================================="
+
+          test -f vector_store/marinewise.faiss
+          test -f vector_store/metadata.json
+          test -f vector_store/index_info.json
+
+          echo "GREEN - FAISS index found"
+          echo "GREEN - FAISS metadata found"
+          echo "GREEN - FAISS information found"
+
+      - name: Run STEP 24 Hybrid RAG
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - HYBRID RAG"
+          echo "=========================================="
+
+          python hybrid_retriever.py
+
+      - name: Verify hybrid results
+        run: |
+          echo "=========================================="
+          echo "STEP 24 - VERIFY HYBRID RESULTS"
+          echo "=========================================="
+
+          test -f hybrid_results.json
+
+          echo "GREEN - hybrid_results.json found"
+
+      - name: Upload STEP 24 results
+        uses: actions/upload-artifact@v4
+        with:
+          name: marinewise-step24-hybrid-rag
+          path: |
+            hybrid_results.json
+            vector_store/
+            chunks/all_chunks.json
+            chunks/all_chunks.jsonl
+
+      - name: STEP 24 complete
+        run: |
+          echo "=========================================="
+          echo "STEP 24 VERIFICATION COMPLETE"
+          echo "=========================================="
+          echo "STEP 24: SUCCESS"
+          echo "GREEN"
