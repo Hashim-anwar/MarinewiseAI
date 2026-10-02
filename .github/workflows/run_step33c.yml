@@ -1,0 +1,231 @@
+name: STEP 33C - Assessment OEM Evidence Grounding
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assessment-evidence-grounding:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "gdown>=6.1.0" "pymupdf"
+
+      - name: Verify required files
+        run: |
+          test -f training_workflow.py
+          test -f assessment_evidence_builder.py
+          test -f manual_selector.py
+          test -f manual_downloader.py
+          test -f manual_catalog.json
+
+          echo "Required files verified."
+
+      - name: Rebuild Step 30 training workflow
+        run: |
+          python training_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --topic "Fuel System and Injector Maintenance" \
+            --technician-level "Basic" \
+            --duration "4 Days" \
+            --vessel "QL-40" \
+            --manuals "manual_catalog.json" \
+            --output training_workflow.json
+
+      - name: Validate Step 30 output
+        run: |
+          python - <<'PY'
+          import json
+
+          with open("training_workflow.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          assert isinstance(data, dict), "training_workflow.json is not a JSON object"
+          assert data.get("step") == 30, f"Unexpected step: {data.get('step')}"
+          assert data.get("status") == "READY_FOR_GROQ", \
+              f"Unexpected status: {data.get('status')}"
+
+          print("STEP 30 validation: GREEN")
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+          PY
+
+      - name: Select relevant OEM manuals
+        run: |
+          python manual_selector.py \
+            --query "QL-40 MAN 16V175D-MM Main Engine Fuel System Injector Maintenance" \
+            --top-k 10 \
+            --output selected_manuals.json
+
+      - name: Validate manual selection
+        run: |
+          python - <<'PY'
+          import json
+
+          with open("selected_manuals.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          if isinstance(data, list):
+              items = data
+          elif isinstance(data, dict):
+              items = None
+
+              for key in (
+                  "selected_manuals",
+                  "results",
+                  "manuals",
+                  "selections",
+              ):
+                  value = data.get(key)
+
+                  if isinstance(value, list):
+                      items = value
+                      break
+
+              if items is None:
+                  items = []
+
+          else:
+              items = []
+
+          assert len(items) >= 1, "No manuals were selected."
+
+          print("Selected manuals:", len(items))
+          print("Manual selection validation: GREEN")
+          PY
+
+      - name: Download selected OEM manuals
+        run: |
+          python manual_downloader.py \
+            --selection selected_manuals.json \
+            --catalog manual_catalog.json \
+            --output-dir selected_manuals
+
+      - name: Validate downloaded OEM manuals
+        run: |
+          PDF_COUNT=$(find selected_manuals -type f -iname "*.pdf" | wc -l)
+
+          echo "Downloaded PDF count: $PDF_COUNT"
+
+          test "$PDF_COUNT" -ge 1
+
+          echo "OEM manual download validation: GREEN"
+
+      - name: Build OEM assessment evidence
+        run: |
+          python assessment_evidence_builder.py \
+            --training training_workflow.json \
+            --manual-dir selected_manuals \
+            --output assessment_evidence.json
+
+      - name: Validate STEP 33C evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("assessment_evidence.json")
+
+          assert path.exists(), "assessment_evidence.json was not created."
+          assert path.stat().st_size > 0, "assessment_evidence.json is empty."
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          assert isinstance(data, dict), \
+              "assessment_evidence.json must be a JSON object."
+
+          assert data.get("step") == 33, \
+              f"Unexpected step: {data.get('step')}"
+
+          assert data.get("substep") == "33C", \
+              f"Unexpected substep: {data.get('substep')}"
+
+          assert data.get("stage") == "assessment_oem_evidence_grounding", \
+              f"Unexpected stage: {data.get('stage')}"
+
+          assert data.get("status") == "SUCCESS", \
+              f"Unexpected status: {data.get('status')}"
+
+          evidence = data.get("evidence")
+
+          assert isinstance(evidence, list), \
+              "Evidence must be a list."
+
+          assert len(evidence) > 0, \
+              "No OEM evidence records were generated."
+
+          for item in evidence:
+              assert isinstance(item, dict), \
+                  "Each evidence record must be an object."
+
+              assert item.get("source_type") == "OEM", \
+                  "Evidence source must be OEM."
+
+              assert item.get("source_file"), \
+                  "Evidence source file is missing."
+
+              assert item.get("page"), \
+                  "Evidence page is missing."
+
+              assert item.get("evidence_text"), \
+                  "Evidence text is missing."
+
+              assert item.get("citation"), \
+                  "OEM citation is missing."
+
+          print("========================================")
+          print("STEP 33C VALIDATION")
+          print("========================================")
+          print("OEM manuals:", data.get("manual_count"))
+          print("Evidence records:", data.get("evidence_count"))
+          print("Assessment areas:", len(data.get("assessment_areas", [])))
+          print("Status:", data.get("status"))
+          print("STEP 33C STATUS: GREEN")
+          print("========================================")
+          PY
+
+      - name: Commit assessment evidence
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add assessment_evidence.json
+
+          if git diff --cached --quiet; then
+            echo "No assessment evidence changes to commit."
+          else
+            git commit -m "Add OEM grounded assessment evidence"
+            git push
+          fi
+
+      - name: Upload STEP 33C artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarineWise-Assessment-Evidence-STEP33C
+          path: |
+            assessment_evidence.json
+            training_workflow.json
+            selected_manuals.json
+          if-no-files-found: error
+
+      - name: Final GREEN status
+        run: |
+          echo "========================================"
+          echo "STEP 33C COMPLETE"
+          echo "STATUS: GREEN"
+          echo "========================================"
