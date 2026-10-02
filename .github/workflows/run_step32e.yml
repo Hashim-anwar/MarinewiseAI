@@ -1,0 +1,315 @@
+name: MarineWise STEP 32E - Final Visual Package Integration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate-visual-package:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify required files
+        run: |
+          test -f training_answer.json
+          test -f validated_visual_requests.json
+          test -f ai_training_visual_manifest.json
+          test -f training_final_visual_integrator.py
+
+          echo "All required STEP 32E files found."
+
+      - name: Validate STEP 31 input
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("training_answer.json")
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          print("STEP 31")
+          print("Step:", data.get("step"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+
+          if data.get("step") != 31:
+              raise SystemExit("training_answer.json is not STEP 31.")
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit("STEP 31 status is not SUCCESS.")
+
+          print("STEP 31 validation: GREEN")
+          PY
+
+      - name: Validate STEP 32C input
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("validated_visual_requests.json")
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          print("STEP 32C")
+          print("Step:", data.get("step"))
+          print("Substep:", data.get("substep"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+          print("OEM visual sections:", data.get("oem_visual_sections"))
+          print("AI fallback sections:", data.get("ai_fallback_sections"))
+
+          if data.get("step") != 32:
+              raise SystemExit("Invalid STEP 32C step.")
+
+          if data.get("substep") != "32C":
+              raise SystemExit("Invalid STEP 32C substep.")
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit("STEP 32C status is not SUCCESS.")
+
+          print("STEP 32C validation: GREEN")
+          PY
+
+      - name: Validate STEP 32D input
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("ai_training_visual_manifest.json")
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          print("STEP 32D")
+          print("Step:", data.get("step"))
+          print("Substep:", data.get("substep"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+          print("Generated:", len(data.get("generated", [])))
+          print("Failed:", len(data.get("failed", [])))
+
+          if data.get("step") != 32:
+              raise SystemExit("Invalid STEP 32D step.")
+
+          if data.get("substep") != "32D":
+              raise SystemExit("Invalid STEP 32D substep.")
+
+          if data.get("stage") != "controlled_ai_visual_generator":
+              raise SystemExit("Invalid STEP 32D stage.")
+
+          if data.get("failed"):
+              raise SystemExit("STEP 32D contains failed visual requests.")
+
+          if data.get("ai_visual_label") != "AI Training Illustration — Not an OEM Figure":
+              raise SystemExit("Invalid AI visual label.")
+
+          print("STEP 32D validation: GREEN")
+          PY
+
+      - name: Verify OEM visual directory
+        run: |
+          if [ -d "validated_oem_visuals" ]; then
+            echo "validated_oem_visuals found."
+            find validated_oem_visuals -type f | head -20
+          else
+            echo "validated_oem_visuals directory not found."
+            echo "Continuing because the STEP 32E manifest may contain existing references."
+          fi
+
+      - name: Verify AI visual directory
+        run: |
+          if [ -d "ai_training_visuals" ]; then
+            echo "ai_training_visuals found."
+            find ai_training_visuals -type f | head -20
+          else
+            echo "No ai_training_visuals directory."
+            echo "This is acceptable when STEP 32D generated zero AI visuals."
+          fi
+
+      - name: Run STEP 32E integrator
+        run: |
+          python training_final_visual_integrator.py \
+            --training training_answer.json \
+            --validated validated_visual_requests.json \
+            --ai-manifest ai_training_visual_manifest.json \
+            --output-dir final_training_package \
+            --manifest final_visual_package_manifest.json
+
+      - name: Validate STEP 32E manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("final_visual_package_manifest.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "final_visual_package_manifest.json was not created."
+              )
+
+          with path.open("r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          print("")
+          print("==============================================")
+          print("STEP 32E MANIFEST")
+          print("==============================================")
+          print("Step:", data.get("step"))
+          print("Substep:", data.get("substep"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+          print("Visual sections:", data.get("visual_sections"))
+          print("OEM integrated:", data.get("oem_visuals_integrated"))
+          print("AI integrated:", data.get("ai_visuals_integrated"))
+          print("Unavailable:", data.get("visuals_unavailable"))
+          print("==============================================")
+
+          if data.get("step") != 32:
+              raise SystemExit("Invalid STEP 32E step.")
+
+          if data.get("substep") != "32E":
+              raise SystemExit("Invalid STEP 32E substep.")
+
+          if data.get("stage") != "final_visual_package_integrator":
+              raise SystemExit("Invalid STEP 32E stage.")
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit("STEP 32E status is not SUCCESS.")
+
+          if data.get("visual_sections") != 10:
+              raise SystemExit(
+                  "STEP 32E must contain 10 visual sections."
+              )
+
+          if data.get("ai_visual_label") != "AI Training Illustration — Not an OEM Figure":
+              raise SystemExit("Invalid STEP 32E AI visual label.")
+
+          print("STEP 32E manifest validation: GREEN")
+          PY
+
+      - name: Verify integrated files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          with open(
+              "final_visual_package_manifest.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          visuals = data.get("visuals", [])
+          missing = []
+
+          for item in visuals:
+              if item.get("status") != "INTEGRATED":
+                  continue
+
+              file_path = item.get("file")
+
+              if not file_path:
+                  missing.append(
+                      f"{item.get('section')}: missing file path"
+                  )
+                  continue
+
+              path = Path(file_path)
+
+              if not path.exists():
+                  missing.append(
+                      f"{item.get('section')}: {path}"
+                  )
+                  continue
+
+              if path.stat().st_size == 0:
+                  missing.append(
+                      f"{item.get('section')}: empty file"
+                  )
+
+          if missing:
+              print("Invalid integrated files:")
+              for item in missing:
+                  print(item)
+
+              raise SystemExit(
+                  "Integrated visual verification failed."
+              )
+
+          print("Integrated visual files validation: GREEN")
+          PY
+
+      - name: Display STEP 32E summary
+        run: |
+          python - <<'PY'
+          import json
+
+          with open(
+              "final_visual_package_manifest.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          print("")
+          print("==============================================")
+          print("MARINEWISE STEP 32E")
+          print("FINAL VISUAL PACKAGE INTEGRATION")
+          print("==============================================")
+          print("STATUS:", data.get("status"))
+          print("OEM VISUALS:", data.get("oem_visuals_integrated"))
+          print("AI VISUALS:", data.get("ai_visuals_integrated"))
+          print("UNAVAILABLE:", data.get("visuals_unavailable"))
+          print("AI LABEL:", data.get("ai_visual_label"))
+          print("==============================================")
+          PY
+
+      - name: Upload STEP 32E artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarineWise-Final-Visual-Integration-STEP32E
+          path: |
+            final_visual_package_manifest.json
+            final_training_package/
+          if-no-files-found: warn
+
+      - name: Commit STEP 32E manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add final_visual_package_manifest.json
+
+          if git diff --cached --quiet; then
+            echo "No STEP 32E manifest changes to commit."
+          else
+            git commit -m "Add MarineWise STEP 32E final visual integration"
+            git push
+          fi
+
+      - name: Final STEP 32E GREEN verification
+        run: |
+          echo "=============================================="
+          echo "STEP 32E STATUS: GREEN"
+          echo "Final visual integration completed."
+          echo "OEM visual priority preserved."
+          echo "AI visuals remain fallback-only."
+          echo "=============================================="
