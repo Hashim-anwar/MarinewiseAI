@@ -500,3 +500,16 @@ jobs:
 
           print("\nSTEP 18 SEARCH TEST: SUCCESS")
           PY
+      - name: Commit manual catalog to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add manual_catalog.json
+
+          if git diff --cached --quiet; then
+            echo "No catalog changes to commit."
+          else
+            git commit -m "Update MarineWise manual catalog"
+            git push
+          fi
