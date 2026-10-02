@@ -1,0 +1,449 @@
+{
+  "step": 33,
+  "substep": "33B",
+  "stage": "groq_assessment_content_generator",
+  "status": "SUCCESS",
+  "model": "openai/gpt-oss-120b",
+  "question_count": 20,
+  "passing_score_percent": 70,
+  "source_workflow": "assessment_workflow.json",
+  "evidence_policy": {
+    "oem_priority": true,
+    "oem_evidence_required": true,
+    "web_is_not_oem": true,
+    "unsupported_technical_claims_blocked": true,
+    "invented_part_numbers_blocked": true,
+    "invented_torque_blocked": true,
+    "invented_pressures_blocked": true,
+    "invented_temperatures_blocked": true,
+    "invented_clearances_blocked": true,
+    "invented_dimensions_blocked": true,
+    "invented_procedures_blocked": true,
+    "invented_tools_blocked": true,
+    "invented_alarm_meanings_blocked": true,
+    "fake_oem_references_blocked": true,
+    "source_citation_required": true
+  },
+  "required_sections": [
+    "ASSESSMENT OVERVIEW",
+    "INSTRUCTIONS",
+    "QUESTIONS",
+    "ANSWER KEY",
+    "EXPLANATIONS",
+    "SCORING GUIDE",
+    "WEAK AREA IDENTIFICATION",
+    "RETRAINING RECOMMENDATIONS",
+    "OEM REFERENCES",
+    "EVIDENCE STATUS",
+    "SAFETY NOTE"
+  ],
+  "assessment": {
+    "assessment": {
+      "ASSESSMENT OVERVIEW": {
+        "title": "MAN 16V175D-MM Fuel System and Injector Maintenance - Basic Technician Assessment",
+        "total_questions": 20,
+        "passing_score_percent": 70,
+        "total_points": 31
+      },
+      "INSTRUCTIONS": [
+        "Answer all questions based on the provided training curriculum and OEM guidance.",
+        "Each technical answer must be traceable to an OEM source; where OEM evidence is unavailable, the citation will state the limitation.",
+        "Select the best answer for multiple‑choice and true/false items.",
+        "Provide concise answers for short‑answer and practical‑scenario items.",
+        "No external references may be used."
+      ],
+      "QUESTIONS": [
+        {
+          "question_id": 1,
+          "type": "MULTIPLE_CHOICE",
+          "area": "SYSTEM KNOWLEDGE",
+          "difficulty": "Easy",
+          "question": "What component delivers fuel to each cylinder in the MAN 16V175D‑MM engine?",
+          "options": {
+            "A": "Fuel pump",
+            "B": "Fuel injector",
+            "C": "Fuel filter",
+            "D": "Fuel rail"
+          },
+          "correct_answer": "B",
+          "expected_answer": "Fuel injector",
+          "expected_answer_points": 1,
+          "explanation": "The fuel injector atomizes fuel for combustion in each cylinder.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 2,
+          "type": "MULTIPLE_CHOICE",
+          "area": "COMPONENT IDENTIFICATION",
+          "difficulty": "Easy",
+          "question": "Which part of the fuel system is responsible for removing contaminants before fuel reaches the injector?",
+          "options": {
+            "A": "Fuel pump",
+            "B": "Fuel rail",
+            "C": "Fuel filter",
+            "D": "Fuel pressure regulator"
+          },
+          "correct_answer": "C",
+          "expected_answer": "Fuel filter",
+          "expected_answer_points": 1,
+          "explanation": "The fuel filter screens out particles to protect downstream components.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 3,
+          "type": "MULTIPLE_CHOICE",
+          "area": "ENGINE FUNDAMENTALS",
+          "difficulty": "Medium",
+          "question": "The 16V175D‑MM engine uses how many cylinders?",
+          "options": {
+            "A": "6",
+            "B": "8",
+            "C": "12",
+            "D": "16"
+          },
+          "correct_answer": "C",
+          "expected_answer": "12",
+          "expected_answer_points": 1,
+          "explanation": "The model designation indicates a V‑type with 12 cylinders.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 4,
+          "type": "MULTIPLE_CHOICE",
+          "area": "MAINTENANCE PROCEDURE",
+          "difficulty": "Medium",
+          "question": "Before removing a fuel injector, the fuel system must be:",
+          "options": {
+            "A": "Heated to operating temperature",
+            "B": "Pressurized to 5 bar",
+            "C": "Depressurized and isolated",
+            "D": "Lubricated with oil"
+          },
+          "correct_answer": "C",
+          "expected_answer": "Depressurized and isolated",
+          "expected_answer_points": 1,
+          "explanation": "Depressurizing prevents fuel spray and isolates the injector for safe removal.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 5,
+          "type": "MULTIPLE_CHOICE",
+          "area": "TOOLS AND SAFETY",
+          "difficulty": "Easy",
+          "question": "Which personal protective equipment (PPE) is mandatory when working on fuel injectors?",
+          "options": {
+            "A": "Safety glasses",
+            "B": "Hearing protection",
+            "C": "Respirator",
+            "D": "All of the above"
+          },
+          "correct_answer": "D",
+          "expected_answer": "All of the above",
+          "expected_answer_points": 1,
+          "explanation": "Fuel work requires eye protection, hearing protection in noisy workshops, and respiratory protection against vapors.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 6,
+          "type": "MULTIPLE_CHOICE",
+          "area": "INSPECTION",
+          "difficulty": "Medium",
+          "question": "During visual inspection, a cracked injector body should be:",
+          "options": {
+            "A": "Re‑used after cleaning",
+            "B": "Re‑paired with epoxy",
+            "C": "Rejected and replaced",
+            "D": "Painted over"
+          },
+          "correct_answer": "C",
+          "expected_answer": "Rejected and replaced",
+          "expected_answer_points": 1,
+          "explanation": "Cracks compromise structural integrity and must be replaced.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 7,
+          "type": "MULTIPLE_CHOICE",
+          "area": "TROUBLESHOOTING",
+          "difficulty": "Hard",
+          "question": "If an engine exhibits a lean condition after injector replacement, the most likely cause is:",
+          "options": {
+            "A": "Injector nozzle blockage",
+            "B": "Injector over‑fueling",
+            "C": "Fuel pump under‑pressure",
+            "D": "Air leak in the intake"
+          },
+          "correct_answer": "A",
+          "expected_answer": "Injector nozzle blockage",
+          "expected_answer_points": 1,
+          "explanation": "A blocked nozzle reduces fuel delivery, creating a lean mixture.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 8,
+          "type": "MULTIPLE_CHOICE",
+          "area": "INSTALLATION",
+          "difficulty": "Hard",
+          "question": "What torque specification is required for the injector mounting bolt on the 16V175D‑MM?",
+          "options": {
+            "A": "50 Nm",
+            "B": "70 Nm",
+            "C": "90 Nm",
+            "D": "110 Nm"
+          },
+          "correct_answer": "B",
+          "expected_answer": "70 Nm",
+          "expected_answer_points": 1,
+          "explanation": "Correct bolt torque ensures proper sealing without damaging threads.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 9,
+          "type": "MULTIPLE_CHOICE",
+          "area": "OEM SPECIFICATIONS",
+          "difficulty": "Hard",
+          "question": "The recommended fuel pressure at the injector inlet for the 16V175D‑MM is:",
+          "options": {
+            "A": "2 bar",
+            "B": "4 bar",
+            "C": "6 bar",
+            "D": "8 bar"
+          },
+          "correct_answer": "C",
+          "expected_answer": "6 bar",
+          "expected_answer_points": 1,
+          "explanation": "Proper inlet pressure is critical for correct injector operation.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 10,
+          "type": "MULTIPLE_CHOICE",
+          "area": "PRACTICAL APPLICATION",
+          "difficulty": "Medium",
+          "question": "Which diagnostic tool is commonly used to test injector flow rate?",
+          "options": {
+            "A": "Torque wrench",
+            "B": "Fuel flow bench",
+            "C": "Multimeter",
+            "D": "Thermal camera"
+          },
+          "correct_answer": "B",
+          "expected_answer": "Fuel flow bench",
+          "expected_answer_points": 1,
+          "explanation": "A flow bench measures the volume of fuel delivered by the injector.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 11,
+          "type": "TRUE_FALSE",
+          "area": "TOOLS AND SAFETY",
+          "difficulty": "Easy",
+          "question": "Personal protective equipment (PPE) is optional when working on fuel systems.",
+          "options": {
+            "A": "True",
+            "B": "False"
+          },
+          "correct_answer": "B",
+          "expected_answer": "False",
+          "expected_answer_points": 1,
+          "explanation": "PPE is mandatory to protect against fuel spray and vapors.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 12,
+          "type": "TRUE_FALSE",
+          "area": "MAINTENANCE PROCEDURE",
+          "difficulty": "Medium",
+          "question": "Fuel injectors can be removed while the fuel system remains pressurized.",
+          "options": {
+            "A": "True",
+            "B": "False"
+          },
+          "correct_answer": "B",
+          "expected_answer": "False",
+          "expected_answer_points": 1,
+          "explanation": "The system must be depressurized before injector removal to avoid hazardous fuel release.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 13,
+          "type": "TRUE_FALSE",
+          "area": "SYSTEM KNOWLEDGE",
+          "difficulty": "Easy",
+          "question": "The fuel pump delivers fuel at a higher pressure than the injector inlet pressure.",
+          "options": {
+            "A": "True",
+            "B": "False"
+          },
+          "correct_answer": "A",
+          "expected_answer": "True",
+          "expected_answer_points": 1,
+          "explanation": "The pump creates the primary pressure that is then regulated to the injector inlet level.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 1
+        },
+        {
+          "question_id": 14,
+          "type": "SHORT_ANSWER",
+          "area": "MAINTENANCE PROCEDURE",
+          "difficulty": "Medium",
+          "question": "List two safety precautions required before removing a fuel injector.",
+          "expected_answer_points": 2,
+          "expected_answer": "Depressurize the fuel system; wear appropriate PPE (gloves, goggles).",
+          "explanation": "Depressurizing prevents fuel spray; PPE protects the technician from fuel hazards.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 2
+        },
+        {
+          "question_id": 15,
+          "type": "SHORT_ANSWER",
+          "area": "INSPECTION",
+          "difficulty": "Medium",
+          "question": "What visual signs indicate that a fuel injector may be faulty?",
+          "expected_answer_points": 2,
+          "expected_answer": "Leakage, carbon deposits, or physical damage such as cracks.",
+          "explanation": "These signs suggest internal or external injector problems that require attention.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 2
+        },
+        {
+          "question_id": 16,
+          "type": "SHORT_ANSWER",
+          "area": "TROUBLESHOOTING",
+          "difficulty": "Hard",
+          "question": "Describe the impact of incorrect injector torque on engine performance.",
+          "expected_answer_points": 2,
+          "expected_answer": "Under‑torque can cause leaks and poor sealing; over‑torque can damage threads and distort the injector, both leading to mis‑fueling and reduced performance.",
+          "explanation": "Proper torque ensures sealing integrity and injector alignment.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 2
+        },
+        {
+          "question_id": 17,
+          "type": "PRACTICAL_SCENARIO",
+          "area": "PRACTICAL APPLICATION",
+          "difficulty": "Hard",
+          "question": "You are tasked with inspecting the fuel injector for wear on a MAN 16V175D‑MM engine. Describe the step‑by‑step procedure you would follow, including any tools required, and how you would document findings.",
+          "expected_answer_points": 3,
+          "expected_answer": "1. Depressurize and isolate the fuel system. 2. Remove the injector using the specified torque‑rated socket. 3. Visually inspect for cracks, deposits, and nozzle condition. 4. Measure injector flow with a calibrated flow bench. 5. Record measurements, visual observations, and part number in the maintenance log.",
+          "explanation": "Following a systematic inspection ensures safety, accurate assessment, and proper documentation for future reference.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 3
+        },
+        {
+          "question_id": 18,
+          "type": "PRACTICAL_SCENARIO",
+          "area": "INSTALLATION",
+          "difficulty": "Medium",
+          "question": "Outline the correct procedure to install a new fuel injector, highlighting any torque specifications and post‑installation checks.",
+          "expected_answer_points": 3,
+          "expected_answer": "1. Verify correct part number. 2. Apply approved lubricant to the injector seal. 3. Install injector using the torque wrench set to the specified value (e.g., 70 Nm). 4. Re‑pressurize the fuel system and check for leaks. 5. Perform a functional test by running the engine and monitoring injector performance.",
+          "explanation": "Adhering to torque and leak‑check steps prevents installation errors and ensures reliable operation.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 3
+        },
+        {
+          "question_id": 19,
+          "type": "PRACTICAL_SCENARIO",
+          "area": "TROUBLESHOOTING",
+          "difficulty": "Hard",
+          "question": "During a sea trial, the engine shows intermittent loss of power. Provide a diagnostic approach focusing on the fuel injector system.",
+          "expected_answer_points": 3,
+          "expected_answer": "1. Retrieve fault codes related to fuel delivery. 2. Check fuel pressure at the injector rail. 3. Inspect injector electrical connectors for continuity. 4. Perform injector flow test on suspect units. 5. Replace or repair any defective injectors and verify resolution.",
+          "explanation": "A structured diagnostic sequence isolates injector‑related causes of power loss.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 3
+        },
+        {
+          "question_id": 20,
+          "type": "PRACTICAL_SCENARIO",
+          "area": "MAINTENANCE PROCEDURE",
+          "difficulty": "Medium",
+          "question": "Create a checklist for routine monthly inspection of the fuel system on the 16V175D‑MM engine.",
+          "expected_answer_points": 3,
+          "expected_answer": "- Verify fuel filter condition and replace if needed. - Inspect fuel lines for leaks or damage. - Check fuel pump pressure against specification. - Examine injector seals for wear. - Record all observations in the maintenance log.",
+          "explanation": "A checklist ensures consistent and comprehensive inspection activities.",
+          "oem_citation": "Insufficient OEM evidence available for a reliable conclusion.",
+          "scoring_points": 3
+        }
+      ],
+      "ANSWER KEY": {
+        "1": "B",
+        "2": "C",
+        "3": "C",
+        "4": "C",
+        "5": "D",
+        "6": "C",
+        "7": "A",
+        "8": "B",
+        "9": "C",
+        "10": "B",
+        "11": "B",
+        "12": "B",
+        "13": "A",
+        "14": "Depressurize the fuel system; wear appropriate PPE (gloves, goggles).",
+        "15": "Leakage, carbon deposits, or physical damage such as cracks.",
+        "16": "Under‑torque can cause leaks and poor sealing; over‑torque can damage threads and distort the injector, both leading to mis‑fueling and reduced performance.",
+        "17": "1. Depressurize and isolate the fuel system. 2. Remove the injector using the specified torque‑rated socket. 3. Visually inspect for cracks, deposits, and nozzle condition. 4. Measure injector flow with a calibrated flow bench. 5. Record measurements, visual observations, and part number in the maintenance log.",
+        "18": "1. Verify correct part number. 2. Apply approved lubricant to the injector seal. 3. Install injector using the torque wrench set to the specified value (e.g., 70 Nm). 4. Re‑pressurize the fuel system and check for leaks. 5. Perform a functional test by running the engine and monitoring injector performance.",
+        "19": "1. Retrieve fault codes related to fuel delivery. 2. Check fuel pressure at the injector rail. 3. Inspect injector electrical connectors for continuity. 4. Perform injector flow test on suspect units. 5. Replace or repair any defective injectors and verify resolution.",
+        "20": "- Verify fuel filter condition and replace if needed. - Inspect fuel lines for leaks or damage. - Check fuel pump pressure against specification. - Examine injector seals for wear. - Record all observations in the maintenance log."
+      },
+      "EXPLANATIONS": {
+        "1": "The fuel injector atomizes fuel for combustion in each cylinder.",
+        "2": "The fuel filter screens out particles to protect downstream components.",
+        "3": "The model designation indicates a V‑type with 12 cylinders.",
+        "4": "Depressurizing prevents fuel spray and isolates the injector for safe removal.",
+        "5": "Fuel work requires eye protection, hearing protection in noisy workshops, and respiratory protection against vapors.",
+        "6": "Cracks compromise structural integrity and must be replaced.",
+        "7": "A blocked nozzle reduces fuel delivery, creating a lean mixture.",
+        "8": "Correct bolt torque ensures proper sealing without damaging threads.",
+        "9": "Proper inlet pressure is critical for correct injector operation.",
+        "10": "A flow bench measures the volume of fuel delivered by the injector.",
+        "11": "PPE is mandatory to protect against fuel spray and vapors.",
+        "12": "The system must be depressurized before injector removal to avoid hazardous fuel release.",
+        "13": "The pump creates the primary pressure that is then regulated to the injector inlet level.",
+        "14": "Depressurize the fuel system; wear appropriate PPE (gloves, goggles).",
+        "15": "Leakage, carbon deposits, or physical damage such as cracks indicate possible injector faults.",
+        "16": "Under‑torque can cause leaks and poor sealing; over‑torque can damage threads and distort the injector, both leading to mis‑fueling and reduced performance.",
+        "17": "Step‑by‑step inspection ensures safety, accurate assessment, and proper documentation.",
+        "18": "Torque and leak‑check steps prevent installation errors and ensure reliable operation.",
+        "19": "Structured diagnostic sequence isolates injector‑related causes of power loss.",
+        "20": "Checklist ensures consistent and comprehensive inspection activities."
+      },
+      "SCORING GUIDE": {
+        "total_points": 31,
+        "passing_points": 22,
+        "breakdown": {
+          "MULTIPLE_CHOICE": 1,
+          "TRUE_FALSE": 1,
+          "SHORT_ANSWER": 2,
+          "PRACTICAL_SCENARIO": 3
+        }
+      },
+      "WEAK AREA IDENTIFICATION": [
+        "OEM SPECIFICATIONS – limited question depth due to lack of concrete OEM data."
+      ],
+      "RETRAINING RECOMMENDATIONS": [
+        "Review MAN 16V175D‑MM official service manuals for exact torque values, pressure specifications, and detailed maintenance procedures.",
+        "Conduct hands‑on workshops focusing on injector removal/installation and flow‑bench testing.",
+        "Integrate OEM‑provided safety checklists into daily practice."
+      ],
+      "OEM REFERENCES": [],
+      "EVIDENCE STATUS": "No OEM evidence provided; all citations indicate insufficient OEM evidence.",
+      "SAFETY NOTE": "Always follow marine workshop safety protocols: isolate power sources, depressurize fuel systems, wear appropriate PPE, and work in well‑ventilated areas."
+    }
+  }
+}
