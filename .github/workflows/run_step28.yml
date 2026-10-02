@@ -22,15 +22,40 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install \
+            gdown \
+            pypdf \
+            rank_bm25 \
+            sentence-transformers \
+            faiss-cpu \
+            requests
 
-      - name: Verify required input files
+      - name: Verify Tavily secret
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: |
+          if [ -z "$TAVILY_API_KEY" ]; then
+            echo "ERROR - TAVILY_API_KEY is not configured."
+            exit 1
+          fi
+
+          echo "TAVILY_API_KEY is configured."
+
+      - name: Verify required pipeline files
         run: |
           python - <<'PY'
           from pathlib import Path
 
           required = [
-              "reranked_evidence.json",
-              "tavily_results.json",
+              "manual_catalog.json",
+              "manual_selector.py",
+              "manual_downloader.py",
+              "document_extractor.py",
+              "document_chunker.py",
+              "vector_indexer.py",
+              "hybrid_retriever.py",
+              "evidence_reranker.py",
+              "tavily_research.py",
               "evidence_fusion.py",
           ]
 
@@ -41,15 +66,119 @@ jobs:
           ]
 
           if missing:
-              print("ERROR - Missing required files:")
+              print("ERROR - Missing required pipeline files:")
               for item in missing:
                   print(f" - {item}")
               raise SystemExit(1)
 
-          print("All STEP 28 input files are present.")
+          print("All required STEP 28 pipeline files are present.")
           PY
 
-      - name: Run evidence fusion
+      - name: Select manuals
+        run: |
+          python manual_selector.py \
+            "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm"
+
+      - name: Download selected manuals
+        run: |
+          python manual_downloader.py
+
+      - name: Extract selected manuals
+        run: |
+          python document_extractor.py
+
+      - name: Create document chunks
+        run: |
+          python document_chunker.py
+
+      - name: Build FAISS vector index
+        run: |
+          python vector_indexer.py
+
+      - name: Run hybrid retrieval
+        run: |
+          python hybrid_retriever.py
+
+      - name: Re-rank OEM evidence
+        run: |
+          python evidence_reranker.py
+
+      - name: Verify OEM evidence output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("reranked_evidence.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - reranked_evidence.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if not isinstance(data, dict):
+              raise SystemExit(
+                  "ERROR - Invalid reranked evidence structure."
+              )
+
+          print("OEM evidence output verified.")
+          print(f"File: {path}")
+          PY
+
+      - name: Run controlled Tavily research
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: |
+          python tavily_research.py
+
+      - name: Verify Tavily output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("tavily_results.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - tavily_results.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          if data.get("step") != 27:
+              raise SystemExit(
+                  "ERROR - Invalid Tavily step number."
+              )
+
+          if data.get("provider") != "Tavily":
+              raise SystemExit(
+                  "ERROR - Invalid Tavily provider."
+              )
+
+          evidence = data.get("web_evidence")
+
+          if not isinstance(evidence, list):
+              raise SystemExit(
+                  "ERROR - web_evidence is not a list."
+              )
+
+          if len(evidence) == 0:
+              raise SystemExit(
+                  "ERROR - Tavily returned no usable evidence."
+              )
+
+          print("Tavily output verified.")
+          print(f"Web evidence: {len(evidence)}")
+          PY
+
+      - name: Run evidence and citation fusion
         run: |
           python evidence_fusion.py
 
@@ -170,9 +299,7 @@ jobs:
                       "ERROR - OEM evidence text missing."
                   )
 
-              if not item.get("citation", "").startswith(
-                  "[OEM"
-              ):
+              if not item.get("citation", "").startswith("[OEM"):
                   raise SystemExit(
                       "ERROR - Invalid OEM citation."
                   )
@@ -193,9 +320,7 @@ jobs:
                       "ERROR - WEB evidence text missing."
                   )
 
-              if not item.get("citation", "").startswith(
-                  "[WEB"
-              ):
+              if not item.get("citation", "").startswith("[WEB"):
                   raise SystemExit(
                       "ERROR - Invalid WEB citation."
                   )
@@ -203,15 +328,9 @@ jobs:
           print("=" * 70)
           print("STEP 28 VERIFICATION COMPLETE")
           print("=" * 70)
-          print(
-              f"OEM evidence       : {len(oem)}"
-          )
-          print(
-              f"WEB evidence       : {len(web)}"
-          )
-          print(
-              f"Combined evidence  : {len(combined)}"
-          )
+          print(f"OEM evidence       : {len(oem)}")
+          print(f"WEB evidence       : {len(web)}")
+          print(f"Combined evidence  : {len(combined)}")
           print()
           print("OEM priority       : TRUE")
           print("WEB is not OEM     : TRUE")
