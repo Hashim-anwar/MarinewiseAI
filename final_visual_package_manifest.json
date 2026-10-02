@@ -1,0 +1,128 @@
+{
+  "step": 32,
+  "substep": "32E",
+  "stage": "final_visual_package_integrator",
+  "status": "SUCCESS",
+  "input": {
+    "manufacturer": "MAN",
+    "engine_model": "16V175D-MM",
+    "topic": "Fuel System and Injector Maintenance",
+    "vessel": "QL-40"
+  },
+  "visual_sections": 10,
+  "oem_visuals_integrated": 0,
+  "ai_visuals_integrated": 0,
+  "visuals_unavailable": 10,
+  "ai_visual_label": "AI Training Illustration — Not an OEM Figure",
+  "visual_policy": {
+    "oem_visual_first": true,
+    "ai_visual_only_when_oem_visual_is_unavailable": true,
+    "ai_visual_is_generic_training_illustration": true,
+    "ai_visual_not_oem_figure": true,
+    "technical_specs_must_come_from_oem": true,
+    "fake_oem_figures_blocked": true,
+    "validated_oem_visuals_are_never_replaced_by_ai": true
+  },
+  "visuals": [
+    {
+      "section": "ENGINE INTRODUCTION",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "SYSTEM OVERVIEW",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "COMPONENT IDENTIFICATION",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "TOOLS REQUIRED",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "SAFETY PRECAUTIONS",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "REMOVAL PROCEDURE",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "INSPECTION",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "INSTALLATION",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "TROUBLESHOOTING",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    },
+    {
+      "section": "PRACTICAL EXERCISE",
+      "visual_source": "NONE",
+      "status": "NO_USABLE_VISUAL",
+      "image": null,
+      "source_file": null,
+      "page": null,
+      "citation": null,
+      "ai_label": null
+    }
+  ]
+}
