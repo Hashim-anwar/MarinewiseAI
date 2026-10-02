@@ -12,27 +12,68 @@ jobs:
 
     steps:
 
+      # ============================================================
+      # 1. CHECKOUT
+      # ============================================================
+
       - name: Checkout repository
         uses: actions/checkout@v5
+
+
+      # ============================================================
+      # 2. PYTHON
+      # ============================================================
 
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
+
+      # ============================================================
+      # 3. INSTALL ALL REQUIRED DEPENDENCIES
+      # ============================================================
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "pymupdf"
 
-      - name: Verify dependencies
+          python -m pip install \
+            "pymupdf" \
+            "groq" \
+            "gdown>=6.1.0"
+
+          echo "All required Python packages installed."
+
+
+      # ============================================================
+      # 4. VERIFY DEPENDENCIES BEFORE RUNNING ANY PYTHON SCRIPT
+      # ============================================================
+
+      - name: Verify Python dependencies
         run: |
           python - <<'PY'
-          import fitz
+          import sys
 
+          print("Python:", sys.version)
+
+          import fitz
           print("PyMuPDF: OK")
-          print("Dependencies GREEN")
+
+          from groq import Groq
+          print("Groq: OK")
+
+          import gdown
+          print("gdown: OK")
+
+          print()
+          print("ALL STEP 32B DEPENDENCIES GREEN")
           PY
+
+
+      # ============================================================
+      # 5. VERIFY PROJECT FILES
+      # ============================================================
 
       - name: Verify required project files
         run: |
@@ -43,8 +84,37 @@ jobs:
           test -f training_answer.py
           test -f training_visual_planner.py
 
-          echo "All required project files found."
-          echo "Project files GREEN"
+          echo "manual_catalog.json: FOUND"
+          echo "manual_selector.py: FOUND"
+          echo "manual_downloader.py: FOUND"
+          echo "training_workflow.py: FOUND"
+          echo "training_answer.py: FOUND"
+          echo "training_visual_planner.py: FOUND"
+
+          echo ""
+          echo "PROJECT FILES GREEN"
+
+
+      # ============================================================
+      # 6. VERIFY GROQ SECRET
+      # ============================================================
+
+      - name: Verify GROQ_API_KEY
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "ERROR: GROQ_API_KEY secret is missing."
+            exit 1
+          fi
+
+          echo "GROQ_API_KEY available."
+          echo "GROQ SECRET GREEN"
+
+
+      # ============================================================
+      # 7. BUILD STEP 30
+      # ============================================================
 
       - name: Build Step 30 training workflow
         run: |
@@ -58,75 +128,106 @@ jobs:
             --manuals "manual_catalog.json" \
             --output training_workflow.json
 
+
+      # ============================================================
+      # 8. VERIFY STEP 30
+      # ============================================================
+
       - name: Verify Step 30
         run: |
           python - <<'PY'
           import json
+          from pathlib import Path
 
-          with open(
-              "training_workflow.json",
+          path = Path("training_workflow.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: training_workflow.json was not created."
+              )
+
+          with path.open(
               "r",
               encoding="utf-8"
           ) as f:
               data = json.load(f)
 
+          print("Step 30 status:", data.get("status"))
+
           if data.get("status") != "READY_FOR_GROQ":
               raise SystemExit(
-                  f"Step 30 failed: {data.get('status')}"
+                  f"STEP 30 failed: {data.get('status')}"
               )
 
           print("STEP 30 GREEN")
           PY
 
-      - name: Verify GROQ_API_KEY
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        run: |
-          if [ -z "$GROQ_API_KEY" ]; then
-            echo "ERROR: GROQ_API_KEY secret is missing."
-            exit 1
-          fi
 
-          echo "GROQ_API_KEY available."
-          echo "Groq secret GREEN"
+      # ============================================================
+      # 9. BUILD STEP 31
+      # ============================================================
 
       - name: Build Step 31 training content
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
+          echo "Starting training_answer.py..."
+
           python training_answer.py \
             --workflow training_workflow.json \
             --output training_answer.json
+
+
+      # ============================================================
+      # 10. VERIFY STEP 31
+      # ============================================================
 
       - name: Verify Step 31
         run: |
           python - <<'PY'
           import json
+          from pathlib import Path
 
-          with open(
-              "training_answer.json",
+          path = Path("training_answer.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: training_answer.json was not created."
+              )
+
+          with path.open(
               "r",
               encoding="utf-8"
           ) as f:
               data = json.load(f)
 
+          print("Step:", data.get("step"))
+          print("Stage:", data.get("stage"))
+          print("Status:", data.get("status"))
+
           if data.get("step") != 31:
               raise SystemExit(
-                  f"Unexpected step: {data.get('step')}"
+                  f"Unexpected Step 31 number: {data.get('step')}"
               )
 
           if data.get("status") != "SUCCESS":
               raise SystemExit(
-                  f"Step 31 failed: {data.get('status')}"
+                  f"STEP 31 failed: {data.get('status')}"
               )
 
           if not data.get("training_content"):
               raise SystemExit(
-                  "training_content is empty."
+                  "ERROR: training_content is empty."
               )
 
+          print()
           print("STEP 31 GREEN")
           PY
+
+
+      # ============================================================
+      # 11. SELECT OEM MANUALS
+      # ============================================================
 
       - name: Select OEM manuals
         run: |
@@ -135,19 +236,32 @@ jobs:
             --top-k 10 \
             --output selected_manuals.json
 
+
+      # ============================================================
+      # 12. VERIFY OEM SELECTION
+      # ============================================================
+
       - name: Verify OEM manual selection
         run: |
           python - <<'PY'
           import json
+          from pathlib import Path
 
-          with open(
-              "selected_manuals.json",
+          path = Path("selected_manuals.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: selected_manuals.json was not created."
+              )
+
+          with path.open(
               "r",
               encoding="utf-8"
           ) as f:
               data = json.load(f)
 
           if isinstance(data, list):
+
               records = data
 
           elif isinstance(data, dict):
@@ -160,19 +274,25 @@ jobs:
               )
 
           else:
+
               records = []
 
           if not records:
               raise SystemExit(
-                  "No OEM manuals selected."
+                  "ERROR: No OEM manuals selected."
               )
 
           print(
               f"Selected OEM manuals: {len(records)}"
           )
 
-          print("OEM selection GREEN")
+          print("OEM SELECTION GREEN")
           PY
+
+
+      # ============================================================
+      # 13. DOWNLOAD SELECTED OEM MANUALS
+      # ============================================================
 
       - name: Download selected OEM manuals
         run: |
@@ -182,6 +302,11 @@ jobs:
             --catalog manual_catalog.json \
             --selected selected_manuals.json \
             --output selected_manuals
+
+
+      # ============================================================
+      # 14. VERIFY DOWNLOADED MANUALS
+      # ============================================================
 
       - name: Verify downloaded OEM manuals
         run: |
@@ -194,7 +319,17 @@ jobs:
             exit 1
           fi
 
-          echo "OEM PDF download GREEN"
+          echo ""
+          echo "Downloaded OEM PDFs:"
+          find selected_manuals -type f -iname "*.pdf" | sort
+
+          echo ""
+          echo "OEM PDF DOWNLOAD GREEN"
+
+
+      # ============================================================
+      # 15. RUN STEP 32B
+      # ============================================================
 
       - name: Run STEP 32B visual planner
         run: |
@@ -204,13 +339,27 @@ jobs:
             --manual-dir selected_manuals \
             --output ai_visual_requests.json
 
+
+      # ============================================================
+      # 16. VERIFY STEP 32B
+      # ============================================================
+
       - name: Verify STEP 32B output
         run: |
           python - <<'PY'
           import json
+          from pathlib import Path
 
-          with open(
-              "ai_visual_requests.json",
+          path = Path(
+              "ai_visual_requests.json"
+          )
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: ai_visual_requests.json was not created."
+              )
+
+          with path.open(
               "r",
               encoding="utf-8"
           ) as f:
@@ -241,26 +390,28 @@ jobs:
                   f"STEP 32B failed: {data.get('status')}"
               )
 
-          if data.get("manual_count", 0) == 0:
+          if data.get("manual_count", 0) <= 0:
               raise SystemExit(
-                  "No OEM manuals detected."
+                  "ERROR: No OEM manuals detected."
               )
 
-          if data.get("visual_sections", 0) == 0:
+          if data.get("visual_sections", 0) <= 0:
               raise SystemExit(
-                  "No visual training sections detected."
+                  "ERROR: No visual training sections detected."
               )
 
           if "ai_visual_requests" not in data:
               raise SystemExit(
-                  "ai_visual_requests field missing."
+                  "ERROR: ai_visual_requests field missing."
               )
 
-          if data.get("ai_visual_label") != (
+          expected_label = (
               "AI Training Illustration — Not an OEM Figure"
-          ):
+          )
+
+          if data.get("ai_visual_label") != expected_label:
               raise SystemExit(
-                  "AI visual label policy is incorrect."
+                  "ERROR: AI visual label policy is incorrect."
               )
 
           policy = data.get(
@@ -272,14 +423,14 @@ jobs:
               "oem_visual_first"
           ):
               raise SystemExit(
-                  "OEM-first policy is not enabled."
+                  "ERROR: OEM-first policy is not enabled."
               )
 
           if not policy.get(
               "technical_specs_must_come_from_oem"
           ):
               raise SystemExit(
-                  "OEM technical-specification policy missing."
+                  "ERROR: OEM technical-specification policy missing."
               )
 
           print()
@@ -307,12 +458,22 @@ jobs:
           print("STEP 32B GREEN")
           PY
 
+
+      # ============================================================
+      # 17. UPLOAD STEP 32B ARTIFACT
+      # ============================================================
+
       - name: Upload STEP 32B artifact
         uses: actions/upload-artifact@v4
         with:
           name: MarineWise-AI-Visual-Requests-STEP32B
           path: ai_visual_requests.json
           if-no-files-found: error
+
+
+      # ============================================================
+      # 18. COMMIT STEP 32B OUTPUT
+      # ============================================================
 
       - name: Commit STEP 32B planner output
         run: |
@@ -328,4 +489,5 @@ jobs:
             git push
           fi
 
-          echo "STEP 32B output commit GREEN"
+          echo ""
+          echo "STEP 32B OUTPUT COMMIT GREEN"
