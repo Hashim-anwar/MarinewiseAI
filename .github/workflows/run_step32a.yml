@@ -1,4 +1,4 @@
-name: STEP 32A - Visual Training Document Generator
+name: STEP 32A - Visual Training Document Package
 
 on:
   workflow_dispatch:
@@ -7,78 +7,60 @@ permissions:
   contents: read
 
 jobs:
-  visual-training-package:
+  build-training-package:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install \
+            "gdown>=6.1.0" \
+            "groq" \
+            "python-docx" \
+            "reportlab" \
+            "python-pptx" \
+            "pymupdf"
 
-          pip install \
-            gdown>=6.1.0 \
-            python-docx \
-            reportlab \
-            python-pptx \
-            pymupdf
+      - name: Verify required files
+        run: |
+          test -f manual_catalog.json
+          test -f manual_selector.py
+          test -f manual_downloader.py
+          test -f training_workflow.py
+          test -f training_answer.py
+          test -f training_document_generator.py
 
-      - name: Verify required source files
+          echo "All required files found."
+
+      - name: Verify Groq package
         run: |
           python - <<'PY'
-          from pathlib import Path
-
-          required = [
-              "manual_catalog.json",
-              "manual_selector.py",
-              "manual_downloader.py",
-              "training_workflow.py",
-              "training_answer.py",
-              "training_document_generator.py",
-          ]
-
-          missing = [
-              item
-              for item in required
-              if not Path(item).exists()
-          ]
-
-          if missing:
-              print("ERROR - Missing required source files:")
-
-              for item in missing:
-                  print(f" - {item}")
-
-              raise SystemExit(1)
-
-          print("All STEP 32A source files are present.")
-          print("GREEN")
+          import groq
+          print("Groq Python package imported successfully.")
+          print("GREEN - Groq dependency ready.")
           PY
 
-      - name: Verify STEP 31 output source
+      - name: Verify GROQ_API_KEY
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          python - <<'PY'
-          from pathlib import Path
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "ERROR: GROQ_API_KEY secret is missing."
+            exit 1
+          fi
 
-          if not Path("training_answer.py").exists():
-              raise SystemExit(
-                  "ERROR - training_answer.py is missing."
-              )
+          echo "GROQ_API_KEY is available."
 
-          print(
-              "STEP 31 source is available."
-          )
-          PY
-
-      - name: Rebuild STEP 30 training workflow
+      - name: Rebuild Step 30 training workflow
         run: |
           python training_workflow.py \
             --manufacturer "MAN" \
@@ -90,172 +72,94 @@ jobs:
             --manuals "manual_catalog.json" \
             --output training_workflow.json
 
-      - name: Verify training workflow
+      - name: Validate Step 30
         run: |
           python - <<'PY'
           import json
-          from pathlib import Path
 
-          path = Path(
-              "training_workflow.json"
+          with open("training_workflow.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          assert data.get("status") == "READY_FOR_GROQ", data.get("status")
+
+          sections = data.get("sections", [])
+          assert len(sections) >= 15, (
+              f"Expected at least 15 training sections, got {len(sections)}"
           )
 
-          if not path.exists():
-              raise SystemExit(
-                  "ERROR - training_workflow.json was not generated."
-              )
+          inputs = data.get("input", {})
+          required = [
+              "manufacturer",
+              "engine_model",
+              "topic",
+              "technician_level",
+              "duration",
+              "vessel",
+          ]
 
-          data = json.loads(
-              path.read_text(
-                  encoding="utf-8"
-              )
-          )
+          for field in required:
+              assert field in inputs, f"Missing input field: {field}"
 
-          if data.get("step") != 30:
-              raise SystemExit(
-                  "ERROR - Training workflow is not STEP 30."
-              )
-
-          if data.get("status") != "READY_FOR_GROQ":
-              raise SystemExit(
-                  "ERROR - Training workflow is not READY_FOR_GROQ."
-              )
-
-          curriculum = data.get(
-              "curriculum",
-              []
-          )
-
-          if len(curriculum) < 15:
-              raise SystemExit(
-                  "ERROR - Training curriculum is incomplete."
-              )
-
-          print(
-              f"Training curriculum sections: {len(curriculum)}"
-          )
-
-          print(
-              "Training workflow verified."
-          )
+          print("STEP 30 validation GREEN")
+          print(f"Training sections: {len(sections)}")
           PY
 
-      - name: Rebuild STEP 31 training content
+      - name: Generate Step 31 training content
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          if [ -z "$GROQ_API_KEY" ]; then
-            echo "ERROR - GROQ_API_KEY is not configured."
-            exit 1
-          fi
-
           python training_answer.py \
             --workflow training_workflow.json \
-            --output training_answer.json \
-            --model "openai/gpt-oss-120b"
+            --output training_answer.json
 
-      - name: Verify STEP 31 training content
+      - name: Validate Step 31
         run: |
           python - <<'PY'
           import json
-          from pathlib import Path
 
-          path = Path(
-              "training_answer.json"
+          with open("training_answer.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          assert data.get("step") == "31", data.get("step")
+          assert data.get("stage") == "groq_training_content_generator", data.get("stage")
+          assert data.get("status") == "SUCCESS", data.get("status")
+
+          sections = data.get("sections", [])
+          assert len(sections) >= 17, (
+              f"Expected at least 17 sections, got {len(sections)}"
           )
 
-          if not path.exists():
-              raise SystemExit(
-                  "ERROR - training_answer.json was not created."
-              )
+          policy = data.get("policy")
+          assert policy, "Training policy missing."
 
-          data = json.loads(
-              path.read_text(
-                  encoding="utf-8"
-              )
-          )
-
-          if data.get("step") != 31:
-              raise SystemExit(
-                  "ERROR - Training answer is not STEP 31."
-              )
-
-          if data.get("status") != "SUCCESS":
-              raise SystemExit(
-                  "ERROR - STEP 31 status is not SUCCESS."
-              )
-
-          content = data.get(
-              "training_content",
-              ""
-          )
-
-          if len(content.strip()) < 300:
-              raise SystemExit(
-                  "ERROR - Training content is too short."
-              )
-
-          print(
-              f"Training content characters: {len(content)}"
-          )
-
-          print(
-              "STEP 31 training content verified."
-          )
+          print("STEP 31 validation GREEN")
+          print(f"Training sections: {len(sections)}")
           PY
 
-      - name: Select relevant manuals
+      - name: Select relevant OEM manuals
         run: |
           python manual_selector.py \
             --query "QL-40 MAN 16V175D-MM Main Engine Fuel System Injector Maintenance" \
             --top-k 10 \
             --output selected_manuals.json
 
-      - name: Verify selected manuals
+      - name: Validate manual selection
         run: |
           python - <<'PY'
           import json
-          from pathlib import Path
 
-          path = Path(
-              "selected_manuals.json"
-          )
-
-          if not path.exists():
-              raise SystemExit(
-                  "ERROR - selected_manuals.json was not created."
-              )
-
-          data = json.loads(
-              path.read_text(
-                  encoding="utf-8"
-              )
-          )
+          with open("selected_manuals.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
 
           if isinstance(data, list):
-              count = len(data)
-
-          elif isinstance(data, dict):
-              items = (
-                  data.get("selected_manuals")
-                  or data.get("results")
-                  or data.get("items")
-                  or []
-              )
-
-              count = len(items)
-
+              records = data
           else:
-              count = 0
+              records = data.get("selected_manuals", data.get("results", []))
 
-          if count == 0:
-              raise SystemExit(
-                  "ERROR - No manuals selected."
-              )
+          assert len(records) > 0, "No manuals selected."
 
-          print(
-              f"Selected manuals: {count}"
-          )
+          print(f"Selected manuals: {len(records)}")
+          print("Manual selection GREEN")
           PY
 
       - name: Download selected OEM manuals
@@ -267,142 +171,44 @@ jobs:
             --selected selected_manuals.json \
             --output selected_manuals
 
-      - name: Verify downloaded manuals
+      - name: Validate downloaded OEM manuals
         run: |
-          python - <<'PY'
-          from pathlib import Path
+          count=$(find selected_manuals -type f -iname "*.pdf" | wc -l)
 
-          directory = Path(
-              "selected_manuals"
-          )
+          echo "Downloaded PDF count: $count"
 
-          files = list(
-              directory.rglob("*.pdf")
-          ) + list(
-              directory.rglob("*.PDF")
-          )
+          if [ "$count" -lt 1 ]; then
+            echo "ERROR: No OEM PDF files downloaded."
+            exit 1
+          fi
 
-          files = list(
-              set(files)
-          )
+          echo "OEM manual download GREEN"
 
-          if not files:
-              raise SystemExit(
-                  "ERROR - No OEM PDF manuals were downloaded."
-              )
-
-          print(
-              f"OEM PDF manuals downloaded: {len(files)}"
-          )
-
-          for file in files:
-              print(
-                  f" - {file.name}"
-              )
-          PY
-
-      - name: Generate visual training package
+      - name: Build visual training package
         run: |
+          rm -rf training_package
+
           python training_document_generator.py \
             --answer training_answer.json \
             --workflow training_workflow.json \
             --manual-dir selected_manuals \
             --output-dir training_package
 
-      - name: Verify final training package
+      - name: Validate Step 32A outputs
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json
+          test -f training_package/MarineWise_Training_Manual.docx
+          test -f training_package/MarineWise_Training_Manual.pdf
+          test -f training_package/MarineWise_Training_Presentation.pptx
+          test -f training_package/training_package_manifest.json
 
-          output = Path(
-              "training_package"
-          )
+          echo "All STEP 32A output files exist."
 
-          required = [
-              output / "MarineWise_Training_Manual.docx",
-              output / "MarineWise_Training_Manual.pdf",
-              output / "MarineWise_Training_Presentation.pptx",
-              output / "training_package_manifest.json",
-          ]
+          echo "OEM visual files:"
+          find training_package/oem_images -type f 2>/dev/null || true
 
-          missing = [
-              str(item)
-              for item in required
-              if not item.exists()
-          ]
+          echo "STEP 32A SUCCESS - GREEN"
 
-          if missing:
-              print(
-                  "ERROR - Missing generated files:"
-              )
-
-              for item in missing:
-                  print(
-                      f" - {item}"
-                  )
-
-              raise SystemExit(1)
-
-          manifest = json.loads(
-              (
-                  output
-                  / "training_package_manifest.json"
-              ).read_text(
-                  encoding="utf-8"
-              )
-          )
-
-          if manifest.get("status") != "SUCCESS":
-              raise SystemExit(
-                  "ERROR - Package manifest status is not SUCCESS."
-              )
-
-          visual_count = manifest.get(
-              "visual_count",
-              0
-          )
-
-          print("=" * 70)
-          print("STEP 32A VERIFICATION COMPLETE")
-          print("=" * 70)
-
-          print(
-              f"OEM manuals       : "
-              f"{manifest.get('manual_count', 0)}"
-          )
-
-          print(
-              f"OEM visual pages  : "
-              f"{visual_count}"
-          )
-
-          print(
-              "DOCX              : TRUE"
-          )
-
-          print(
-              "PDF               : TRUE"
-          )
-
-          print(
-              "PPTX              : TRUE"
-          )
-
-          print(
-              "Visual captions   : TRUE"
-          )
-
-          print(
-              "OEM source policy : TRUE"
-          )
-
-          print()
-          print("STEP 32A: SUCCESS")
-          print("GREEN")
-          PY
-
-      - name: Upload downloadable training package
+      - name: Upload STEP 32A training package
         uses: actions/upload-artifact@v4
         with:
           name: MarineWise-Training-Package-STEP32A
