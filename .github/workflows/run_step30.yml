@@ -1,0 +1,213 @@
+name: STEP 30 - Training Intelligence Curriculum Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  training-intelligence:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify required files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          required = [
+              "manual_catalog.json",
+              "training_workflow.py",
+          ]
+
+          missing = [
+              item
+              for item in required
+              if not Path(item).exists()
+          ]
+
+          if missing:
+              print("ERROR - Missing required files:")
+
+              for item in missing:
+                  print(f" - {item}")
+
+              raise SystemExit(1)
+
+          print("All STEP 30 required files are present.")
+          PY
+
+      - name: Run Training Intelligence
+        run: |
+          python training_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --topic "Fuel System and Injector Maintenance" \
+            --technician-level "Basic" \
+            --duration "4 Days" \
+            --vessel "QL-40" \
+            --manuals "manual_catalog.json" \
+            --output training_workflow.json
+
+      - name: Verify Training Workflow
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path(
+              "training_workflow.json"
+          )
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - training_workflow.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(
+                  encoding="utf-8"
+              )
+          )
+
+          if data.get("step") != 30:
+              raise SystemExit(
+                  "ERROR - Incorrect step number."
+              )
+
+          if data.get("stage") != (
+              "training_intelligence_curriculum_planner"
+          ):
+              raise SystemExit(
+                  "ERROR - Incorrect training stage."
+              )
+
+          if data.get("status") != "READY_FOR_GROQ":
+              raise SystemExit(
+                  "ERROR - Training workflow is not ready for Groq."
+              )
+
+          selected = data.get(
+              "manual_selection",
+              {}
+          ).get(
+              "selected_manuals",
+              []
+          )
+
+          if not selected:
+              raise SystemExit(
+                  "ERROR - No manuals selected."
+              )
+
+          curriculum = data.get(
+              "curriculum",
+              []
+          )
+
+          if len(curriculum) < 15:
+              raise SystemExit(
+                  "ERROR - Curriculum is incomplete."
+              )
+
+          required_sections = [
+              "TRAINING OBJECTIVE",
+              "ENGINE INTRODUCTION",
+              "SYSTEM OVERVIEW",
+              "COMPONENT IDENTIFICATION",
+              "TOOLS REQUIRED",
+              "SAFETY PRECAUTIONS",
+              "REMOVAL PROCEDURE",
+              "INSPECTION",
+              "INSTALLATION",
+              "TORQUE AND SPECIFICATIONS",
+              "COMMON FAULTS",
+              "TROUBLESHOOTING",
+              "PRACTICAL EXERCISE",
+              "KNOWLEDGE CHECK",
+              "FINAL ASSESSMENT",
+              "OEM REFERENCES",
+              "EVIDENCE STATUS",
+          ]
+
+          actual = [
+              item.get("section")
+              for item in curriculum
+          ]
+
+          for section in required_sections:
+              if section not in actual:
+                  raise SystemExit(
+                      f"ERROR - Missing curriculum section: {section}"
+                  )
+
+          policy = data.get(
+              "evidence_policy",
+              {}
+          )
+
+          if policy.get(
+              "oem_priority"
+          ) is not True:
+              raise SystemExit(
+                  "ERROR - OEM priority policy failed."
+              )
+
+          if policy.get(
+              "oem_evidence_required"
+          ) is not True:
+              raise SystemExit(
+                  "ERROR - OEM evidence policy failed."
+              )
+
+          if policy.get(
+              "web_is_not_oem"
+          ) is not True:
+              raise SystemExit(
+                  "ERROR - WEB/OEM separation policy failed."
+              )
+
+          print("=" * 70)
+          print("STEP 30 VERIFICATION COMPLETE")
+          print("=" * 70)
+
+          print(
+              f"Selected manuals   : {len(selected)}"
+          )
+
+          print(
+              f"Curriculum sections: {len(curriculum)}"
+          )
+
+          print(
+              f"Training topic     : "
+              f"{data['input']['topic']}"
+          )
+
+          print()
+          print("Manual selection   : TRUE")
+          print("Curriculum         : TRUE")
+          print("OEM priority       : TRUE")
+          print("Evidence required  : TRUE")
+          print("WEB separation     : TRUE")
+          print("Ready for Groq     : TRUE")
+          print()
+          print("STEP 30: SUCCESS")
+          print("GREEN")
+          PY
+
+      - name: Upload STEP 30 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: step30-training-intelligence
+          path: training_workflow.json
