@@ -34,6 +34,7 @@ from reportlab.platypus import (
 OUTPUT_DIR = Path("training_package")
 IMAGE_DIR = OUTPUT_DIR / "oem_images"
 
+
 REQUIRED_SECTIONS = [
     "TRAINING OBJECTIVE",
     "ENGINE INTRODUCTION",
@@ -276,9 +277,11 @@ def manual_matches(
         ]
 
         for possible in possible_names:
+
             if possible and Path(
                 str(possible)
             ).name.lower() == name:
+
                 return item
 
     return None
@@ -296,10 +299,12 @@ def search_oem_pages(
         document = fitz.open(
             pdf_path
         )
+
     except Exception:
         return matches
 
     try:
+
         for page_number in range(
             len(document)
         ):
@@ -320,12 +325,15 @@ def search_oem_pages(
             for keyword in keywords:
 
                 if keyword.lower() in lower:
+
                     score += 1
+
                     matched_terms.append(
                         keyword
                     )
 
             if score > 0:
+
                 matches.append(
                     {
                         "pdf": str(pdf_path),
@@ -359,7 +367,10 @@ def render_page(
     output_path: Path,
 ) -> bool:
 
+    document = None
+
     try:
+
         document = fitz.open(
             pdf_path
         )
@@ -382,17 +393,21 @@ def render_page(
             str(output_path)
         )
 
-        document.close()
-
         return True
 
     except Exception as exc:
+
         print(
             f"WARNING - Could not render "
             f"{pdf_path.name} page {page_number}: {exc}"
         )
 
         return False
+
+    finally:
+
+        if document is not None:
+            document.close()
 
 
 def collect_visuals(
@@ -719,12 +734,15 @@ def build_docx(
         row.cells[1].text = value
 
         for cell in row.cells:
+
             cell.vertical_alignment = (
                 WD_CELL_VERTICAL_ALIGNMENT.CENTER
             )
 
             for paragraph in cell.paragraphs:
+
                 for run in paragraph.runs:
+
                     run.font.name = "Times New Roman"
                     run.font.size = Pt(11)
 
@@ -769,6 +787,7 @@ def build_docx(
 
 
 def make_pdf_styles():
+
     styles = getSampleStyleSheet()
 
     title_style = ParagraphStyle(
@@ -1037,7 +1056,9 @@ def add_ppt_text(
     title_frame.text = title
 
     for paragraph in title_frame.paragraphs:
+
         for run in paragraph.runs:
+
             run.font.name = "Times New Roman"
             run.font.size = PptPt(24)
             run.font.bold = True
@@ -1056,7 +1077,9 @@ def add_ppt_text(
     frame.text = content[:4500]
 
     for paragraph in frame.paragraphs:
+
         for run in paragraph.runs:
+
             run.font.name = "Times New Roman"
             run.font.size = PptPt(14)
 
@@ -1068,6 +1091,13 @@ def build_pptx(
     output_path: Path,
 ) -> None:
 
+    # ==============================================================
+    # FIX:
+    # Presentation() starts with ZERO slides.
+    # Therefore presentation.slides[0] is invalid.
+    # Create the title slide explicitly.
+    # ==============================================================
+
     presentation = Presentation()
 
     presentation.slide_width = PptInches(13.333)
@@ -1078,19 +1108,56 @@ def build_pptx(
         {},
     )
 
-    title_slide = presentation.slides[0]
+    # Create title slide explicitly.
+    title_layout = presentation.slide_layouts[0]
 
-    title_slide.shapes.title.text = (
-        "MARINEWISE AI"
+    title_slide = presentation.slides.add_slide(
+        title_layout
     )
 
-    subtitle = title_slide.placeholders[1]
+    # Set title.
+    if title_slide.shapes.title is not None:
 
-    subtitle.text = (
-        "Marine Engine Technician Training\n"
-        f"{clean(input_data.get('engine_model'))}\n"
-        f"{clean(input_data.get('topic'))}"
-    )
+        title_slide.shapes.title.text = (
+            "MARINEWISE AI"
+        )
+
+        for paragraph in title_slide.shapes.title.text_frame.paragraphs:
+
+            for run in paragraph.runs:
+
+                run.font.name = "Times New Roman"
+                run.font.size = PptPt(28)
+                run.font.bold = True
+
+    # Set subtitle.
+    subtitle = None
+
+    if len(title_slide.placeholders) > 1:
+
+        try:
+            subtitle = title_slide.placeholders[1]
+        except Exception:
+            subtitle = None
+
+    if subtitle is not None:
+
+        subtitle.text = (
+            "Marine Engine Technician Training\n"
+            f"{clean(input_data.get('engine_model'))}\n"
+            f"{clean(input_data.get('topic'))}"
+        )
+
+        for paragraph in subtitle.text_frame.paragraphs:
+
+            for run in paragraph.runs:
+
+                run.font.name = "Times New Roman"
+                run.font.size = PptPt(18)
+
+    # ==============================================================
+    # Training content slides
+    # ==============================================================
 
     for section in REQUIRED_SECTIONS:
 
@@ -1184,6 +1251,7 @@ def main() -> None:
     ]
 
     if missing:
+
         raise ValueError(
             "Missing required sections: "
             + ", ".join(missing)
@@ -1194,6 +1262,7 @@ def main() -> None:
     )
 
     if output_dir.exists():
+
         shutil.rmtree(
             output_dir
         )
@@ -1230,6 +1299,7 @@ def main() -> None:
     )
 
     if not manual_files:
+
         raise RuntimeError(
             "No selected OEM PDF manuals were found."
         )
@@ -1264,6 +1334,10 @@ def main() -> None:
         / "MarineWise_Training_Presentation.pptx"
     )
 
+    # ==============================================================
+    # DOCX
+    # ==============================================================
+
     build_docx(
         sections,
         visuals,
@@ -1274,6 +1348,10 @@ def main() -> None:
     print(
         f"DOCX created       : {docx_path}"
     )
+
+    # ==============================================================
+    # PDF
+    # ==============================================================
 
     build_pdf(
         sections,
@@ -1286,6 +1364,10 @@ def main() -> None:
         f"PDF created        : {pdf_path}"
     )
 
+    # ==============================================================
+    # PPTX
+    # ==============================================================
+
     build_pptx(
         sections,
         visuals,
@@ -1296,6 +1378,10 @@ def main() -> None:
     print(
         f"PPTX created       : {pptx_path}"
     )
+
+    # ==============================================================
+    # Manifest
+    # ==============================================================
 
     manifest = {
         "step": 32,
@@ -1357,6 +1443,10 @@ def main() -> None:
 
     print(
         f"PPTX              : {pptx_path.name}"
+    )
+
+    print(
+        f"Manifest           : {manifest_path.name}"
     )
 
     print()
