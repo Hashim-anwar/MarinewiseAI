@@ -1,0 +1,968 @@
+{
+  "step": 32,
+  "substep": "32B",
+  "stage": "ai_visual_fallback_planner",
+  "status": "SUCCESS",
+  "input": {
+    "manufacturer": "MAN",
+    "engine_model": "16V175D-MM",
+    "topic": "Fuel System and Injector Maintenance",
+    "vessel": "QL-40"
+  },
+  "manual_count": 10,
+  "visual_sections": 10,
+  "oem_visual_sections": 10,
+  "ai_fallback_sections": 0,
+  "ai_visual_label": "AI Training Illustration — Not an OEM Figure",
+  "section_results": {
+    "ENGINE INTRODUCTION": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 149,
+          "score": 16,
+          "matched_terms": [
+            "engine",
+            "diesel"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "schematic",
+            "assembly",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 1 - 4 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 1 TECHNICAL INTRODUCTION High-pressure exhaust turbocharger: The high-pressure exhaust turbocharger is the high- pressure stage within the two-stage charging assembly of a combustion engine. Low-pressure exhaust gas turbocharger: The low-pressure exhaust turbocharger is the low- pressure stage within the two-stage charging assembly of a combustion engine. Lubricating oil system: The lubricating oil system of the turbocharger starts at the lubricating oil supply on the bearing housing. The lubricating oil flows through an internal ring channel system and lubricates the bearing points. The lubricating oil syst"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "score": 15,
+          "matched_terms": [
+            "engine",
+            "diesel",
+            "marine"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXVIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 112 Excess length of lines must not be stored in the control cabinet. .......................... 241 Figure 2 - 113 The left illustration shows incorrectly looped lines; the middle .............................. 242 Figure 2 - 114 In the picture on the left, the cables are chafing on the slats. ............................... 243 Figure 2 - 115 (Left) cables not properly laid; (right) the cable routes have not been used .......... 243 Figure 2 - 116 Correct wired cables in a control cabinet .............................................................. 243 Figure 2 - 117 Lines are rubbing"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "score": 14,
+          "matched_terms": [
+            "engine",
+            "diesel"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXXIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 352 Connection diagrams ........................................................................................... 569 Figure 2 - 353 Closing the case 1 ............................................................................................... 569 Figure 2 - 354 Closing the case 2 ............................................................................................... 569 Figure 2 - 355 Closing the case 3 ............................................................................................... 569 Figure 2 - 356 Cable relief ............................................."
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "score": 13,
+          "matched_terms": [
+            "engine",
+            "diesel",
+            "marine"
+          ],
+          "visual_terms": [
+            "diagram",
+            "schematic",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 177 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION dimensioned and arranged in such a way that the cooling water content of the circuits of the cooling water systems can be drained into it for maintenance purposes. 2.5.5.2.9. FIL-019/Sea water filter To protect the seawater system against erosion or blocking, a suitable seawater filter has to be installed. We recommend a mesh size of 0.5 - 2 mm. 2.5.5.2.10. Draining At the lowest point of the cooling system a drain has to be provided. Additional points for draining to be provided in the cooling system according to layout and necessity, e.g., for components in the system that will be removed for"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 78,
+          "score": 12,
+          "matched_terms": [
+            "engine",
+            "diesel"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "assembly",
+            "circuit"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXVII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 64 At the end of the grating duct, the cable ties .......................................................... 212 Figure 2 - 65 Corrugated pipe for adjustment to the geometry .................................................... 213 Figure 2 - 66 Edge protection for protecting lines against sharp edges ....................................... 213 Figure 2 - 67 Left illustration without rubber grommet ................................................................. 214 Figure 2 - 68 Forming using spiral strip ...................................................................................."
+        }
+      ],
+      "ai_request_created": false
+    },
+    "SYSTEM OVERVIEW": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "score": 18,
+          "matched_terms": [
+            "system",
+            "fuel",
+            "circuit",
+            "diagram",
+            "flow",
+            "fuel system"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXXIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 352 Connection diagrams ........................................................................................... 569 Figure 2 - 353 Closing the case 1 ............................................................................................... 569 Figure 2 - 354 Closing the case 2 ............................................................................................... 569 Figure 2 - 355 Closing the case 3 ............................................................................................... 569 Figure 2 - 356 Cable relief ............................................."
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 149,
+          "score": 18,
+          "matched_terms": [
+            "system",
+            "diagram",
+            "schematic",
+            "flow"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "schematic",
+            "assembly",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 1 - 4 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 1 TECHNICAL INTRODUCTION High-pressure exhaust turbocharger: The high-pressure exhaust turbocharger is the high- pressure stage within the two-stage charging assembly of a combustion engine. Low-pressure exhaust gas turbocharger: The low-pressure exhaust turbocharger is the low- pressure stage within the two-stage charging assembly of a combustion engine. Lubricating oil system: The lubricating oil system of the turbocharger starts at the lubricating oil supply on the bearing housing. The lubricating oil flows through an internal ring channel system and lubricates the bearing points. The lubricating oil syst"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "score": 15,
+          "matched_terms": [
+            "system",
+            "diagram",
+            "flow"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXVIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 112 Excess length of lines must not be stored in the control cabinet. .......................... 241 Figure 2 - 113 The left illustration shows incorrectly looped lines; the middle .............................. 242 Figure 2 - 114 In the picture on the left, the cables are chafing on the slats. ............................... 243 Figure 2 - 115 (Left) cables not properly laid; (right) the cable routes have not been used .......... 243 Figure 2 - 116 Correct wired cables in a control cabinet .............................................................. 243 Figure 2 - 117 Lines are rubbing"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "score": 15,
+          "matched_terms": [
+            "system",
+            "fuel",
+            "circuit",
+            "diagram",
+            "schematic"
+          ],
+          "visual_terms": [
+            "diagram",
+            "schematic",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 177 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION dimensioned and arranged in such a way that the cooling water content of the circuits of the cooling water systems can be drained into it for maintenance purposes. 2.5.5.2.9. FIL-019/Sea water filter To protect the seawater system against erosion or blocking, a suitable seawater filter has to be installed. We recommend a mesh size of 0.5 - 2 mm. 2.5.5.2.10. Draining At the lowest point of the cooling system a drain has to be provided. Additional points for draining to be provided in the cooling system according to layout and necessity, e.g., for components in the system that will be removed for"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 367,
+          "score": 14,
+          "matched_terms": [
+            "system",
+            "fuel",
+            "diagram",
+            "flow"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 185 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION 2.5.6.3.1. Introduction The MAN 175D engine runs on distillate diesel fuel oil (light fuel oil) only. The following is a description of a typical MAN 175D fuel oil system and is designed to suit the majority of installations (refer Figure 2 - 54 Fuel oil treatment system). Tailored systems are possible for individual vessel requirements as well. To specify those please contact MAN Energy Solutions for assistance. 2.5.6.3.2. Distillate fuel oil specification and requirements ISO 8217 class DMA (with approval of MAN Energy Solutions see paragraph 2.3.1. Diesel fuel specification) or equivalent. I"
+        }
+      ],
+      "ai_request_created": false
+    },
+    "COMPONENT IDENTIFICATION": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 149,
+          "score": 16,
+          "matched_terms": [
+            "component",
+            "assembly"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "schematic",
+            "assembly",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 1 - 4 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 1 TECHNICAL INTRODUCTION High-pressure exhaust turbocharger: The high-pressure exhaust turbocharger is the high- pressure stage within the two-stage charging assembly of a combustion engine. Low-pressure exhaust gas turbocharger: The low-pressure exhaust turbocharger is the low- pressure stage within the two-stage charging assembly of a combustion engine. Lubricating oil system: The lubricating oil system of the turbocharger starts at the lubricating oil supply on the bearing housing. The lubricating oil flows through an internal ring channel system and lubricates the bearing points. The lubricating oil syst"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "score": 15,
+          "matched_terms": [
+            "fuel",
+            "component",
+            "cylinder"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXXIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 352 Connection diagrams ........................................................................................... 569 Figure 2 - 353 Closing the case 1 ............................................................................................... 569 Figure 2 - 354 Closing the case 2 ............................................................................................... 569 Figure 2 - 355 Closing the case 3 ............................................................................................... 569 Figure 2 - 356 Cable relief ............................................."
+        },
+        {
+          "source_file": "ML-3 MAINTENANCE-5.pdf",
+          "page": 7,
+          "score": 14,
+          "matched_terms": [
+            "injector",
+            "fuel",
+            "component",
+            "assembly"
+          ],
+          "visual_terms": [
+            "figure",
+            "illustration",
+            "assembly",
+            "flow",
+            "component"
+          ],
+          "text_preview": "1 Fuel injection line 4 Injector* 11 Cone sealing surfaces 2 Thrust screw 6 Flow limiter I-III Assembly steps 3 O-ring 10 Thrust ring Figure 3: Fitting the fuel injection pipe * The shape and position of the component may differ from the one shown in the illustration 2022-07-19 - de MAN Energy Solutions 010.110.052-01 MAN175D, M010.110.052-01-0004 7 (7) Fuel injection line"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "score": 13,
+          "matched_terms": [
+            "component"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXVIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 112 Excess length of lines must not be stored in the control cabinet. .......................... 241 Figure 2 - 113 The left illustration shows incorrectly looped lines; the middle .............................. 242 Figure 2 - 114 In the picture on the left, the cables are chafing on the slats. ............................... 243 Figure 2 - 115 (Left) cables not properly laid; (right) the cable routes have not been used .......... 243 Figure 2 - 116 Correct wired cables in a control cabinet .............................................................. 243 Figure 2 - 117 Lines are rubbing"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "score": 12,
+          "matched_terms": [
+            "fuel",
+            "component"
+          ],
+          "visual_terms": [
+            "diagram",
+            "schematic",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 177 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION dimensioned and arranged in such a way that the cooling water content of the circuits of the cooling water systems can be drained into it for maintenance purposes. 2.5.5.2.9. FIL-019/Sea water filter To protect the seawater system against erosion or blocking, a suitable seawater filter has to be installed. We recommend a mesh size of 0.5 - 2 mm. 2.5.5.2.10. Draining At the lowest point of the cooling system a drain has to be provided. Additional points for draining to be provided in the cooling system according to layout and necessity, e.g., for components in the system that will be removed for"
+        }
+      ],
+      "ai_request_created": false
+    },
+    "TOOLS REQUIRED": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 78,
+          "score": 11,
+          "matched_terms": [
+            "tool"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "assembly",
+            "circuit"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXVII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 64 At the end of the grating duct, the cable ties .......................................................... 212 Figure 2 - 65 Corrugated pipe for adjustment to the geometry .................................................... 213 Figure 2 - 66 Edge protection for protecting lines against sharp edges ....................................... 213 Figure 2 - 67 Left illustration without rubber grommet ................................................................. 214 Figure 2 - 68 Forming using spiral strip ...................................................................................."
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "score": 11,
+          "matched_terms": [
+            "equipment"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 237 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION appropriate measurements (see Check of equipotential bonding). 2.6.6.7.1. Protective equipotential bonding The protective equipotential bonding (earthing) is necessary to fulfil the specified protective measure for a piece of equipment. Its primary function is to create the conditions for a shut- down. The earthing defines the paths of the fault currents (short-circuit currents). The cross section of the protective earth must be dimensioned as per DIN EN 60204-1. • The connection of a protective earth conductor must be in an easily visible location and identified with a corresponding marking (s"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 719,
+          "score": 11,
+          "matched_terms": [
+            "equipment"
+          ],
+          "visual_terms": [
+            "diagram",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 537 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION 1. Connect customer pipelines and shut-off valves to the inlet (3) and outlet (4). 2. On models without a safety valve, install an external safety valve on the outlet (4) or inlet (3). 2.9.1.1.6.3. Electrical connection of the equipment Danger of death due to electric shock! Contact with live parts can result in fatal injuries. • Before any work on the control cabinet, switch off all electrical feeder cables to ensure they are not live. • Secure the control cabinet and all feeder cables against being • switched back on inadvertently, e.g., by means of an information sign or a padlock. The operator "
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 724,
+          "score": 11,
+          "matched_terms": [
+            "equipment"
+          ],
+          "visual_terms": [
+            "figure",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 542 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Fill the device Adjust the safety temperature limiter and the temperature controller (if applicable) Connect the power supply Start the device using the external switch supplied by the customer. Customer-side enable signal Switch on the device via the optional main switch on the control cabinet. Set optional 0 - 1 switch to 1. Set optional MAN-0-REM switch to REM. Customer-side enable signal is switched on If applicable, adjust the electronic temperature controller (EM, ETU) The device is ready to operate Figure 2 - 324 Commissioning checklist 2.9.1.1.8. Operation (QL 1) Danger of death due to elec"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 762,
+          "score": 11,
+          "matched_terms": [
+            "equipment"
+          ],
+          "visual_terms": [
+            "assembly",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 580 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Hot surfaces and hot media! Skin contact with hot surfaces or hot media can cause serious burns and scalds. • Allow components, supply lines and media to cool and check temperature before all work on the device. • Wear personal protective equipment. • Do not touch fluids which leak out. Keep a safe distance. Danger of injury due to pressurized fluids! Serious injuries may result. • Read the operating instructions for the entire installation to find out where the pressure can be released. • Regularly check the device for externally visible damage such as leaks. Immediately eliminate damage and defec"
+        }
+      ],
+      "ai_request_created": false
+    },
+    "SAFETY PRECAUTIONS": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 724,
+          "score": 12,
+          "matched_terms": [
+            "safety",
+            "protective"
+          ],
+          "visual_terms": [
+            "figure",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 542 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Fill the device Adjust the safety temperature limiter and the temperature controller (if applicable) Connect the power supply Start the device using the external switch supplied by the customer. Customer-side enable signal Switch on the device via the optional main switch on the control cabinet. Set optional 0 - 1 switch to 1. Set optional MAN-0-REM switch to REM. Customer-side enable signal is switched on If applicable, adjust the electronic temperature controller (EM, ETU) The device is ready to operate Figure 2 - 324 Commissioning checklist 2.9.1.1.8. Operation (QL 1) Danger of death due to elec"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 762,
+          "score": 12,
+          "matched_terms": [
+            "warning",
+            "protective"
+          ],
+          "visual_terms": [
+            "assembly",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 580 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Hot surfaces and hot media! Skin contact with hot surfaces or hot media can cause serious burns and scalds. • Allow components, supply lines and media to cool and check temperature before all work on the device. • Wear personal protective equipment. • Do not touch fluids which leak out. Keep a safe distance. Danger of injury due to pressurized fluids! Serious injuries may result. • Read the operating instructions for the entire installation to find out where the pressure can be released. • Regularly check the device for externally visible damage such as leaks. Immediately eliminate damage and defec"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "score": 11,
+          "matched_terms": [
+            "protective"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 237 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION appropriate measurements (see Check of equipotential bonding). 2.6.6.7.1. Protective equipotential bonding The protective equipotential bonding (earthing) is necessary to fulfil the specified protective measure for a piece of equipment. Its primary function is to create the conditions for a shut- down. The earthing defines the paths of the fault currents (short-circuit currents). The cross section of the protective earth must be dimensioned as per DIN EN 60204-1. • The connection of a protective earth conductor must be in an easily visible location and identified with a corresponding marking (s"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 557,
+          "score": 11,
+          "matched_terms": [
+            "safety",
+            "hazard",
+            "protective"
+          ],
+          "visual_terms": [
+            "assembly",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 375 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION 2.7.2.7.2.2.11. Whipping If damage to a hose assembly would cause a hazard from whipping, the hose must be restrained or shielded. The dangerous ‘whipping’ that occurs when a hose assembly ruptures can be prevented by the appropriate design. The HANSA-FLEX Stop flex safety system that achieves a secure connection between hose and machine component is ideally suited for installation in both new and existing systems. 2.7.2.7.2.2.12. Leaks If damage to a hose assembly would cause a hazard from escaping pressurized medium, the hose must be shielded. 2.7.2.7.2.2.13. Cold flow Despite its chemical an"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 606,
+          "score": 11,
+          "matched_terms": [
+            "protective"
+          ],
+          "visual_terms": [
+            "figure",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 424 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Figure 2 - 206 Scope of delivery Scope of delivery No. Component Reference number Drawing number 1 Charge air cooler KH971, LH348, LH401 BB45U00 Table 2 - 125 Scope of delivery 2.7.4.1.2.2. Function Description Charge air that has been super-heated by compression flows through the charge air cooler. In the charge air cooler, the heat of the charge air is discharged into the water-glycol mix that also flows through the charge air cooler. This allows a greater quantity of charge air to be fed to the motor. 2.7.4.1.2.3. Coolant Purpose of the coolant: To prevent damage by corrosion, cavitation, fr"
+        }
+      ],
+      "ai_request_created": false
+    },
+    "REMOVAL PROCEDURE": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "score": 13,
+          "matched_terms": [
+            "removal"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXVIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 112 Excess length of lines must not be stored in the control cabinet. .......................... 241 Figure 2 - 113 The left illustration shows incorrectly looped lines; the middle .............................. 242 Figure 2 - 114 In the picture on the left, the cables are chafing on the slats. ............................... 243 Figure 2 - 115 (Left) cables not properly laid; (right) the cable routes have not been used .......... 243 Figure 2 - 116 Correct wired cables in a control cabinet .............................................................. 243 Figure 2 - 117 Lines are rubbing"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "score": 13,
+          "matched_terms": [
+            "removal"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXXIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 352 Connection diagrams ........................................................................................... 569 Figure 2 - 353 Closing the case 1 ............................................................................................... 569 Figure 2 - 354 Closing the case 2 ............................................................................................... 569 Figure 2 - 355 Closing the case 3 ............................................................................................... 569 Figure 2 - 356 Cable relief ............................................."
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 622,
+          "score": 13,
+          "matched_terms": [
+            "remove",
+            "removal",
+            "disassembly"
+          ],
+          "visual_terms": [
+            "figure",
+            "assembly",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 440 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION The connections for filling and draining this circuit are outside the component. For the procedure for filling and draining this circuit, see the entire documentation. Venting of coolant circuit during filling: The vent connection of the cooler must be open during the filling operation. Figure 2 - 212 Venting (examples) 1. Detach the vent screw(s) (1 respectively 2). 2. Fill the coolant circuit in accordance with the entire documentation. 3. After the filling reinstall and tighten the vent screw(s) (1 respectively 2) (tightening torque 23±2 Nm). See chapter 2.7.4.1.2.5. Specified Tightening Tor"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "score": 11,
+          "matched_terms": [
+            "remove"
+          ],
+          "visual_terms": [
+            "diagram",
+            "schematic",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 177 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION dimensioned and arranged in such a way that the cooling water content of the circuits of the cooling water systems can be drained into it for maintenance purposes. 2.5.5.2.9. FIL-019/Sea water filter To protect the seawater system against erosion or blocking, a suitable seawater filter has to be installed. We recommend a mesh size of 0.5 - 2 mm. 2.5.5.2.10. Draining At the lowest point of the cooling system a drain has to be provided. Additional points for draining to be provided in the cooling system according to layout and necessity, e.g., for components in the system that will be removed for"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "score": 11,
+          "matched_terms": [
+            "remove"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 237 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION appropriate measurements (see Check of equipotential bonding). 2.6.6.7.1. Protective equipotential bonding The protective equipotential bonding (earthing) is necessary to fulfil the specified protective measure for a piece of equipment. Its primary function is to create the conditions for a shut- down. The earthing defines the paths of the fault currents (short-circuit currents). The cross section of the protective earth must be dimensioned as per DIN EN 60204-1. • The connection of a protective earth conductor must be in an easily visible location and identified with a corresponding marking (s"
+        }
+      ],
+      "ai_request_created": false
+    },
+    "INSPECTION": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "score": 12,
+          "matched_terms": [
+            "check",
+            "measure"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 237 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION appropriate measurements (see Check of equipotential bonding). 2.6.6.7.1. Protective equipotential bonding The protective equipotential bonding (earthing) is necessary to fulfil the specified protective measure for a piece of equipment. Its primary function is to create the conditions for a shut- down. The earthing defines the paths of the fault currents (short-circuit currents). The cross section of the protective earth must be dimensioned as per DIN EN 60204-1. • The connection of a protective earth conductor must be in an easily visible location and identified with a corresponding marking (s"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 724,
+          "score": 12,
+          "matched_terms": [
+            "check",
+            "wear"
+          ],
+          "visual_terms": [
+            "figure",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 542 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Fill the device Adjust the safety temperature limiter and the temperature controller (if applicable) Connect the power supply Start the device using the external switch supplied by the customer. Customer-side enable signal Switch on the device via the optional main switch on the control cabinet. Set optional 0 - 1 switch to 1. Set optional MAN-0-REM switch to REM. Customer-side enable signal is switched on If applicable, adjust the electronic temperature controller (EM, ETU) The device is ready to operate Figure 2 - 324 Commissioning checklist 2.9.1.1.8. Operation (QL 1) Danger of death due to elec"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 762,
+          "score": 12,
+          "matched_terms": [
+            "check",
+            "wear"
+          ],
+          "visual_terms": [
+            "assembly",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 580 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Hot surfaces and hot media! Skin contact with hot surfaces or hot media can cause serious burns and scalds. • Allow components, supply lines and media to cool and check temperature before all work on the device. • Wear personal protective equipment. • Do not touch fluids which leak out. Keep a safe distance. Danger of injury due to pressurized fluids! Serious injuries may result. • Read the operating instructions for the entire installation to find out where the pressure can be released. • Regularly check the device for externally visible damage such as leaks. Immediately eliminate damage and defec"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 763,
+          "score": 12,
+          "matched_terms": [
+            "check",
+            "wear"
+          ],
+          "visual_terms": [
+            "figure",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 581 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Model KAG100 Figure 2 - 365 Filling the tank 3 4 6 Filling connection Draining connection Level indicator with magnetic switch 1. Connect the media circuit to the filling connection (3). 2. Set the level indicator with magnetic switch to the preferred minimum level. 3. Connect the media circuit to the draining connection (4). 4. Open the customer supplied shut-off valves. 2.9.1.2.8. Operation 2.9.1.2.8.1. Starting the device Hot surfaces and hot media! Skin contact with hot surfaces or hot media can cause serious burns and scalds. • Allow components, supply lines and media to cool and check tempera"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 428,
+          "score": 11,
+          "matched_terms": [
+            "inspection"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "section",
+            "circuit"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 246 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Figure 2 - 121 Incorrect implementation Visual inspection: • Wires to the terminal are not laid straight and routed as short as possible. • Cable ties were not attached as close as possible to the terminal point. • Maximum distance of cable ties are not observed. 2.6.6.10. Installation of bus systems (connections) 2.6.6.10.1. SaCosone Systembus CAN 1/2 and ¾ The connection occurs either directly via the SaCoS modules via Phoenix Contact plug with integrated spring-loaded terminals or the connection is prepared for terminal blocks into the control cabinets. No wire end sleeves should not be used"
+        }
+      ],
+      "ai_request_created": false
+    },
+    "INSTALLATION": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 79,
+          "score": 15,
+          "matched_terms": [
+            "install",
+            "installation",
+            "mounting"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXVIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 112 Excess length of lines must not be stored in the control cabinet. .......................... 241 Figure 2 - 113 The left illustration shows incorrectly looped lines; the middle .............................. 242 Figure 2 - 114 In the picture on the left, the cables are chafing on the slats. ............................... 243 Figure 2 - 115 (Left) cables not properly laid; (right) the cable routes have not been used .......... 243 Figure 2 - 116 Correct wired cables in a control cabinet .............................................................. 243 Figure 2 - 117 Lines are rubbing"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "score": 15,
+          "matched_terms": [
+            "install",
+            "installation",
+            "mounting"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXXIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 352 Connection diagrams ........................................................................................... 569 Figure 2 - 353 Closing the case 1 ............................................................................................... 569 Figure 2 - 354 Closing the case 2 ............................................................................................... 569 Figure 2 - 355 Closing the case 3 ............................................................................................... 569 Figure 2 - 356 Cable relief ............................................."
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 149,
+          "score": 15,
+          "matched_terms": [
+            "assembly"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "schematic",
+            "assembly",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 1 - 4 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 1 TECHNICAL INTRODUCTION High-pressure exhaust turbocharger: The high-pressure exhaust turbocharger is the high- pressure stage within the two-stage charging assembly of a combustion engine. Low-pressure exhaust gas turbocharger: The low-pressure exhaust turbocharger is the low- pressure stage within the two-stage charging assembly of a combustion engine. Lubricating oil system: The lubricating oil system of the turbocharger starts at the lubricating oil supply on the bearing housing. The lubricating oil flows through an internal ring channel system and lubricates the bearing points. The lubricating oil syst"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 762,
+          "score": 13,
+          "matched_terms": [
+            "install",
+            "installation",
+            "assembly"
+          ],
+          "visual_terms": [
+            "assembly",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 580 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Hot surfaces and hot media! Skin contact with hot surfaces or hot media can cause serious burns and scalds. • Allow components, supply lines and media to cool and check temperature before all work on the device. • Wear personal protective equipment. • Do not touch fluids which leak out. Keep a safe distance. Danger of injury due to pressurized fluids! Serious injuries may result. • Read the operating instructions for the entire installation to find out where the pressure can be released. • Regularly check the device for externally visible damage such as leaks. Immediately eliminate damage and defec"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 1434,
+          "score": 13,
+          "matched_terms": [
+            "install",
+            "installation",
+            "assembly"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "assembly",
+            "section",
+            "circuit"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 3 - 644 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 3 MAINTENANCE • Secure the control cabinet and all feeder cables against being switched back on inadvertently, e.g., by means of an information sign or a padlock. Figure - 1 Control Cabinet Damage to the device! • The device may become damaged due to incorrect installation. • In order to prevent deformation of the heating element, tighten the nuts on the bolts using a ring spanner. • The torques for screws and nuts comply with the applicable standards and directives. • Torques that differ from the standards, are mentioned in the operating instructions. 1.Disconnect all electrical feeding to cabinet. Be sure an"
+        }
+      ],
+      "ai_request_created": false
+    },
+    "TROUBLESHOOTING": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "score": 14,
+          "matched_terms": [
+            "alarm",
+            "fuel"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXXIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 352 Connection diagrams ........................................................................................... 569 Figure 2 - 353 Closing the case 1 ............................................................................................... 569 Figure 2 - 354 Closing the case 2 ............................................................................................... 569 Figure 2 - 355 Closing the case 3 ............................................................................................... 569 Figure 2 - 356 Cable relief ............................................."
+        },
+        {
+          "source_file": "ML-3 MAINTENANCE-5.pdf",
+          "page": 7,
+          "score": 12,
+          "matched_terms": [
+            "fuel",
+            "injector"
+          ],
+          "visual_terms": [
+            "figure",
+            "illustration",
+            "assembly",
+            "flow",
+            "component"
+          ],
+          "text_preview": "1 Fuel injection line 4 Injector* 11 Cone sealing surfaces 2 Thrust screw 6 Flow limiter I-III Assembly steps 3 O-ring 10 Thrust ring Figure 3: Fitting the fuel injection pipe * The shape and position of the component may differ from the one shown in the illustration 2022-07-19 - de MAN Energy Solutions 010.110.052-01 MAN175D, M010.110.052-01-0004 7 (7) Fuel injection line"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "score": 11,
+          "matched_terms": [
+            "fuel"
+          ],
+          "visual_terms": [
+            "diagram",
+            "schematic",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 177 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION dimensioned and arranged in such a way that the cooling water content of the circuits of the cooling water systems can be drained into it for maintenance purposes. 2.5.5.2.9. FIL-019/Sea water filter To protect the seawater system against erosion or blocking, a suitable seawater filter has to be installed. We recommend a mesh size of 0.5 - 2 mm. 2.5.5.2.10. Draining At the lowest point of the cooling system a drain has to be provided. Additional points for draining to be provided in the cooling system according to layout and necessity, e.g., for components in the system that will be removed for"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 367,
+          "score": 11,
+          "matched_terms": [
+            "fuel"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 185 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION 2.5.6.3.1. Introduction The MAN 175D engine runs on distillate diesel fuel oil (light fuel oil) only. The following is a description of a typical MAN 175D fuel oil system and is designed to suit the majority of installations (refer Figure 2 - 54 Fuel oil treatment system). Tailored systems are possible for individual vessel requirements as well. To specify those please contact MAN Energy Solutions for assistance. 2.5.6.3.2. Distillate fuel oil specification and requirements ISO 8217 class DMA (with approval of MAN Energy Solutions see paragraph 2.3.1. Diesel fuel specification) or equivalent. I"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 419,
+          "score": 11,
+          "matched_terms": [
+            "fault"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 237 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION appropriate measurements (see Check of equipotential bonding). 2.6.6.7.1. Protective equipotential bonding The protective equipotential bonding (earthing) is necessary to fulfil the specified protective measure for a piece of equipment. Its primary function is to create the conditions for a shut- down. The earthing defines the paths of the fault currents (short-circuit currents). The cross section of the protective earth must be dimensioned as per DIN EN 60204-1. • The connection of a protective earth conductor must be in an easily visible location and identified with a corresponding marking (s"
+        }
+      ],
+      "ai_request_created": false
+    },
+    "PRACTICAL EXERCISE": {
+      "visual_source": "OEM",
+      "status": "OEM_VISUAL_AVAILABLE",
+      "oem_candidates": [
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 84,
+          "score": 13,
+          "matched_terms": [
+            "maintenance"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "flow",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE LXXXIII MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 LIST OF FIGURES (LOF) Figure 2 - 352 Connection diagrams ........................................................................................... 569 Figure 2 - 353 Closing the case 1 ............................................................................................... 569 Figure 2 - 354 Closing the case 2 ............................................................................................... 569 Figure 2 - 355 Closing the case 3 ............................................................................................... 569 Figure 2 - 356 Cable relief ............................................."
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 359,
+          "score": 11,
+          "matched_terms": [
+            "maintenance"
+          ],
+          "visual_terms": [
+            "diagram",
+            "schematic",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 177 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION dimensioned and arranged in such a way that the cooling water content of the circuits of the cooling water systems can be drained into it for maintenance purposes. 2.5.5.2.9. FIL-019/Sea water filter To protect the seawater system against erosion or blocking, a suitable seawater filter has to be installed. We recommend a mesh size of 0.5 - 2 mm. 2.5.5.2.10. Draining At the lowest point of the cooling system a drain has to be provided. Additional points for draining to be provided in the cooling system according to layout and necessity, e.g., for components in the system that will be removed for"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 428,
+          "score": 11,
+          "matched_terms": [
+            "inspection"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "illustration",
+            "section",
+            "circuit"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 246 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION Figure 2 - 121 Incorrect implementation Visual inspection: • Wires to the terminal are not laid straight and routed as short as possible. • Cable ties were not attached as close as possible to the terminal point. • Maximum distance of cable ties are not observed. 2.6.6.10. Installation of bus systems (connections) 2.6.6.10.1. SaCosone Systembus CAN 1/2 and ¾ The connection occurs either directly via the SaCoS modules via Phoenix Contact plug with integrated spring-loaded terminals or the connection is prepared for terminal blocks into the control cabinets. No wire end sleeves should not be used"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 622,
+          "score": 11,
+          "matched_terms": [
+            "procedure"
+          ],
+          "visual_terms": [
+            "figure",
+            "assembly",
+            "section",
+            "circuit",
+            "component"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 2 - 440 / 2283 MAN 16V175D-MM MAIN DIESEL ENGINE TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 2 OPERATION The connections for filling and draining this circuit are outside the component. For the procedure for filling and draining this circuit, see the entire documentation. Venting of coolant circuit during filling: The vent connection of the cooler must be open during the filling operation. Figure 2 - 212 Venting (examples) 1. Detach the vent screw(s) (1 respectively 2). 2. Fill the coolant circuit in accordance with the entire documentation. 3. After the filling reinstall and tighten the vent screw(s) (1 respectively 2) (tightening torque 23±2 Nm). See chapter 2.7.4.1.2.5. Specified Tightening Tor"
+        },
+        {
+          "source_file": "LANDING CRAFT QL 40_001_1_MAN_16V175D_MM_MAIN_DIESEL_ENGINE_TECH_DOC.pdf",
+          "page": 1324,
+          "score": 11,
+          "matched_terms": [
+            "maintenance"
+          ],
+          "visual_terms": [
+            "figure",
+            "diagram",
+            "section",
+            "circuit",
+            "flow"
+          ],
+          "text_preview": "COMMERCIAL IN CONFIDENCE 3 - 534 / 2283 MAN 16V175D-ML DIESEL ENGINES TECHNICAL DOCUMENT Document No. : 699-LCM00-8564-001-001-1 Page Rev. Date : 05.12.2022 Page Rev. No. : 1 SECTION 3 MAINTENANCE Inserting the heating element: 1. Clean the flange gasket surfaces. 2. Install the heating insert and a new flange gasket (3) in the reverse order, and comply with the following torques and tightening sequence. 3. For Continuous flow heater of the series 4600WR: Use new gaskets. 4. Make the electrical connections in accordance with the circuit diagram provided. Torques: M12: ~60Nm M16: ~135Nm M20: ~275Nm M24: ~455Nm M27: ~600Nm M30: ~950Nm Tightening sequence for heating insert: cross-wise The torque of the nuts for the electrical connection cables is 2.5 Nm. Filling the pressure vessel with medi"
+        }
+      ],
+      "ai_request_created": false
+    }
+  },
+  "ai_visual_requests": [],
+  "visual_policy": {
+    "oem_visual_first": true,
+    "ai_visual_only_when_oem_visual_is_unavailable": true,
+    "ai_visual_is_generic_training_illustration": true,
+    "ai_visual_not_oem_figure": true,
+    "technical_specs_must_come_from_oem": true,
+    "fake_oem_figures_blocked": true
+  }
+}
