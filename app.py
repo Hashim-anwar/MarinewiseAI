@@ -1,6 +1,8 @@
+import streamlit as st
+
 from ai_engine import show_ai_test
 from config import show_api_status
-import streamlit as st
+from assessment_dashboard import show_assessment
 
 
 def show_header():
@@ -22,6 +24,7 @@ def show_status():
 
 def main():
     """Run the MARINEWISE AI Streamlit application."""
+
     st.set_page_config(
         page_title="MARINEWISE AI",
         page_icon="⚓",
@@ -32,6 +35,17 @@ def main():
     show_status()
     show_api_status()
     show_ai_test()
+
+    st.markdown("---")
+
+    st.header("📝 Technician Assessment")
+
+    st.write(
+        "Test technician knowledge using the "
+        "OEM-grounded MarineWise assessment."
+    )
+
+    show_assessment()
 
 
 if __name__ == "__main__":
