@@ -3,3 +3,4 @@ groq
 gdown
 pypdf
 python-docx
+rank_bm25
