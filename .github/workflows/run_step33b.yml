@@ -21,13 +21,13 @@ jobs:
           python-version: "3.11"
 
       - name: Verify required files
-        shell: bash
         run: |
-          set -e
-
           test -f training_workflow.py
           test -f assessment_workflow.py
           test -f assessment_answer.py
+          test -f assessment_evidence_builder.py
+          test -f manual_selector.py
+          test -f manual_downloader.py
           test -f manual_catalog.json
 
           echo "Required files verified."
@@ -35,19 +35,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install groq gdown
+          pip install groq "gdown>=6.1.0" pymupdf
 
       - name: Verify assessment generator CLI
         run: |
           python assessment_answer.py --help
 
+      - name: Verify assessment evidence builder CLI
+        run: |
+          python assessment_evidence_builder.py --help
+
       - name: Verify Groq API key
-        shell: bash
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          set -e
-
           if [ -z "$GROQ_API_KEY" ]; then
             echo "ERROR: GROQ_API_KEY GitHub secret is missing."
             exit 1
@@ -68,10 +69,7 @@ jobs:
             --output training_workflow.json
 
       - name: Validate STEP 30
-        shell: bash
         run: |
-          set -e
-
           python - <<'PY'
           import json
 
@@ -113,10 +111,7 @@ jobs:
             --passing-score 70
 
       - name: Validate STEP 33A
-        shell: bash
         run: |
-          set -e
-
           python - <<'PY'
           import json
 
@@ -152,26 +147,211 @@ jobs:
           print("STEP 33A VALIDATION: GREEN")
           PY
 
+      - name: Select relevant OEM manuals
+        run: |
+          python manual_selector.py \
+            --query "QL-40 MAN 16V175D-MM Main Engine Fuel System Injector Maintenance" \
+            --top-k 10 \
+            --output selected_manuals.json
+
+      - name: Validate manual selection
+        run: |
+          python - <<'PY'
+          import json
+
+          with open(
+              "selected_manuals.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if isinstance(data, list):
+              items = data
+
+          elif isinstance(data, dict):
+              items = None
+
+              for key in (
+                  "selected_manuals",
+                  "results",
+                  "manuals",
+                  "selections",
+              ):
+                  value = data.get(key)
+
+                  if isinstance(value, list):
+                      items = value
+                      break
+
+              if items is None:
+                  items = []
+
+          else:
+              items = []
+
+          if len(items) < 1:
+              raise SystemExit(
+                  "ERROR: No manuals were selected."
+              )
+
+          print("Selected manuals:", len(items))
+          print("Manual selection validation: GREEN")
+          PY
+
+      - name: Download selected OEM manuals
+        run: |
+          python manual_downloader.py \
+            --selection selected_manuals.json \
+            --catalog manual_catalog.json \
+            --output-dir selected_manuals
+
+      - name: Validate downloaded OEM manuals
+        run: |
+          PDF_COUNT=$(find selected_manuals -type f -iname "*.pdf" | wc -l)
+
+          echo "Downloaded PDF count: $PDF_COUNT"
+
+          if [ "$PDF_COUNT" -lt 1 ]; then
+            echo "ERROR: No OEM PDF manuals were downloaded."
+            exit 1
+          fi
+
+          echo "OEM manual download validation: GREEN"
+
+      - name: Build STEP 33C OEM assessment evidence
+        run: |
+          python assessment_evidence_builder.py \
+            --training training_workflow.json \
+            --manual-dir selected_manuals \
+            --output assessment_evidence.json
+
+      - name: Validate OEM assessment evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("assessment_evidence.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR: assessment_evidence.json was not created."
+              )
+
+          if path.stat().st_size == 0:
+              raise SystemExit(
+                  "ERROR: assessment_evidence.json is empty."
+              )
+
+          with path.open(
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          if not isinstance(data, dict):
+              raise SystemExit(
+                  "ERROR: assessment_evidence.json "
+                  "must be a JSON object."
+              )
+
+          if data.get("step") != 33:
+              raise SystemExit(
+                  f"ERROR: Expected step 33, got {data.get('step')}"
+              )
+
+          if data.get("substep") != "33C":
+              raise SystemExit(
+                  f"ERROR: Expected substep 33C, "
+                  f"got {data.get('substep')}"
+              )
+
+          if data.get("stage") != (
+              "assessment_oem_evidence_grounding"
+          ):
+              raise SystemExit(
+                  "ERROR: Unexpected STEP 33C stage: "
+                  + str(data.get("stage"))
+              )
+
+          if data.get("status") != "SUCCESS":
+              raise SystemExit(
+                  f"ERROR: Expected SUCCESS, "
+                  f"got {data.get('status')}"
+              )
+
+          evidence = data.get("evidence")
+
+          if not isinstance(evidence, list):
+              raise SystemExit(
+                  "ERROR: Evidence must be a list."
+              )
+
+          if len(evidence) == 0:
+              raise SystemExit(
+                  "ERROR: No OEM evidence records were generated."
+              )
+
+          for item in evidence:
+
+              if not isinstance(item, dict):
+                  raise SystemExit(
+                      "ERROR: Evidence record is not an object."
+                  )
+
+              if item.get("source_type") != "OEM":
+                  raise SystemExit(
+                      "ERROR: Non-OEM evidence detected."
+                  )
+
+              if not item.get("source_file"):
+                  raise SystemExit(
+                      "ERROR: Evidence source file is missing."
+                  )
+
+              if not item.get("page"):
+                  raise SystemExit(
+                      "ERROR: Evidence page is missing."
+                  )
+
+              if not item.get("evidence_text"):
+                  raise SystemExit(
+                      "ERROR: Evidence text is missing."
+                  )
+
+              if not item.get("citation"):
+                  raise SystemExit(
+                      "ERROR: OEM citation is missing."
+                  )
+
+          print("========================================")
+          print("OEM EVIDENCE VALIDATION")
+          print("========================================")
+          print("OEM manuals:", data.get("manual_count"))
+          print("Evidence records:", len(evidence))
+          print("Assessment areas:", len(data.get("assessment_areas", [])))
+          print("Status:", data.get("status"))
+          print("OEM EVIDENCE VALIDATION: GREEN")
+          print("========================================")
+          PY
+
       - name: Run STEP 33B Groq assessment generator
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           python assessment_answer.py \
             --workflow assessment_workflow.json \
+            --evidence assessment_evidence.json \
             --output assessment_answer.json
 
-      - name: Validate STEP 33B output
-        shell: bash
+      - name: Validate STEP 33B output and OEM grounding
         run: |
-          set -e
-
           python - <<'PY'
           import json
           from pathlib import Path
 
-          path = Path(
-              "assessment_answer.json"
-          )
+          path = Path("assessment_answer.json")
 
           if not path.exists():
               raise SystemExit(
@@ -226,6 +406,36 @@ jobs:
                   "ERROR: assessment section missing."
               )
 
+          evidence_used = data.get(
+              "oem_evidence_records_used"
+          )
+
+          if evidence_used is None:
+              raise SystemExit(
+                  "ERROR: oem_evidence_records_used is missing."
+              )
+
+          if not isinstance(evidence_used, int):
+              raise SystemExit(
+                  "ERROR: oem_evidence_records_used "
+                  "must be an integer."
+              )
+
+          if evidence_used <= 0:
+              raise SystemExit(
+                  "ERROR: STEP 33B generated assessment "
+                  "without OEM evidence."
+              )
+
+          source_evidence = data.get(
+              "source_evidence"
+          )
+
+          if not source_evidence:
+              raise SystemExit(
+                  "ERROR: source_evidence is missing."
+              )
+
           print("")
           print("========================================")
           print("STEP 33B VALIDATION")
@@ -235,24 +445,29 @@ jobs:
           print("Stage:", data.get("stage"))
           print("Status:", data.get("status"))
           print("Model:", data.get("model"))
+          print(
+              "OEM evidence records used:",
+              evidence_used
+          )
+          print("Source evidence: verified")
           print("Assessment payload: verified")
           print("========================================")
           print("STEP 33B VALIDATION: GREEN")
           print("========================================")
           PY
 
-      - name: Commit STEP 33B output
-        shell: bash
+      - name: Commit STEP 33B outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add assessment_answer.json
+          git add assessment_evidence.json
 
           if git diff --cached --quiet; then
-            echo "No assessment answer changes to commit."
+            echo "No STEP 33B changes to commit."
           else
-            git commit -m "Add MarineWise STEP 33B assessment generator output"
+            git commit -m "Add OEM grounded MarineWise STEP 33B assessment"
             git push
           fi
 
@@ -262,5 +477,17 @@ jobs:
           name: MarineWise-Assessment-Generator-STEP33B
           path: |
             assessment_answer.json
+            assessment_evidence.json
             assessment_workflow.json
+            training_workflow.json
+            selected_manuals.json
           if-no-files-found: error
+
+      - name: Final GREEN status
+        run: |
+          echo "========================================"
+          echo "MARINEWISE STEP 33B COMPLETE"
+          echo "OEM EVIDENCE: CONNECTED"
+          echo "GROQ ASSESSMENT: GENERATED"
+          echo "STATUS: GREEN"
+          echo "========================================"
