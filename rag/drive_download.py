@@ -17,8 +17,11 @@ def create_manual_folder() -> None:
 
 
 def download_manuals() -> str:
-    """Download the Google Drive MANUALS folder."""
+    """Download the shared Google Drive MANUALS folder."""
     create_manual_folder()
+
+    print("Google Drive source:")
+    print(DRIVE_FOLDER_URL)
 
     gdown.download_folder(
         url=DRIVE_FOLDER_URL,
