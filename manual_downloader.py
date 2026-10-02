@@ -100,8 +100,8 @@ def get_drive_id(record: dict) -> str | None:
     Look for an existing Google Drive file ID in the catalog.
     """
 
-    aliases = [
-        "id",
+      aliases = [
+        "google_drive_file_id",
         "file_id",
         "drive_id",
         "google_drive_id",
