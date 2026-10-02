@@ -1,0 +1,208 @@
+name: MarineWise STEP 25 Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  step25:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install gdown pypdf sentence-transformers faiss-cpu rank_bm25
+
+      - name: Verify manual selection
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - VERIFY MANUAL SELECTION"
+          echo "=========================================="
+
+          test -f selected_manuals.json
+
+          echo "GREEN - selected_manuals.json found"
+
+      - name: Rebuild selected manual PDFs
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - DOWNLOAD SELECTED MANUALS"
+          echo "=========================================="
+
+          python manual_downloader.py
+
+      - name: Verify selected PDFs
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - VERIFY SELECTED PDFS"
+          echo "=========================================="
+
+          COUNT=$(find selected_manuals \
+            -maxdepth 1 \
+            -type f \
+            \( -iname "*.pdf" \) \
+            | wc -l)
+
+          echo "Selected PDF files: $COUNT"
+
+          test "$COUNT" -eq 10
+
+          echo "GREEN - 10 selected manuals available"
+
+      - name: Extract documents
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - DOCUMENT EXTRACTION"
+          echo "=========================================="
+
+          python document_extractor.py
+
+      - name: Verify extracted documents
+        run: |
+          COUNT=$(find extracted_documents \
+            -maxdepth 1 \
+            -type f \
+            -name "*.json" \
+            | wc -l)
+
+          echo "Extraction JSON files: $COUNT"
+
+          test "$COUNT" -eq 10
+
+          echo "GREEN - 10 extraction files available"
+
+      - name: Build document chunks
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - BUILD CHUNKS"
+          echo "=========================================="
+
+          python document_chunker.py
+
+      - name: Verify chunk index
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - VERIFY CHUNKS"
+          echo "=========================================="
+
+          test -f chunks/all_chunks.json
+          test -f chunks/all_chunks.jsonl
+
+          echo "GREEN - all_chunks.json found"
+          echo "GREEN - all_chunks.jsonl found"
+
+      - name: Build FAISS vector index
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - BUILD FAISS INDEX"
+          echo "=========================================="
+
+          python vector_indexer.py
+
+      - name: Verify FAISS vector store
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - VERIFY FAISS"
+          echo "=========================================="
+
+          test -f vector_store/marinewise.faiss
+          test -f vector_store/metadata.json
+          test -f vector_store/index_info.json
+
+          echo "GREEN - FAISS index found"
+          echo "GREEN - FAISS metadata found"
+          echo "GREEN - FAISS information found"
+
+      - name: Run Hybrid RAG
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - HYBRID RAG"
+          echo "=========================================="
+
+          python hybrid_retriever.py
+
+      - name: Verify Hybrid RAG
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - VERIFY HYBRID RAG"
+          echo "=========================================="
+
+          test -f hybrid_results.json
+
+          echo "GREEN - hybrid_results.json found"
+
+      - name: Run Evidence Re-Ranker
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - EVIDENCE RE-RANKING"
+          echo "=========================================="
+
+          python evidence_reranker.py
+
+      - name: Verify Reranked Evidence
+        run: |
+          echo "=========================================="
+          echo "STEP 25 - VERIFY RERANKED EVIDENCE"
+          echo "=========================================="
+
+          test -f reranked_evidence.json
+
+          echo "GREEN - reranked_evidence.json found"
+
+          python - <<'PY'
+          import json
+
+          with open(
+              "reranked_evidence.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+              data = json.load(f)
+
+          results = data.get("results", [])
+
+          print(
+              f"Final evidence results: {len(results)}"
+          )
+
+          assert len(results) > 0
+          assert len(results) <= 8
+
+          for item in results:
+              assert "source_file" in item
+              assert "page" in item
+              assert "text" in item
+              assert "rerank_score" in item
+              assert "evidence_rank" in item
+
+          print(
+              "GREEN - evidence structure verified"
+          )
+          PY
+
+      - name: Upload STEP 25 results
+        uses: actions/upload-artifact@v4
+        with:
+          name: marinewise-step25-evidence-reranking
+          path: |
+            hybrid_results.json
+            reranked_evidence.json
+            vector_store/
+            chunks/all_chunks.json
+            chunks/all_chunks.jsonl
+
+      - name: STEP 25 complete
+        run: |
+          echo "=========================================="
+          echo "STEP 25 VERIFICATION COMPLETE"
+          echo "=========================================="
+          echo "STEP 25: SUCCESS"
+          echo "GREEN"
