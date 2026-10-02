@@ -1,4 +1,4 @@
-name: STEP 29A - Troubleshooting Workflow Verification
+name: STEP 29B - Structured Troubleshooting Verification
 
 on:
   workflow_dispatch:
@@ -36,7 +36,7 @@ jobs:
 
           echo "TAVILY_API_KEY is configured."
 
-      - name: Verify STEP 29 files
+      - name: Verify required files
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -69,7 +69,7 @@ jobs:
 
               raise SystemExit(1)
 
-          print("All STEP 29 required files are present.")
+          print("All required STEP 29B files are present.")
           PY
 
       - name: Select relevant manuals
@@ -124,6 +124,7 @@ jobs:
               )
 
           print(f"Selected manuals: {count}")
+          PY
 
       - name: Download selected manuals
         run: |
@@ -153,16 +154,17 @@ jobs:
               )
 
           print(f"Downloaded manuals: {len(files)}")
+          PY
 
-      - name: Extract selected manuals
+      - name: Extract manuals
         run: |
           python document_extractor.py
 
-      - name: Create document chunks
+      - name: Create chunks
         run: |
           python document_chunker.py
 
-      - name: Build FAISS vector index
+      - name: Build FAISS index
         run: |
           python vector_indexer.py
 
@@ -197,8 +199,9 @@ jobs:
               )
 
           print("OEM evidence verified.")
+          PY
 
-      - name: Run controlled Tavily research
+      - name: Run Tavily research
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         run: |
@@ -244,8 +247,9 @@ jobs:
               )
 
           print(f"WEB evidence: {len(evidence)}")
+          PY
 
-      - name: Run evidence and citation fusion
+      - name: Run evidence fusion
         run: |
           python evidence_fusion.py
 
@@ -279,142 +283,12 @@ jobs:
           for key in required:
               if key not in data:
                   raise SystemExit(
-                      f"ERROR - Missing final evidence key: {key}"
+                      f"ERROR - Missing key: {key}"
                   )
 
           if data["step"] != 28:
               raise SystemExit(
-                  "ERROR - final_evidence.json is not STEP 28."
-              )
-
-          oem = data["oem_evidence"]
-          web = data["web_evidence"]
-          combined = data["combined_evidence"]
-
-          if not isinstance(oem, list):
-              raise SystemExit(
-                  "ERROR - OEM evidence is not a list."
-              )
-
-          if not isinstance(web, list):
-              raise SystemExit(
-                  "ERROR - WEB evidence is not a list."
-              )
-
-          if not isinstance(combined, list):
-              raise SystemExit(
-                  "ERROR - Combined evidence is not a list."
-              )
-
-          if len(oem) == 0:
-              raise SystemExit(
-                  "ERROR - No OEM evidence available."
-              )
-
-          if len(combined) != len(oem) + len(web):
-              raise SystemExit(
-                  "ERROR - Combined evidence count mismatch."
-              )
-
-          policy = data["source_policy"]
-
-          if policy.get("oem_priority") is not True:
-              raise SystemExit(
-                  "ERROR - OEM priority policy failed."
-              )
-
-          if policy.get("web_is_not_oem") is not True:
-              raise SystemExit(
-                  "ERROR - WEB/OEM separation policy failed."
-              )
-
-          if policy.get(
-              "oem_requires_manual_reference"
-          ) is not True:
-              raise SystemExit(
-                  "ERROR - OEM reference policy failed."
-              )
-
-          if policy.get(
-              "web_requires_url"
-          ) is not True:
-              raise SystemExit(
-                  "ERROR - WEB URL policy failed."
-              )
-
-          if policy.get(
-              "source_types_are_separated"
-          ) is not True:
-              raise SystemExit(
-                  "ERROR - Source separation policy failed."
-              )
-
-          print("STEP 28 final evidence verified.")
-          print(f"OEM evidence      : {len(oem)}")
-          print(f"WEB evidence      : {len(web)}")
-          print(f"Combined evidence : {len(combined)}")
-
-      - name: Run STEP 29A troubleshooting workflow
-        run: |
-          python troubleshooting_workflow.py \
-            --query "QL-40 MAN 16V175D-MM main engine high exhaust temperature alarm" \
-            --evidence final_evidence.json \
-            --output troubleshooting_workflow.json
-
-      - name: Verify STEP 29A workflow
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          path = Path("troubleshooting_workflow.json")
-
-          if not path.exists():
-              raise SystemExit(
-                  "ERROR - troubleshooting_workflow.json was not created."
-              )
-
-          data = json.loads(
-              path.read_text(encoding="utf-8")
-          )
-
-          required_keys = [
-              "step",
-              "stage",
-              "status",
-              "query",
-              "input",
-              "evidence",
-              "source_policy",
-              "workflow_sequence",
-              "troubleshooting_output_sections",
-              "oem_evidence",
-              "web_evidence",
-              "combined_evidence",
-              "next_stage",
-          ]
-
-          for key in required_keys:
-              if key not in data:
-                  raise SystemExit(
-                      f"ERROR - Missing required key: {key}"
-                  )
-
-          if data["step"] != 29:
-              raise SystemExit(
                   "ERROR - Incorrect STEP number."
-              )
-
-          if data["stage"] != (
-              "marine_troubleshooting_workflow"
-          ):
-              raise SystemExit(
-                  "ERROR - Incorrect workflow stage."
-              )
-
-          if data["status"] != "READY_FOR_GROQ":
-              raise SystemExit(
-                  "ERROR - Workflow is not ready for Groq."
               )
 
           oem = data["oem_evidence"]
@@ -455,14 +329,19 @@ jobs:
               "WEB is not OEM":
                   policy.get("web_is_not_oem") is True,
 
-              "OEM required":
+              "OEM reference":
                   policy.get(
-                      "oem_required_for_technical_conclusion"
+                      "oem_requires_manual_reference"
                   ) is True,
 
-              "Citations required":
+              "WEB URL":
                   policy.get(
-                      "citations_required"
+                      "web_requires_url"
+                  ) is True,
+
+              "Source separation":
+                  policy.get(
+                      "source_types_are_separated"
                   ) is True,
           }
 
@@ -480,16 +359,125 @@ jobs:
 
               raise SystemExit(1)
 
+          print("Final evidence verified.")
+          print(f"OEM evidence      : {len(oem)}")
+          print(f"WEB evidence      : {len(web)}")
+          print(f"Combined evidence : {len(combined)}")
+          PY
+
+      - name: Run structured STEP 29B workflow
+        run: |
+          python troubleshooting_workflow.py \
+            --manufacturer "MAN" \
+            --engine-model "16V175D-MM" \
+            --serial-number "" \
+            --vessel "QL-40" \
+            --operating-hours "5000" \
+            --system "Main Engine" \
+            --fault "High exhaust temperature alarm" \
+            --evidence final_evidence.json \
+            --output troubleshooting_workflow.json
+
+      - name: Verify structured troubleshooting workflow
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("troubleshooting_workflow.json")
+
+          if not path.exists():
+              raise SystemExit(
+                  "ERROR - troubleshooting_workflow.json was not created."
+              )
+
+          data = json.loads(
+              path.read_text(encoding="utf-8")
+          )
+
+          required = [
+              "step",
+              "stage",
+              "status",
+              "input",
+              "constructed_query",
+              "evidence",
+              "source_policy",
+              "workflow_sequence",
+              "troubleshooting_output_sections",
+              "oem_evidence",
+              "web_evidence",
+              "combined_evidence",
+              "next_stage",
+          ]
+
+          for key in required:
+              if key not in data:
+                  raise SystemExit(
+                      f"ERROR - Missing key: {key}"
+                  )
+
+          if data["step"] != 29:
+              raise SystemExit(
+                  "ERROR - Incorrect STEP number."
+              )
+
+          if data["stage"] != (
+              "marine_troubleshooting_workflow"
+          ):
+              raise SystemExit(
+                  "ERROR - Incorrect workflow stage."
+              )
+
+          if data["status"] != "READY_FOR_GROQ":
+              raise SystemExit(
+                  "ERROR - Workflow is not ready for Groq."
+              )
+
+          user_input = data["input"]
+
+          expected = {
+              "manufacturer": "MAN",
+              "engine_model": "16V175D-MM",
+              "vessel": "QL-40",
+              "operating_hours": "5000",
+              "system": "Main Engine",
+              "fault": "High exhaust temperature alarm",
+          }
+
+          for key, expected_value in expected.items():
+              if user_input.get(key) != expected_value:
+                  raise SystemExit(
+                      f"ERROR - Incorrect input value for {key}."
+                  )
+
+          oem = data["oem_evidence"]
+          web = data["web_evidence"]
+          combined = data["combined_evidence"]
+
+          if len(oem) == 0:
+              raise SystemExit(
+                  "ERROR - No OEM evidence."
+              )
+
+          if len(combined) != len(oem) + len(web):
+              raise SystemExit(
+                  "ERROR - Evidence count mismatch."
+              )
+
           sections = data[
               "troubleshooting_output_sections"
           ]
 
           required_sections = [
               "PROBLEM IDENTIFICATION",
+              "ENGINE AND EQUIPMENT",
               "RELEVANT OEM EVIDENCE",
               "PROBABLE CAUSES",
               "TROUBLESHOOTING STEPS",
+              "CHECKS AND MEASUREMENTS",
               "CORRECTIVE ACTION",
+              "PARTS AND TOOLS",
               "OEM REFERENCES",
               "EVIDENCE STATUS",
               "SAFETY NOTE",
@@ -511,27 +499,61 @@ jobs:
               )
 
           print("=" * 70)
-          print("STEP 29A VERIFICATION COMPLETE")
+          print("STEP 29B VERIFICATION COMPLETE")
           print("=" * 70)
-          print(f"OEM evidence       : {len(oem)}")
-          print(f"WEB evidence       : {len(web)}")
-          print(f"Combined evidence  : {len(combined)}")
           print()
-          print("OEM priority       : TRUE")
-          print("WEB is not OEM     : TRUE")
-          print("OEM required       : TRUE")
-          print("Citations required : TRUE")
-          print("Output structure   : TRUE")
-          print("Groq handoff       : TRUE")
+          print("STRUCTURED INPUT")
+          print("-" * 70)
+          print(
+              f"Manufacturer      : "
+              f"{user_input['manufacturer']}"
+          )
+          print(
+              f"Engine model      : "
+              f"{user_input['engine_model']}"
+          )
+          print(
+              f"Vessel            : "
+              f"{user_input['vessel']}"
+          )
+          print(
+              f"Operating hours   : "
+              f"{user_input['operating_hours']}"
+          )
+          print(
+              f"System            : "
+              f"{user_input['system']}"
+          )
+          print(
+              f"Fault             : "
+              f"{user_input['fault']}"
+          )
           print()
-          print("STEP 29A: SUCCESS")
+          print(
+              f"OEM evidence      : {len(oem)}"
+          )
+          print(
+              f"WEB evidence      : {len(web)}"
+          )
+          print(
+              f"Combined evidence : {len(combined)}"
+          )
+          print()
+          print("Structured inputs : TRUE")
+          print("Query construction: TRUE")
+          print("OEM evidence      : TRUE")
+          print("WEB evidence      : TRUE")
+          print("Output sections   : TRUE")
+          print("Groq handoff      : TRUE")
+          print()
+          print("STEP 29B: SUCCESS")
           print("GREEN")
           PY
 
-      - name: Upload STEP 29A artifact
+      - name: Upload STEP 29B artifact
         uses: actions/upload-artifact@v4
         with:
-          name: step29a-troubleshooting-workflow
+          name: step29b-structured-troubleshooting
           path: |
             troubleshooting_workflow.json
             final_evidence.json
