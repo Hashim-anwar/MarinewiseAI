@@ -1,10 +1,10 @@
-name: List OEM Manuals
+name: Build MarineWise Manual Catalog
 
 on:
   workflow_dispatch:
 
 jobs:
-  list-manuals:
+  build-catalog:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,22 +18,277 @@ jobs:
           python -m pip install --upgrade pip
           pip install "gdown>=6.1.0"
 
-      - name: List MANUALS contents
+      - name: Discover MANUALS and build catalog
         run: |
           python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
           import gdown
 
-          folder_url = (
+
+          FOLDER_URL = (
               "https://drive.google.com/drive/folders/"
               "1gI_rJpsDzJ3HsOBO0Hb50B71vaJDkXY5?usp=sharing"
           )
 
+          OUTPUT_FILE = Path("manual_catalog.json")
+
+
+          # ---------------------------------------------------------
+          # Metadata extraction helpers
+          # ---------------------------------------------------------
+
+          def clean_text(value: str) -> str:
+              value = value.replace("_", " ")
+              value = re.sub(r"\s+", " ", value)
+              return value.strip()
+
+
+          def detect_vessel(text: str) -> str:
+              match = re.search(
+                  r"\b(QL\s*[-_]?\s*\d+)\b",
+                  text,
+                  re.IGNORECASE,
+              )
+
+              if match:
+                  return re.sub(
+                      r"\s+",
+                      " ",
+                      match.group(1).upper().replace("_", " "),
+                  ).replace("QL ", "QL ")
+
+              return "Unknown"
+
+
+          def detect_manufacturer(text: str) -> str:
+              upper = text.upper()
+
+              manufacturers = [
+                  "MTU",
+                  "MAN",
+                  "CATERPILLAR",
+                  "CAT",
+                  "YANMAR",
+                  "VOLVO PENTA",
+                  "VOLVO",
+                  "YAMAHA",
+                  "MJP",
+                  "ARNESON",
+                  "ZF",
+                  "REXROTH",
+                  "GÜRDESAN",
+                  "GURDESAN",
+                  "ROMAGNOLI",
+                  "DOEN",
+                  "ISBIR",
+                  "CUMMINS",
+              ]
+
+              for manufacturer in manufacturers:
+                  if manufacturer in upper:
+                      return manufacturer
+
+              return "Unknown"
+
+
+          def detect_engine_model(text: str) -> str:
+              upper = text.upper()
+
+              patterns = [
+                  r"\b\d{1,2}V\s*2000\s*M\d{2,3}[A-Z]*\b",
+                  r"\b\d{1,2}V\s*4000\s*M\d{2,3}[A-Z]*\b",
+                  r"\b\d{1,2}V\s*175D[-\s]?(?:MM|ML)\b",
+                  r"\bD2676\s*LE\d+\b",
+                  r"\bD2676\b",
+                  r"\bC12\b",
+                  r"\b3508\b",
+                  r"\b4CH(?:E)?3\b",
+                  r"\b16V175D[-\s]?MM\b",
+                  r"\b12V175D[-\s]?ML\b",
+                  r"\bMRTP\s*16\b",
+                  r"\bMRTP\s*20\b",
+                  r"\bMRTP\s*34\b",
+              ]
+
+              for pattern in patterns:
+                  match = re.search(pattern, upper)
+                  if match:
+                      return re.sub(r"\s+", " ", match.group(0)).strip()
+
+              return "Unknown"
+
+
+          def detect_system(text: str) -> str:
+              upper = text.upper()
+
+              system_rules = [
+                  ("Main Engine", [
+                      "MAIN ENGINE",
+                      "DIESEL ENGINE",
+                      "16V175D",
+                      "12V175D",
+                      "D2676",
+                      "10V 2000",
+                      "12V 2000",
+                      "16V 4000",
+                  ]),
+                  ("Water Jet", [
+                      "WATER JET",
+                      "MJP",
+                      "DOEN",
+                  ]),
+                  ("Bow Ramp", [
+                      "BOW RAMP",
+                  ]),
+                  ("Bow Thruster", [
+                      "BOW THRUSTER",
+                  ]),
+                  ("Steering System", [
+                      "STEERING",
+                  ]),
+                  ("Gearbox", [
+                      "GEAR BOX",
+                      "GEARBOX",
+                      "ZF",
+                  ]),
+                  ("Generator", [
+                      "GENERATOR",
+                      "DG SET",
+                      "DIESEL GENERATOR",
+                  ]),
+                  ("Hydraulic System", [
+                      "HYDRAULIC",
+                      "REXROTH",
+                  ]),
+                  ("Anchor / Capstan", [
+                      "ANCHOR",
+                      "CAPSTAN",
+                  ]),
+                  ("Petrol Engine", [
+                      "PETROL ENGINE",
+                      "YAMAHA",
+                  ]),
+                  ("Control / Monitoring", [
+                      "CONTROL",
+                      "MONITORING",
+                      "ALARM",
+                  ]),
+              ]
+
+              for system, keywords in system_rules:
+                  for keyword in keywords:
+                      if keyword in upper:
+                          return system
+
+              return "Other"
+
+
+          def detect_document_type(text: str) -> str:
+              upper = text.upper()
+
+              rules = [
+                  ("Parts Catalog", [
+                      "PART LIST",
+                      "PARTS LIST",
+                      "PARTS CATALOG",
+                      "SPARE PARTS",
+                  ]),
+                  ("Maintenance Manual", [
+                      "MAINTENANCE",
+                      "SERVICE MANUAL",
+                      "MAINTENANCE MANUAL",
+                  ]),
+                  ("Operating Instructions", [
+                      "OPERATING INSTRUCTION",
+                      "OPERATION MANUAL",
+                      "OPERATING MANUAL",
+                  ]),
+                  ("Technical Documentation", [
+                      "TECH DOC",
+                      "TECHNICAL DOCUMENT",
+                      "TECHNICAL",
+                  ]),
+                  ("Installation Manual", [
+                      "INSTALLATION",
+                  ]),
+                  ("Workshop Manual", [
+                      "WORKSHOP",
+                  ]),
+                  ("Electrical Documentation", [
+                      "ELECTRICAL",
+                      "WIRING",
+                      "CIRCUIT",
+                  ]),
+                  ("Hydraulic Documentation", [
+                      "HYDRAULIC",
+                  ]),
+                  ("Drawing", [
+                      "DRAWING",
+                      "SCHEMATIC",
+                  ]),
+              ]
+
+              for document_type, keywords in rules:
+                  for keyword in keywords:
+                      if keyword in upper:
+                          return document_type
+
+              return "General OEM Document"
+
+
+          def detect_manual_category(text: str) -> str:
+              upper = text.upper()
+
+              if any(
+                  keyword in upper
+                  for keyword in [
+                      "MANUAL",
+                      "MAINTENANCE",
+                      "SERVICE",
+                      "OPERATING",
+                      "TECHNICAL",
+                      "WORKSHOP",
+                  ]
+              ):
+                  return "OEM Technical Documentation"
+
+              if any(
+                  keyword in upper
+                  for keyword in [
+                      "PART",
+                      "SPARE",
+                      "COMPONENT",
+                  ]
+              ):
+                  return "Parts / Spares"
+
+              if any(
+                  keyword in upper
+                  for keyword in [
+                      "DRAWING",
+                      "SCHEMATIC",
+                  ]
+              ):
+                  return "Engineering Drawing"
+
+              return "Technical Document"
+
+
+          # ---------------------------------------------------------
+          # Discover files
+          # ---------------------------------------------------------
+
           print("=" * 60)
-          print("MARINEWISE AI - MANUALS FOLDER LIST")
+          print("MARINEWISE AI - STEP 17 MANUAL CATALOG")
           print("=" * 60)
 
+          print("\nScanning Google Drive MANUALS folder...")
+
           files = gdown.download_folder(
-              url=folder_url,
+              url=FOLDER_URL,
               quiet=False,
               use_cookies=False,
               skip_download=True,
@@ -41,15 +296,104 @@ jobs:
 
           print(f"\nTotal items detected: {len(files)}")
 
-          print("\nFirst 30 items:")
+
+          # ---------------------------------------------------------
+          # Build catalog
+          # ---------------------------------------------------------
+
+          catalog = []
+
+          for index, item in enumerate(files, start=1):
+
+              raw_path = str(getattr(item, "path", ""))
+
+              file_name = Path(raw_path).name
+
+              clean_path = clean_text(raw_path)
+              clean_name = clean_text(file_name)
+
+              combined_text = f"{clean_path} {clean_name}"
+
+              record = {
+                  "catalog_id": index,
+                  "vessel": detect_vessel(combined_text),
+                  "system": detect_system(combined_text),
+                  "manufacturer": detect_manufacturer(combined_text),
+                  "engine_model": detect_engine_model(combined_text),
+                  "document_type": detect_document_type(combined_text),
+                  "manual_category": detect_manual_category(combined_text),
+                  "file_name": file_name,
+                  "drive_path": raw_path,
+                  "google_drive_file_id": getattr(item, "id", None),
+              }
+
+              catalog.append(record)
+
+
+          # ---------------------------------------------------------
+          # Save catalog
+          # ---------------------------------------------------------
+
+          OUTPUT_FILE.write_text(
+              json.dumps(
+                  {
+                      "project": "MarineWise AI",
+                      "source": "Google Drive MANUALS",
+                      "total_items": len(catalog),
+                      "catalog_version": "1.0",
+                      "items": catalog,
+                  },
+                  indent=2,
+                  ensure_ascii=False,
+              ),
+              encoding="utf-8",
+          )
+
+
+          # ---------------------------------------------------------
+          # Verification
+          # ---------------------------------------------------------
+
+          print("\n" + "=" * 60)
+          print("STEP 17 CATALOG VERIFICATION")
+          print("=" * 60)
+
+          print(f"Catalog file: {OUTPUT_FILE}")
+          print(f"Catalog records: {len(catalog)}")
+
+          print("\nFirst 10 catalog records:")
           print("-" * 60)
 
-          for number, item in enumerate(files[:30], start=1):
+          for record in catalog[:10]:
               print(
-                  f"{number}. "
-                  f"{item.path}"
+                  f"{record['catalog_id']}. "
+                  f"{record['vessel']} | "
+                  f"{record['manufacturer']} | "
+                  f"{record['system']} | "
+                  f"{record['engine_model']} | "
+                  f"{record['document_type']} | "
+                  f"{record['file_name']}"
               )
 
-          print("\nNo files were downloaded.")
-          print("MANUALS listing test: SUCCESS")
+
+          # Basic safety checks
+
+          assert len(catalog) == len(files), (
+              "Catalog count does not match discovered file count."
+          )
+
+          assert OUTPUT_FILE.exists(), (
+              "manual_catalog.json was not created."
+          )
+
+          print("\nNo manuals were downloaded.")
+          print("manual_catalog.json created successfully.")
+          print("STEP 17: SUCCESS")
           PY
+
+      - name: Upload manual catalog artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: marinewise-manual-catalog
+          path: manual_catalog.json
+          if-no-files-found: error
