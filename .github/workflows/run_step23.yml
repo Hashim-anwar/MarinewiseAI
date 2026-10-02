@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v5
 
@@ -38,8 +39,12 @@ jobs:
 
           python manual_downloader.py
 
-            - name: Verify selected PDFs
+      - name: Verify selected PDFs
         run: |
+          echo "=========================================="
+          echo "STEP 23 - VERIFY SELECTED PDFS"
+          echo "=========================================="
+
           COUNT=$(find selected_manuals -maxdepth 1 -type f \( -iname "*.pdf" \) | wc -l)
 
           echo "Selected PDF files: $COUNT"
@@ -60,6 +65,10 @@ jobs:
 
       - name: Verify extracted documents
         run: |
+          echo "=========================================="
+          echo "STEP 23 - VERIFY EXTRACTION"
+          echo "=========================================="
+
           COUNT=$(find extracted_documents -maxdepth 1 -type f -name "*.json" | wc -l)
 
           echo "Extraction JSON files: $COUNT"
@@ -90,6 +99,10 @@ jobs:
 
       - name: Run STEP 23 Vector Indexer
         run: |
+          echo "=========================================="
+          echo "STEP 23 - EMBEDDINGS + FAISS"
+          echo "=========================================="
+
           python vector_indexer.py
 
       - name: Verify vector store
